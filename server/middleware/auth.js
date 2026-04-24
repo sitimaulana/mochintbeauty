@@ -20,6 +20,7 @@ const isAdmin = (req, res, next) => {
   }
 };
 
+// Export correctly as object
 module.exports = authenticateToken;
 module.exports.isAdmin = isAdmin;
 module.exports.authenticateToken = authenticateToken;

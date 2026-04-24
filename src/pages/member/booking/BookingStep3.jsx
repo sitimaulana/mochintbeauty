@@ -1,5 +1,18 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useState, useEffect, useMemo } from 'react'; 
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Home, 
+  Calendar, 
+  Clock, 
+  User, 
+  ChevronRight, 
+  CheckCircle, 
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  Info,
+  Lightbulb
+} from 'lucide-react';
 import { appointmentAPI } from '../../../services/api';
 
 const BookingStep3 = () => {
@@ -491,7 +504,7 @@ const BookingStep3 = () => {
             <div className="space-y-6 sm:space-y-8 md:space-y-10 mt-6 sm:mt-8">
               <div>
                 <label className="text-[9px] sm:text-[10px] font-black text-[#5D4037] mb-3 sm:mb-4 uppercase flex items-center gap-2 tracking-wider sm:tracking-widest font-sans ml-1">
-                  <i className="fas fa-calendar" style={{ color: '#8D6E63', fontSize: '14px' }}></i> 1. Pilih Tanggal Perawatan
+                  <Calendar size={16} color='#8D6E63' /> 1. Pilih Tanggal Perawatan
                 </label>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col lg:flex-row gap-4 items-start">
@@ -522,7 +535,7 @@ const BookingStep3 = () => {
                             title="Buka kalender"
                           />
                           <div className="w-11 h-11 flex items-center justify-center bg-[#8D6E63] text-white rounded-xl hover:bg-[#5D4037] transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm">
-                            <i className="fas fa-calendar" style={{ fontSize: '20px' }}></i>
+                            <Calendar size={20} color='white' />
                           </div>
                         </div>
                       </div>
@@ -536,7 +549,7 @@ const BookingStep3 = () => {
                     
                     {selectedDate && (
                       <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-[20px] text-sm text-green-700 font-medium w-full lg:w-auto animate-fadeIn">
-                        <i className="fas fa-calendar" style={{ fontSize: '16px' }}></i>
+                        <Calendar size={16} color='#16a34a' />
                         <span className="text-xs md:text-sm">{formatSelectedDate()}</span>
                       </div>
                     )}
@@ -546,7 +559,6 @@ const BookingStep3 = () => {
                     {!displayDate && (
                       <>
                         <p className="flex items-center gap-2">
-                          <i className="fas fa-lightbulb" style={{ color: '#EAB308', fontSize: '14px' }}></i>
                           <span><span className="font-bold">Ketik manual</span> (DD/MM/YYYY) atau <span className="font-bold text-[#8D6E63]">klik icon kalender</span> di kanan untuk buka kalender</span>
                         </p>
                       </>
@@ -558,7 +570,7 @@ const BookingStep3 = () => {
                     )}
                     {displayDate.length === 10 && !selectedDate && dateError && (
                       <p className="text-red-600 flex items-center gap-2">
-                        <i className="fas fa-circle-exclamation" style={{ fontSize: '14px' }}></i> {dateError}
+                        <AlertCircle size={16} color='#dc2626' /> {dateError}
                       </p>
                     )}
                   </div>
@@ -567,7 +579,7 @@ const BookingStep3 = () => {
 
               <div>
                 <label className="text-[10px] font-black text-[#5D4037] mb-4 uppercase flex items-center gap-2 tracking-widest font-sans ml-1">
-                  <i className="fas fa-clock" style={{ color: '#8D6E63', fontSize: '14px' }}></i> 2. Pilih Jam Mulai
+                  <Clock size={16} color='#8D6E63' /> 2. Pilih Jam Mulai
                 </label>
                 
                 {!selectedDate ? (
@@ -577,7 +589,9 @@ const BookingStep3 = () => {
                   </div>
                 ) : loading ? (
                   <div className="text-center py-12 bg-gray-50 rounded-2xl">
-                    <i className="fas fa-spinner fa-spin" style={{ color: '#8D6E63', fontSize: '48px' }} className="mx-auto mb-4"></i>
+                    <div className="mx-auto mb-4 flex justify-center">
+                      <Loader2 size={48} color='#8D6E63' className='animate-spin' />
+                    </div>
                     <p className="text-gray-500 font-medium">Memuat jadwal tersedia...</p>
                   </div>
                 ) : (
@@ -652,7 +666,7 @@ const BookingStep3 = () => {
                         </div>
                         
                         <div className="text-xs font-medium text-gray-600 bg-white px-3 py-1.5 rounded-full border border-gray-200 flex items-center gap-2">
-                          <i className="fas fa-clock" style={{ color: '#8D6E63', fontSize: '14px' }}></i>
+                          <Clock size={14} color='#8D6E63' />
                           Jam Operasional: 08:00 - 20:00
                         </div>
                       </div>
@@ -667,7 +681,7 @@ const BookingStep3 = () => {
         <div className="w-full lg:w-96">
           <div className="bg-white border border-gray-200 text-[#3E2723] p-8 rounded-[40px] shadow-lg sticky top-8 text-left">
             <h3 className="text-xl font-display font-bold mb-8 flex items-center gap-3 text-[#8D6E63] tracking-tight">
-              <i className="fas fa-circle-info" style={{ fontSize: '22px' }}></i> Ringkasan Booking
+              <Info size={22} color='#8D6E63' /> Ringkasan Booking
             </h3>
             
             <div className="space-y-6 font-sans">
@@ -675,7 +689,7 @@ const BookingStep3 = () => {
                 <p className="text-[9px] text-[#3E2723] uppercase font-black mb-1.5 tracking-widest">Treatment</p>
                 <p className="text-sm font-bold leading-snug mb-2">{treatment?.name || "-"}</p>
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 bg-white px-3 py-2 rounded-lg">
-                  <Clock size={12} className="text-[#8D6E63]" />
+                    <Clock size={14} color='#8D6E63' />
                   <p>Durasi standar: <span className="font-bold text-[#8D6E63]">90 menit</span></p>
                 </div>
                 <p className="text-[9px] text-gray-500 mt-2 leading-relaxed">
@@ -732,7 +746,7 @@ const BookingStep3 = () => {
             >
               {loading ? (
                 <>
-                  <i className="fas fa-spinner fa-spin" style={{ fontSize: '18px' }}></i>
+                  <Loader2 size={18} color='white' className='animate-spin' />
                   <span>Membuat Appointment...</span>
                 </>
               ) : selectedDate && selectedTime ? (

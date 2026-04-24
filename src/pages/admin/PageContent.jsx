@@ -9,7 +9,10 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = '/api'; // Force /api for local development (Vite proxy will handle it)
+
+// Debug log
+console.log('🔧 PageContent API Configuration:', { API_URL });
 
 // Error image SVG constant
 const ERROR_IMAGE_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23888" font-size="12"%3EError%3C/text%3E%3C/svg%3E';
@@ -72,13 +75,23 @@ const PageContent = () => {
   const fetchPageInfos = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/page-info?include_inactive=true`, getAuthHeaders());
+      const url = `${API_URL}/page-info?include_inactive=true`;
+      console.log('📡 Fetching from:', url);
+      
+      const response = await axios.get(url, getAuthHeaders());
+      console.log('✅ Response:', response.data);
+      
       setPageInfos(response.data.data || []);
       setError('');
     } catch (err) {
-      console.error('Error fetching page infos:', err);
+      console.error('❌ Error fetching page infos:', {
+        url: `${API_URL}/page-info`,
+        status: err.response?.status,
+        message: err.message,
+        error: err
+      });
       setError('Gagal memuat data. Silakan coba lagi.');
-      showNotification('Gagal Memuat', 'Gagal memuat data', 'error', 5000);
+      showNotification('Gagal Memuat', 'Gagal memuat data: ' + err.message, 'error', 5000);
       setPageInfos([]);
     } finally {
       setLoading(false);
@@ -1209,20 +1222,14 @@ const PageContent = () => {
                       className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
                       key="main-image-upload"
                     />
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                      <p className="text-xs text-blue-800">
-                        ðŸ’¡ <strong>Tips:</strong> Untuk performa terbaik, compress gambar sebelum upload atau gunakan URL dari hosting/CDN.
-                      </p>
+                    <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">  
                     </div>
-                  </div>
-
-                  <div className="text-center text-xs font-bold text-gray-500 my-2">â”€â”€ ATAU â”€â”€</div>
-
+                  </div> 
                   {/* Method 2: Image URL Input - RECOMMENDED */}
                   <div className="bg-white p-3 rounded-lg border-2 border-green-300 shadow-sm">
                     <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1.5">
                       <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">REKOMENDASI</span>
-                      ðŸ”— Masukkan URL Gambar
+                       Masukkan URL Gambar
                     </label>
                     <input
                       type="url"
@@ -1233,16 +1240,13 @@ const PageContent = () => {
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     />
                     <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-                      <p className="text-xs text-green-800">
-                        âœ… <strong>Keuntungan URL:</strong> Loading lebih cepat, tidak ada batasan ukuran, mudah diganti.
-                      </p>
                     </div>
                   </div>
 
                   {/* Image Preview */}
                   {previewImage && (
                     <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">ðŸ‘ï¸ Preview Gambar:</p>
+                      <p className="text-xs font-semibold text-gray-700 mb-2"> Preview Gambar:</p>
                       <div className="relative inline-block">
                         <img
                           src={previewImage}

@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const pageInfoController = require('../controllers/pageInfoController');
-const { authenticateToken, isAdmin } = require('../middleware/auth');
+const authenticateTokenMiddleware = require('../middleware/auth');
+const { isAdmin } = require('../middleware/auth');
+
+// Use the exported functions correctly
+const authenticateToken = authenticateTokenMiddleware;
 
 // Public routes (accessible without authentication)
 router.get('/public', pageInfoController.getAll);
