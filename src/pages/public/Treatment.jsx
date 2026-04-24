@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Preloader from '../../components/common/Preloader';
+import { Home, Search, SlidersHorizontal, Filter, X, ArrowRight } from 'lucide-react';import Preloader from '../../components/common/Preloader';
 import axios from 'axios';
 
 // Import komponen detailnya

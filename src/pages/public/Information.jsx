@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Home, Play } from 'lucide-react';
 import axios from 'axios';
 import Preloader from '../../components/common/Preloader';
 

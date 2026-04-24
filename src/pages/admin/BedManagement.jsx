@@ -2,8 +2,9 @@
 import Preloader from '../../components/common/Preloader';
 
 const BedManagement = () => {
-  const APPOINTMENTS_API_URL = '/api/appointments';
-  const TIMESLOTS_API_URL = '/api/timeslots';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const APPOINTMENTS_API_URL = `${API_BASE}/api/appointments`;
+  const TIMESLOTS_API_URL = `${API_BASE}/api/timeslots`;
   const Token = localStorage.getItem('token');
 
   const BEDS_CAPACITY = 3;

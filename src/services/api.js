@@ -2,11 +2,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // GUNAKAN HARDCODE DULU
+  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: import.meta.env.VITE_API_TIMEOUT || 10000,
 });
 
 // Add token to every request

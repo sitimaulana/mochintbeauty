@@ -5,7 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "setup-db": "node setup-db-simple.js",
+    "setup-db-auto": "node auto-setup-db.js",
+    "init-db": "node initTables.js",
+    "migrate": "node run_migration.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

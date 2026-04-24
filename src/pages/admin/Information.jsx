@@ -23,7 +23,8 @@ const Information = () => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   // API base URL
-  const API_URL = '/api/articles';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = `${API_BASE}/api/articles`;
   const Token = localStorage.getItem('token');
 
   // Kategori yang tersedia
