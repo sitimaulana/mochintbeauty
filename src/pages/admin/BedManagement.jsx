@@ -1,10 +1,27 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Bed, 
+  Calendar, 
+  Clock, 
+  ChevronLeft, 
+  ChevronRight, 
+  Info, 
+  RefreshCw, 
+  CheckCircle,
+  Users,
+  AlertCircle,
+  X,
+  Check,
+  Lock,
+  Unlock
+} from 'lucide-react';
 import Preloader from '../../components/common/Preloader';
 
 const BedManagement = () => {
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const APPOINTMENTS_API_URL = `${API_BASE}/api/appointments`;
-  const TIMESLOTS_API_URL = `${API_BASE}/api/timeslots`;
+  // ... sisa kode kamu
+  // Fix API URLs - use /api prefix directly (handled by Vite proxy)
+  const APPOINTMENTS_API_URL = `/api/appointments`;
+  const TIMESLOTS_API_URL = `/api/timeslots`;
   const Token = localStorage.getItem('token');
 
   const BEDS_CAPACITY = 3;
@@ -74,6 +91,8 @@ const BedManagement = () => {
 
   const toggleTimeslot = async (timeSlot) => {
     try {
+      console.log('🔄 Toggling timeslot:', { timeSlot, selectedDate, url: `${TIMESLOTS_API_URL}/toggle` });
+      
       const response = await fetch(`${TIMESLOTS_API_URL}/toggle`, {
         method: 'POST',
         headers: {
@@ -87,18 +106,21 @@ const BedManagement = () => {
         })
       });
       
+      console.log('📡 Response status:', response.status);
+      
       if (!response.ok) throw new Error('Gagal toggle timeslot');
       
       const data = await response.json();
+      console.log('✅ Toggle success:', data);
       
       // Refresh disabled timeslots
       fetchDisabledTimeslots();
       
       // Show notification
-      alert(data.message);
+      alert(data.message || 'Status timeslot berhasil diubah');
     } catch (err) {
-      console.error('Error toggling timeslot:', err);
-      alert('Gagal mengubah status timeslot');
+      console.error('❌ Error toggling timeslot:', err);
+      alert('Gagal mengubah status timeslot: ' + err.message);
     }
   };
 
@@ -225,16 +247,6 @@ const BedManagement = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Format date from DD/MM/YYYY to YYYY-MM-DD for storage
-  const formatDateForStorage = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    }
-    return dateStr;
-  };
-
   if (loading) {
     return <Preloader type="partial" text="Memuat data bed..." />;
   }
@@ -266,51 +278,26 @@ const BedManagement = () => {
             <Calendar size={18} className="text-brown-600" />
             Pilih Tanggal:
           </div>
-          <div className="relative">
-            <input 
-              type="text" 
-              value={selectedDate ? formatDateForDisplay(selectedDate) : ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Allow only numbers and forward slashes
-                const filtered = value.replace(/[^0-9/]/g, '');
-                
-                // Auto-add slashes
-                let formatted = filtered;
-                if (filtered.length === 2 && !filtered.includes('/')) {
-                  formatted = filtered + '/';
-                } else if (filtered.length === 5 && filtered.split('/').length === 2) {
-                  formatted = filtered + '/';
-                }
-                
-                // Update display value
-                e.target.value = formatted;
-                
-                // If complete date format (DD/MM/YYYY), convert and save
-                if (formatted.length === 10) {
-                  const storageDate = formatDateForStorage(formatted);
-                  setSelectedDate(storageDate);
-                }
-              }}
-              placeholder="DD/MM/YYYY"
-              maxLength="10"
-              className="border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brown-500 w-40"
-            />
-            {/* Hidden date input for calendar picker */}
+          
+          {/* Simple date input */}
+          <div className="flex gap-2">
             <input 
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="absolute right-0 top-0 w-10 h-full opacity-0 cursor-pointer"
-              style={{ zIndex: 2 }}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brown-500"
             />
-            {/* Calendar icon */}
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+            
+            {/* Reset button */}
+            <button
+              onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+              className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 transition-colors"
+              title="Kembali ke hari ini"
+            >
+              Today
+            </button>
           </div>
+          
           <div className="text-sm text-gray-600">
             {formatDate(selectedDate)}
           </div>
@@ -419,14 +406,17 @@ const BedManagement = () => {
                 {/* Toggle Disable Button */}
                 <button
                   onClick={() => toggleTimeslot(time)}
-                  className={`absolute top-2 left-2 p-1 rounded-md text-xs font-bold transition-all ${
-                    isDisabled 
+                  className={`absolute top-2 left-2 p-1.5 rounded-md transition-all hover:scale-110 ${    isDisabled 
                       ? 'bg-green-500 text-white hover:bg-green-600' 
                       : 'bg-red-500 text-white hover:bg-red-600'
                   }`}
                   title={isDisabled ? 'Aktifkan slot ini' : 'Nonaktifkan slot ini'}
                 >
-                  {isDisabled ? <i className="fas fa-check" style={{ fontSize: '12px' }}></i> : <i className="fas fa-x" style={{ fontSize: '12px' }}></i>}
+                  {isDisabled ? (
+                    <X size={14} strokeWidth={3} />
+                  ) : (
+                    <X size={14} strokeWidth={3} />
+                  )}
                 </button>
                 
                 <div className="text-center mt-2">

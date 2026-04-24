@@ -1,7 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Search, 
+  Filter, 
+  Calendar, 
+  Clock, 
+  MoreVertical, 
+  CheckCircle, 
+  XCircle, 
+  Star,     
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Hash,
+  X
+} from 'lucide-react';
 import Preloader from '../../components/common/Preloader';
-
 const Appointment = () => {
   // API URLs
   const APPOINTMENTS_API_URL = '/api/appointments';

@@ -46,47 +46,64 @@ const Treatment = () => {
     fetchTreatments();
   }, []);
 
-  // âœ¨ Ambil kategori unik
+  // ✨ Ambil kategori unik (DENGAN NORMALISASI)
   const categories = useMemo(() => {
     const uniqueCategories = new Set();
     treatments.forEach(t => {
-      // Handle both array and string categories
+      const processCategory = (cat) => {
+        if (!cat) return;
+        let normalizedCat = cat.trim();
+        
+        // LOGIKA PENYATUAN: Gabungkan "Facial" ke "Perawatan Wajah" agar tidak ganda
+        if (normalizedCat.toLowerCase() === 'facial') {
+          normalizedCat = 'Perawatan Wajah';
+        }
+        
+        uniqueCategories.add(normalizedCat);
+      };
+
       if (Array.isArray(t.category)) {
-        t.category.forEach(cat => uniqueCategories.add(cat));
+        t.category.forEach(processCategory);
       } else if (t.category) {
-        uniqueCategories.add(t.category);
+        processCategory(t.category);
       }
     });
     return ['All', ...Array.from(uniqueCategories).sort()];
   }, [treatments]);
 
-  // âœ¨ Filter data
+  // ✨ Filter data
   const filteredTreatments = useMemo(() => {
     let filtered = treatments;
     
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(t => {
-        // Handle both array and string categories
-        if (Array.isArray(t.category)) {
-          return t.category.includes(selectedCategory);
-        }
-        return t.category === selectedCategory;
+        const itemCats = Array.isArray(t.category) ? t.category : [t.category];
+        // Pastikan pengecekan filter juga mengikuti logika penyatuan di atas
+        return itemCats.some(c => {
+          let name = c?.trim();
+          if (name?.toLowerCase() === 'facial') name = 'Perawatan Wajah';
+          return name === selectedCategory;
+        });
       });
     }
     
     if (searchQuery.trim() !== '') {
       filtered = filtered.filter(t => {
-        const categories = Array.isArray(t.category) ? t.category : [t.category];
-        return t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        // Gunakan 'itemCategories' (bukan 'categories') agar tidak bentrok
+        const itemCategories = Array.isArray(t.category) ? t.category : [t.category];
+        
+        return (
+          t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          categories.some(cat => cat && cat.toLowerCase().includes(searchQuery.toLowerCase()));
+          itemCategories.some(cat => cat && cat.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
       });
     }
     
     return filtered;
   }, [treatments, selectedCategory, searchQuery]);
 
-  // âœ¨ Reset filter
+  // ✨ Reset filter (HANYA SATU DEKLARASI DISINI)
   const handleResetFilter = () => {
     setSelectedCategory('All');
     setSearchQuery('');
@@ -226,9 +243,9 @@ const Treatment = () => {
                     ? treatments.length 
                     : treatments.filter(t => {
                         if (Array.isArray(t.category)) {
-                          return t.category.includes(cat);
+                          return t.category.some(c => c?.trim() === cat);
                         }
-                        return t.category === cat;
+                        return t.category?.trim() === cat;
                       }).length;
 
                   return (
@@ -324,9 +341,9 @@ const Treatment = () => {
                           ? treatments.length 
                           : treatments.filter(t => {
                               if (Array.isArray(t.category)) {
-                                return t.category.includes(cat);
+                                return t.category.some(c => c?.trim() === cat);
                               }
-                              return t.category === cat;
+                              return t.category?.trim() === cat;
                             }).length;
 
                         return (

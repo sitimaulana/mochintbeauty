@@ -2,9 +2,17 @@
 
 import axios from "axios";
 
-// MENJADI INI:
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-const DEBUG_MODE = import.meta.env.MODE === 'development';
+// For development: use proxy '/api' (configured in vite.config.js)
+// For production: use environment variable or full URL
+// During dev, Vite proxy will forward /api to http://localhost:5000/api
+const API_URL = '/api';
+const DEBUG_MODE = true; // Always debug for now
+
+// Log configuration on load
+console.log('🔧 API Configuration:');
+console.log('  API_URL:', API_URL);
+console.log('  Mode:', import.meta.env.MODE);
+console.log('  Full URL for login: ' + API_URL + '/auth/login');
 
 // ============================
 // CONFIGURATION

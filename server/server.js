@@ -74,7 +74,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, '../public_html')));
+// Debug: Log registered routes
+console.log('\n📋 Registered API Routes:');
+console.log('  ✅ /api/auth - Authentication routes');
+console.log('  ✅ /api/treatments - Treatment routes');
+console.log('  ✅ /api/therapists - Therapist routes');
+console.log('  ✅ /api/products - Product routes');
+console.log('  ✅ /api/reviews - Review routes');
+console.log('  ✅ /api/articles - Article routes');
+console.log('  ✅ /api/page-info - Page info routes');
+console.log('  ✅ /api/contact - Contact routes');
+console.log('  ✅ /api/appointments - Appointment routes (protected)');
+console.log('  ✅ /api/members - Member routes (protected)');
+console.log('  ✅ /api/timeslots - Timeslot routes (protected)\n');
 
 // optional DB init (if file exists) - COMMENTED OUT UNTUK PRODUCTION
 // if (createAllTables && typeof createAllTables === 'function') {
@@ -82,7 +94,7 @@ app.use(express.static(path.join(__dirname, '../public_html')));
 // }
 
 
-// Public routes (no token required)
+// Public routes (no token required) - MUST BE BEFORE STATIC FILES
 app.use('/api/auth', authRoutes);
 app.use('/api/treatments', treatmentRoutes);
 app.use('/api/therapists', therapistRoutes);
@@ -92,7 +104,7 @@ app.use('/api/articles', articlesRoutes);
 app.use('/api/page-info', pageInfoRoutes); // Dynamic page content management
 app.use('/api/contact', contactRoutes); // Contact information management
 
-// Protected routes (require token)
+// Protected routes (require token) - MUST BE BEFORE STATIC FILES
 app.use('/api/appointments', authenticateToken, appointmentRoutes);
 app.use('/api/members', authenticateToken, memberRoutes);
 app.use('/api/timeslots', authenticateToken, timeslotRoutes);
@@ -114,15 +126,24 @@ app.get('/health', async (req, res) => {
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// PERHATIKAN: Jangan gunakan tanda kutip (' atau ") di dalam kurung!
+// NOW serve static files (after all API routes)
+app.use(express.static(path.join(__dirname, '../public_html')));
+
+// PERHATIAN: Jangan gunakan tanda kutip (' atau ") di dalam kurung!
 // Gunakan garis miring /.*/ yang merupakan format RegExp JavaScript.
+// HANYA untuk GET requests (SPA routing)
 
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../public_html', 'index.html'));
 });
 
+// 404 handler untuk method lain
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: 'Endpoint not found', path: req.originalUrl, method: req.method });
+});
+
 // Pastikan app.listen tetap di paling bawah
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, 'localhost', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Accessible at http://103.185.38.16:${PORT}`);
+  console.log(`🌐 Local development: http://localhost:${PORT}`);
 });

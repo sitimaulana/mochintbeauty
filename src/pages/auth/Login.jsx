@@ -93,8 +93,11 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
         setTimeout(() => {
           if (onLoginSuccess) onLoginSuccess(res.user);
           const userRole = res.user.role || res.user.user_type;
-          if (userRole === 'admin' || res.user.is_admin === true) {
-            navigate('/admin');
+          // Check if user is admin (includes super_admin, admin)
+          const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole?.includes('admin') || res.user.is_admin === true;
+          
+          if (isAdminUser) {
+            navigate('/admin/dashboard');
           } else {
             navigate('/member');
           }
@@ -229,7 +232,7 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={18} />
                   <input 
                     type="email" 
-                    placeholder="nama@email.com" 
+                    placeholder="Nama@email.com" 
                     required 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
