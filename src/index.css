@@ -1,0 +1,42 @@
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tambahkan styling global tambahan di bawah ini jika diperlukan */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Animasi untuk notification modal */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Leaflet Map Styling */
+.leaflet-container {
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.leaflet-popup-content {
+  margin: 8px;
+  font-size: 12px;
+}
