@@ -612,10 +612,24 @@ const PageContent = () => {
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#FDFBF7]">
           <div className="text-center">
-            <div className="relative w-20 h-20 mx-auto mb-4">
-              <div className="absolute inset-0 rounded-full border-4 border-[#D7CCC8]"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-t-[#3E2723] border-r-[#8D6E63] animate-spin"></div>
-            </div>
+            <style>{`
+              @keyframes spinCenter {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              
+              .page-content-spinner {
+                animation: spinCenter 1.5s linear infinite;
+                display: inline-block;
+                width: 80px;
+                height: 80px;
+                border: 4px solid #D7CCC820;
+                border-top-color: #3E2723;
+                border-right-color: #8D6E63;
+                border-radius: 50%;
+              }
+            `}</style>
+            <div className="page-content-spinner mx-auto mb-4"></div>
             <p className="text-[#3E2723] font-medium">Loading...</p>
           </div>
         </div>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Loader } from 'lucide-react';
 
 /**
  * Preloader Component - Unified loading indicator untuk seluruh aplikasi
@@ -55,12 +54,39 @@ const Preloader = ({
   const config = configs[type] || configs.fullscreen;
   const background = bgColor || config.defaultBg;
 
+  // Calculate spinner dimensions based on type
+  const spinnerSize = config.iconSize || 48;
+  const borderWidth = spinnerSize > 32 ? 4 : 3;
+
   return (
     <div className={`${config.container} ${background}`}>
+      <style>{`
+        @keyframes spinCenter {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        .preloader-spinner {
+          animation: spinCenter 1.5s linear infinite;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+      `}</style>
       <div className={config.innerBox}>
-        <div className="animate-spin" style={{ color: iconColor }}>
-          <Loader size={config.iconSize} />
-        </div>
+        <div 
+          className="preloader-spinner"
+          style={{ 
+            width: spinnerSize,
+            height: spinnerSize,
+            borderWidth: borderWidth,
+            borderStyle: 'solid',
+            borderColor: `${iconColor}20`,
+            borderTopColor: iconColor,
+            borderRightColor: iconColor
+          }}
+        ></div>
         {text && <p className={config.textClass}>{text}</p>}
       </div>
     </div>
