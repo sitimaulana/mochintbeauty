@@ -1057,18 +1057,18 @@ const Treatment = () => {
 
                       {/* Kategori Terpilih */}
                       {(formData.category || []).length > 0 && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs sm:text-sm font-medium text-blue-800 mb-2">
+                        <div className="mt-3 p-3 bg-brown-50 rounded-lg border border-brown-200">
+                          <p className="text-xs sm:text-sm font-medium text-brown-800 mb-2">
                             {(formData.category || []).length} kategori terpilih:
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {(formData.category || []).map((cat, idx) => (
-                              <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                              <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-brown-100 text-brown-700 rounded-full text-xs">
                                 {cat}
                                 <button
                                   type="button"
                                   onClick={() => handleCategoryToggle(cat)}
-                                  className="text-blue-500 hover:text-blue-700"
+                                  className="text-brown-500 hover:text-brown-700"
                                 >
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

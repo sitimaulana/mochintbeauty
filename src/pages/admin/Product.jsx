@@ -30,13 +30,17 @@ const Product = () => {
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(''); // Filter kategori
+  const [availableCategories, setAvailableCategories] = useState([
+    'Semua Produk', 'Acne', 'Brightening', 'Best Seller', 'Lainnya'
+  ]);
+  const [newCategory, setNewCategory] = useState('');
 
   const API_URL = '/api/products';
-  
-  const categories = ['Semua Produk', 'Acne', 'Brightening', 'Best Seller', 'Lainnya'];
+  const OPTIONS_API_URL = '/api/treatment-options';
   
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   // Auto-hide notification after 3 seconds
@@ -48,6 +52,21 @@ const Product = () => {
       return () => clearTimeout(timer);
     }
   }, [notification.show]);
+
+  // Fetch categories dari database
+  const fetchCategories = async () => {
+    try {
+      const Token = localStorage.getItem('token');
+      const response = await axios.get(`${OPTIONS_API_URL}/categories`, {
+        headers: { Authorization: `Bearer ${Token}` }
+      });
+      const categories = response.data.data || [];
+      setAvailableCategories(categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Keep default categories on error
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -96,12 +115,99 @@ const Product = () => {
     return price - discount;
   };
 
+  // Handle Tambah Kategori Baru
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Validasi Gagal',
+        message: 'Nama kategori wajib diisi'
+      });
+      return;
+    }
+
+    if (availableCategories.includes(newCategory.trim())) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Kategori Sudah Ada',
+        message: 'Kategori ini sudah ada di daftar'
+      });
+      return;
+    }
+
+    const newCategoryValue = newCategory.trim();
+    
+    try {
+      const Token = localStorage.getItem('token');
+      await axios.post(`${OPTIONS_API_URL}/categories`, 
+        { value: newCategoryValue },
+        { headers: { Authorization: `Bearer ${Token}` } }
+      );
+
+      await fetchCategories();
+      setFormData({
+        ...formData,
+        category: newCategoryValue
+      });
+      setNewCategory('');
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Kategori Ditambahkan',
+        message: `Kategori "${newCategoryValue}" berhasil ditambahkan`
+      });
+    } catch (error) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Gagal Menambahkan Kategori',
+        message: error.response?.data?.message || 'Terjadi kesalahan saat menyimpan kategori'
+      });
+    }
+  };
+
+  // Handle Hapus Kategori
+  const handleRemoveCategory = async (category) => {
+    try {
+      const Token = localStorage.getItem('token');
+      await axios.delete(`${OPTIONS_API_URL}/categories`, {
+        data: { value: category },
+        headers: { Authorization: `Bearer ${Token}` }
+      });
+
+      await fetchCategories();
+      
+      if (formData.category === category) {
+        setFormData({
+          ...formData,
+          category: ''
+        });
+      }
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Kategori Dihapus',
+        message: `Kategori "${category}" berhasil dihapus`
+      });
+    } catch (error) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Gagal Menghapus Kategori',
+        message: error.response?.data?.message || 'Terjadi kesalahan saat menghapus kategori'
+      });
+    }
+  };
+
   const handleAdd = () => {
     setIsAdding(true);
     setEditingProduct(null);
     setFormData({
       name: '',
-      category: 'Semua Produk',
+      category: '',
       price: '',
       weight: '',
       description: '',
@@ -116,6 +222,7 @@ const Product = () => {
       promoStartDate: '',
       promoEndDate: ''
     });
+    setNewCategory('');
     setPreviewImage(null);
   };
 
@@ -240,7 +347,7 @@ const Product = () => {
     setIsAdding(false);
     setFormData({
       name: '',
-      category: 'Semua Produk',
+      category: '',
       price: '',
       weight: '',
       description: '',
@@ -255,6 +362,7 @@ const Product = () => {
       promoStartDate: '',
       promoEndDate: ''
     });
+    setNewCategory('');
     setPreviewImage(null);
   };
 
@@ -427,7 +535,7 @@ const Product = () => {
               className="flex-1 px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 focus:border-transparent transition-colors duration-200"
             >
               <option value="">Semua Kategori</option>
-              {categories.map((category) => (
+              {availableCategories.map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -608,19 +716,102 @@ const Product = () => {
                     required 
                   />
                 </div>
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                <div className="md:col-span-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">
                     Kategori <span className="text-red-500">*</span>
                   </label>
-                  <select 
-                    name="category" 
-                    value={formData.category || ''} 
-                    onChange={handleChange} 
-                    className="w-full border border-gray-300 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base" 
-                    required
-                  >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  
+                  {/* Checkbox Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                    {availableCategories.map((cat) => (
+                      <label
+                        key={cat}
+                        className={`group flex items-center gap-2 p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all relative ${
+                          formData.category === cat
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="category"
+                          value={cat}
+                          checked={formData.category === cat}
+                          onChange={() => setFormData({...formData, category: cat})}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className={`text-xs sm:text-sm font-medium flex-1 ${
+                          formData.category === cat ? 'text-blue-700' : 'text-gray-700'
+                        }`}>
+                          {cat}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (window.confirm(`Hapus kategori "${cat}" dari daftar?`)) {
+                              handleRemoveCategory(cat);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Hapus kategori dari daftar"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Tambah Kategori Baru */}
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                      Atau Tambah Kategori Baru
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
+                        className="flex-1 border border-gray-300 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                        placeholder="Masukkan nama kategori baru..."
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCategory}
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-brown-600 text-white rounded-md hover:bg-brown-700 text-xs sm:text-sm font-medium whitespace-nowrap"
+                      >
+                        + Tambah
+                      </button>
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                      Kategori baru akan muncul sebagai pilihan checkbox di atas dan otomatis dipilih
+                    </p>
+                  </div>
+
+                  {/* Kategori Terpilih */}
+                  {formData.category && (
+                    <div className="p-3 bg-brown-50 rounded-lg border border-brown-200">
+                      <p className="text-xs sm:text-sm font-medium text-brown-800 mb-2">
+                        Kategori terpilih:
+                      </p>
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-brown-100 text-brown-700 rounded-full text-xs">
+                        {formData.category}
+                        <button
+                          type="button"
+                          onClick={() => setFormData({...formData, category: ''})}
+                          className="text-brown-500 hover:text-brown-700"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
