@@ -23,8 +23,8 @@ const Information = () => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   // API base URL
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const API_URL = `${API_BASE}/api/articles`;
+  const API_BASE = import.meta.env.VITE_API_URL || '/api';
+  const API_URL = `${API_BASE}/articles`;
   const Token = localStorage.getItem('token');
 
   // Kategori yang tersedia
@@ -39,15 +39,37 @@ const Information = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching articles from:', API_URL);
+      console.log('Token:', Token ? 'Present' : 'Missing');
+      
       const response = await axios.get(API_URL, {
-        headers: {Authorization: `Bearer ${Token}`
+        headers: {
+          Authorization: `Bearer ${Token}`
         }
       });
       setArticles(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || 'Gagal memuat artikel';
+      const status = err.response?.status;
+      let errorMessage = 'Gagal memuat artikel';
+      
+      if (status === 401) {
+        errorMessage = 'Token tidak valid atau sudah expired. Silakan login kembali.';
+        localStorage.removeItem('token');
+      } else if (status === 404) {
+        errorMessage = `Endpoint tidak ditemukan: ${API_URL}. Pastikan server berjalan di ${API_BASE}`;
+      } else if (status === 403) {
+        errorMessage = 'Anda tidak memiliki akses untuk melihat artikel';
+      } else {
+        errorMessage = err.response?.data?.error || err.message || errorMessage;
+      }
+      
       setError(errorMessage);
-      console.error('Error memuat artikel:', err);
+      console.error('Error memuat artikel:', {
+        status: err.response?.status,
+        message: err.message,
+        url: API_URL,
+        error: err.response?.data
+      });
       setArticles([]);
     } finally {
       setLoading(false);
