@@ -464,50 +464,50 @@ class EmailService {
 
     <!-- Content -->
     <div class="content">
-      <div class="greeting">Halo, ${data.customerName}! 👋</div>
+      <div class="greeting">Halo, ${data.customerName}! </div>
       
       <div class="reminder-message">
-        <strong>⏰ Pengingat Jadwal Perawatan</strong>
+        <strong> Pengingat Jadwal Perawatan</strong>
         Anda memiliki jadwal perawatan yang akan datang. Pastikan Anda siap dan tiba tepat waktu!
       </div>
 
       <!-- Appointment Details -->
       <div class="appointment-details">
         <div class="detail-row">
-          <div class="detail-label">📌 No. Appointment:</div>
+          <div class="detail-label"> No. Appointment:</div>
           <div class="detail-value"><strong>${data.appointmentNo}</strong></div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">💆 Perawatan:</div>
+          <div class="detail-label"> Perawatan:</div>
           <div class="detail-value"><strong>${data.treatmentName}</strong></div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">⏱️ Durasi:</div>
+          <div class="detail-label"> Durasi:</div>
           <div class="detail-value">${data.treatmentDuration}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">📅 Tanggal:</div>
+          <div class="detail-label"> Tanggal:</div>
           <div class="detail-value"><span class="highlight">${formattedDate}</span></div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">🕐 Jam:</div>
+          <div class="detail-label"> Jam:</div>
           <div class="detail-value"><span class="highlight">${formattedTime}</span></div>
         </div>
         ${data.therapistName ? `
         <div class="detail-row">
-          <div class="detail-label">💇 Terapis:</div>
+          <div class="detail-label"> Terapis:</div>
           <div class="detail-value">${data.therapistName}</div>
         </div>
         ` : ''}
         <div class="detail-row">
-          <div class="detail-label">💰 Harga:</div>
+          <div class="detail-label"> Harga:</div>
           <div class="detail-value"><strong>${formattedAmount}</strong></div>
         </div>
       </div>
 
       <!-- Additional Info -->
       <div class="info-box">
-        <strong>💡 Tips:</strong><br>
+        <strong> Tips:</strong><br>
         • Tiba 10-15 menit sebelum jadwal Anda<br>
         • Pastikan kulit Anda dalam kondisi bersih<br>
         • Hindari makeup tebal sebelum perawatan<br>
