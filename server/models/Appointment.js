@@ -32,8 +32,9 @@ class Appointment {
   }
 
   // Get appointment by ID with details (JOIN)
+  // Supports both numeric ID and appointment_id (string)
   static async getByIdWithDetails(id) {
-    const [rows] = await promisePool.query(`
+    let query = `
       SELECT 
         a.*,
         m.name as member_name,
@@ -47,8 +48,28 @@ class Appointment {
       LEFT JOIN members m ON a.member_id = m.id
       LEFT JOIN treatments t ON a.treatment_id = t.id
       LEFT JOIN therapists th ON a.therapist_id = th.id
-      WHERE a.id = ?
-    `, [id]);
+      WHERE `;
+    
+    let params = [];
+    
+    // Check if id looks like appointment_id (e.g., "APT99999")
+    if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
+      query += `a.appointment_id = ?`;
+      params.push(id);
+    } else {
+      // Try numeric ID first
+      const numId = parseInt(id);
+      if (!isNaN(numId)) {
+        query += `a.id = ?`;
+        params.push(numId);
+      } else {
+        // If all else fails, try both
+        query += `(a.id = ? OR a.appointment_id = ?)`;
+        params.push(id, id);
+      }
+    }
+    
+    const [rows] = await promisePool.query(query, params);
     return rows[0];
   }
 
@@ -311,6 +332,145 @@ class Appointment {
       SELECT COUNT(*) as total_appointments FROM appointments
     `);
     return rows[0].total_appointments;
+  }
+
+  // ===== REMINDER METHODS =====
+
+  /**
+   * Mark appointment reminder as sent
+   * Supports both numeric ID and appointment_id (string)
+   */
+  static async markReminderSent(id) {
+    const numId = parseInt(id);
+    let whereClause = 'id = ?';
+    let params = [numId];
+    
+    // If id looks like appointment_id (e.g., "APT99999")
+    if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
+      whereClause = 'appointment_id = ?';
+      params = [id];
+    }
+    
+    const [result] = await promisePool.query(
+      `UPDATE appointments 
+       SET reminder_sent = TRUE, reminder_sent_at = NOW()
+       WHERE ${whereClause}`,
+      params
+    );
+    return result.affectedRows;
+  }
+
+  /**
+   * Get reminder status for appointment
+   * Supports both numeric ID and appointment_id (string)
+   */
+  static async getReminderStatus(id) {
+    const numId = parseInt(id);
+    let whereClause = 'id = ?';
+    let params = [numId];
+    
+    // If id looks like appointment_id (e.g., "APT99999")
+    if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
+      whereClause = 'appointment_id = ?';
+      params = [id];
+    }
+    
+    const [rows] = await promisePool.query(
+      `SELECT id, appointment_id, reminder_sent, reminder_sent_at FROM appointments WHERE ${whereClause}`,
+      params
+    );
+    return rows[0] || null;
+  }
+
+  /**
+   * Get pending reminders (not sent yet)
+   */
+  static async getPendingReminders(hoursBefore = 2) {
+    const [rows] = await promisePool.query(`
+      SELECT 
+        a.*,
+        m.name as member_name,
+        m.email as member_email,
+        m.phone as member_phone,
+        t.name as treatment_name,
+        t.duration as treatment_duration,
+        th.name as therapist_name
+      FROM appointments a
+      LEFT JOIN members m ON a.member_id = m.id
+      LEFT JOIN treatments t ON a.treatment_id = t.id
+      LEFT JOIN therapists th ON a.therapist_id = th.id
+      WHERE 
+        a.reminder_sent = FALSE
+        AND a.status = 'confirmed'
+        AND DATE(a.date) = CURDATE()
+        AND TIME(CONCAT(a.date, ' ', a.time)) BETWEEN 
+            DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+            AND DATE_ADD(NOW(), INTERVAL ? HOUR)
+      ORDER BY a.date, a.time
+    `, [hoursBefore]);
+    return rows || [];
+  }
+
+  /**
+   * Get reminder statistics
+   */
+  static async getReminderStats() {
+    const [rows] = await promisePool.query(`
+      SELECT 
+        COUNT(*) as total_appointments,
+        SUM(CASE WHEN reminder_sent = TRUE THEN 1 ELSE 0 END) as reminders_sent,
+        SUM(CASE WHEN reminder_sent = FALSE AND status = 'confirmed' AND date >= CURDATE() THEN 1 ELSE 0 END) as pending_reminders,
+        SUM(CASE WHEN reminder_sent = TRUE AND DATE(reminder_sent_at) = CURDATE() THEN 1 ELSE 0 END) as today_reminders
+      FROM appointments
+      WHERE date >= CURDATE()
+    `);
+    return rows[0] || {};
+  }
+
+  /**
+   * Reset reminder status (for re-sending reminders)
+   * Supports both numeric ID and appointment_id (string)
+   */
+  static async resetReminder(id) {
+    const numId = parseInt(id);
+    let whereClause = 'id = ?';
+    let params = [numId];
+    
+    // If id looks like appointment_id (e.g., "APT99999")
+    if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
+      whereClause = 'appointment_id = ?';
+      params = [id];
+    }
+    
+    const [result] = await promisePool.query(
+      `UPDATE appointments 
+       SET reminder_sent = FALSE, reminder_sent_at = NULL
+       WHERE ${whereClause}`,
+      params
+    );
+    return result.affectedRows;
+  }
+
+  /**
+   * Get appointments with reminder history
+   */
+  static async getWithReminderHistory() {
+    const [rows] = await promisePool.query(`
+      SELECT 
+        a.*,
+        m.name as member_name,
+        m.email as member_email,
+        t.name as treatment_name,
+        th.name as therapist_name
+      FROM appointments a
+      LEFT JOIN members m ON a.member_id = m.id
+      LEFT JOIN treatments t ON a.treatment_id = t.id
+      LEFT JOIN therapists th ON a.therapist_id = th.id
+      WHERE reminder_sent = TRUE
+      ORDER BY reminder_sent_at DESC
+      LIMIT 50
+    `);
+    return rows;
   }
 }
 

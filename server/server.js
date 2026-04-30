@@ -12,6 +12,7 @@ const authenticateToken = require('./middleware/auth');
 
 const authRoutes = require('./routes/authRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
+const appointmentReminderRoutes = require('./routes/appointmentReminderRoutes');
 const treatmentRoutes = require('./routes/treatmentRoutes');
 const treatmentOptionsRoutes = require('./routes/treatmentOptionsRoutes');
 const therapistRoutes = require('./routes/therapistRoutes');
@@ -22,6 +23,9 @@ const articlesRoutes = require('./routes/articlesRoutes');
 const timeslotRoutes = require('./routes/timeslotRoutes');
 const pageInfoRoutes = require('./routes/pageInfoRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+
+// Import Reminder Service
+const reminderService = require('./services/reminderService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -69,6 +73,15 @@ emailService.initialize().then(initialized => {
   console.log('⚠️  Email service initialization error:', err.message);
 });
 
+// Initialize Appointment Reminder Service
+if (process.env.REMINDER_SERVICE_ENABLED !== 'false') {
+  reminderService.start().catch(err => {
+    console.error('⚠️  Failed to start reminder service:', err.message);
+  });
+} else {
+  console.log('⚠️  Reminder service disabled in .env');
+}
+
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
@@ -85,6 +98,7 @@ console.log('  ✅ /api/articles - Article routes');
 console.log('  ✅ /api/page-info - Page info routes');
 console.log('  ✅ /api/contact - Contact routes');
 console.log('  ✅ /api/appointments - Appointment routes (protected)');
+console.log('  ✅ /api/reminders - Appointment Reminder routes (protected)');
 console.log('  ✅ /api/members - Member routes (protected)');
 console.log('  ✅ /api/timeslots - Timeslot routes (protected)\n');
 
@@ -106,6 +120,7 @@ app.use('/api/contact', contactRoutes); // Contact information management
 
 // Protected routes (require token) - MUST BE BEFORE STATIC FILES
 app.use('/api/appointments', authenticateToken, appointmentRoutes);
+app.use('/api/reminders', authenticateToken, appointmentReminderRoutes);
 app.use('/api/members', authenticateToken, memberRoutes);
 app.use('/api/timeslots', authenticateToken, timeslotRoutes);
 app.use('/api/treatment-options', treatmentOptionsRoutes); // Categories and facilities management

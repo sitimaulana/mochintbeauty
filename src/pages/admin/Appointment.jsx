@@ -48,7 +48,7 @@ const Appointment = () => {
   
   const [formData, setFormData] = useState({
     customer_name: '', member_id: '', treatment: '', treatment_id: '', therapist: '', therapist_id: '',
-    date: '', time: '', amount: 0, status: 'confirmed'
+    date: '', time: '', amount: 0, status: 'confirmed', reminder_hours_before: 2
   });
   
   const [amountInput, setAmountInput] = useState('');
@@ -62,6 +62,13 @@ const Appointment = () => {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // State untuk reminder management
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [selectedAppointmentForReminder, setSelectedAppointmentForReminder] = useState(null);
+  const [reminderStatus, setReminderStatus] = useState(null);
+  const [reminderHours, setReminderHours] = useState(2);
+  const [reminderSending, setReminderSending] = useState(false);
   
   // State untuk notification modal
   const [notification, setNotification] = useState({
@@ -147,6 +154,127 @@ const Appointment = () => {
       total_revenue,
       completed_revenue
     });
+  };
+
+  // Reminder Management Functions
+  const openReminderModal = async (appointment) => {
+    setSelectedAppointmentForReminder(appointment);
+    setReminderHours(appointment.reminder_hours_before || 2);
+    
+    try {
+      const response = await axios.get(
+        `/api/reminders/${appointment.appointment_id || appointment.id}/status`,
+        { headers: { Authorization: `Bearer ${Token}` } }
+      );
+      setReminderStatus(response.data);
+    } catch (err) {
+      console.error('Error fetching reminder status:', err);
+      setReminderStatus({
+        reminder_sent: appointment.reminder_sent || false,
+        reminder_sent_at: appointment.reminder_sent_at || null
+      });
+    }
+    
+    setReminderModalOpen(true);
+  };
+
+  const closeReminderModal = () => {
+    setReminderModalOpen(false);
+    setSelectedAppointmentForReminder(null);
+    setReminderStatus(null);
+    setReminderHours(2);
+  };
+
+  const sendReminderNow = async () => {
+    if (!selectedAppointmentForReminder) return;
+    
+    setReminderSending(true);
+    try {
+      const appointmentId = selectedAppointmentForReminder.appointment_id || selectedAppointmentForReminder.id;
+      
+      const response = await axios.post(
+        `/api/reminders/${appointmentId}/send`,
+        {},
+        { headers: { Authorization: `Bearer ${Token}` } }
+      );
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Reminder Terkirim!',
+        message: `Email reminder berhasil dikirim ke pelanggan`
+      });
+      
+      // Update local state
+      const updatedAppointments = appointments.map(app => 
+        app.id === selectedAppointmentForReminder.id 
+          ? { ...app, reminder_sent: true, reminder_sent_at: new Date().toISOString() }
+          : app
+      );
+      setAppointments(updatedAppointments);
+      
+      setReminderStatus({
+        reminder_sent: true,
+        reminder_sent_at: new Date().toISOString()
+      });
+      
+    } catch (err) {
+      console.error('Error sending reminder:', err);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Gagal Mengirim Reminder',
+        message: err.response?.data?.message || 'Terjadi kesalahan saat mengirim reminder'
+      });
+    } finally {
+      setReminderSending(false);
+    }
+  };
+
+  const resetReminder = async () => {
+    if (!selectedAppointmentForReminder) return;
+    
+    setReminderSending(true);
+    try {
+      const appointmentId = selectedAppointmentForReminder.appointment_id || selectedAppointmentForReminder.id;
+      
+      await axios.put(
+        `/api/reminders/${appointmentId}/reset`,
+        {},
+        { headers: { Authorization: `Bearer ${Token}` } }
+      );
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Reminder Direset!',
+        message: `Status reminder berhasil direset`
+      });
+      
+      // Update local state
+      const updatedAppointments = appointments.map(app => 
+        app.id === selectedAppointmentForReminder.id 
+          ? { ...app, reminder_sent: false, reminder_sent_at: null }
+          : app
+      );
+      setAppointments(updatedAppointments);
+      
+      setReminderStatus({
+        reminder_sent: false,
+        reminder_sent_at: null
+      });
+      
+    } catch (err) {
+      console.error('Error resetting reminder:', err);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Gagal Mereset Reminder',
+        message: err.response?.data?.message || 'Terjadi kesalahan saat mereset reminder'
+      });
+    } finally {
+      setReminderSending(false);
+    }
   };
 
   const addToMemberHistory = async (appointment) => {
@@ -372,7 +500,8 @@ const Appointment = () => {
       date: app.date || '',
       time: app.time || '',
       amount: parseFloat(app.amount) || 0,
-      status: app.status || 'confirmed'
+      status: app.status || 'confirmed',
+      reminder_hours_before: app.reminder_hours_before || 2
     });
     setAmountInput(app.amount.toString());
     setMemberSearch(app.customer_name || '');
@@ -451,7 +580,8 @@ const Appointment = () => {
         date: formData.date,
         time: formData.time,
         amount: formData.amount,
-        status: formData.status
+        status: formData.status,
+        reminder_hours_before: formData.reminder_hours_before || 2
       };
 
       let response;
@@ -756,6 +886,7 @@ const Appointment = () => {
                 <th className="p-2 sm:p-4">Jadwal</th>
                 <th className="p-2 sm:p-4">Jumlah</th>
                 <th className="p-2 sm:p-4 text-center">Status</th>
+                <th className="p-2 sm:p-4 text-center">Reminder</th>
                 <th className="p-2 sm:p-4 text-center">Aksi Cepat</th>
                 <th className="p-2 sm:p-4 text-center">Kelola</th>
               </tr>
@@ -763,7 +894,7 @@ const Appointment = () => {
             <tbody className="divide-y divide-gray-50">
               {filteredAppointments.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="p-6 sm:p-8 text-center text-gray-500">
+                  <td colSpan="9" className="p-6 sm:p-8 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center">
                       <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mb-2 sm:mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -812,22 +943,33 @@ const Appointment = () => {
                       </span>
                     </td>
                     <td className="p-2 sm:p-4 text-center">
-                      <div className="flex justify-center gap-1">
-                        {app.status === 'confirmed' && (
-                          <button 
-                            onClick={() => handleQuickStatusUpdate(app.id, 'confirmed')} 
-                            disabled={actionLoading[app.id]}
-                            className="bg-green-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase shadow-sm hover:bg-green-600 disabled:opacity-50 transition-colors duration-200"
-                          >
-                            {actionLoading[app.id] ? 'Proses...' : 'Selesai'}
-                          </button>
-                        )}
-                        {app.status === 'completed' && (
-                          <span className="text-green-500 text-[9px] sm:text-[10px] font-bold italic tracking-wider px-2 py-1">
-                            SELESAI
-                          </span>
-                        )}
-                      </div>
+                      <button 
+                        onClick={() => openReminderModal(app)}
+                        className={`px-2 sm:px-3 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase transition-all ${
+                          app.reminder_sent 
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                            : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                        }`}
+                        title={app.reminder_sent ? 'Reminder sudah dikirim' : 'Kirim reminder'}
+                      >
+                        {app.reminder_sent ? '✓ Terkirim' : 'Belum kirim'}
+                      </button>
+                    </td>
+                    <td className="p-2 sm:p-4 text-center">
+                      {app.status === 'confirmed' && (
+                        <button 
+                          onClick={() => handleQuickStatusUpdate(app.id, 'confirmed')} 
+                          disabled={actionLoading[app.id]}
+                          className="bg-green-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase shadow-sm hover:bg-green-600 disabled:opacity-50 transition-colors duration-200"
+                        >
+                          {actionLoading[app.id] ? 'Proses...' : 'Selesai'}
+                        </button>
+                      )}
+                      {app.status === 'completed' && (
+                        <span className="text-green-500 text-[9px] sm:text-[10px] font-bold italic tracking-wider px-2 py-1">
+                          SELESAI
+                        </span>
+                      )}
                     </td>
                     <td className="p-2 sm:p-4 text-center">
                       <div className="flex justify-center gap-1 sm:gap-2">
@@ -931,6 +1073,130 @@ const Appointment = () => {
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reminder Management Modal */}
+      {reminderModalOpen && selectedAppointmentForReminder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md space-y-4 sm:space-y-5 shadow-xl">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-gray-800">Manajemen Reminder</h3>
+                <p className="text-xs text-gray-500 mt-1">{selectedAppointmentForReminder.appointment_id || selectedAppointmentForReminder.id}</p>
+              </div>
+              <button 
+                onClick={closeReminderModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Appointment Info */}
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 space-y-2">
+              <div className="text-sm">
+                <div className="text-xs text-gray-600">Pelanggan:</div>
+                <div className="font-bold text-gray-800">{selectedAppointmentForReminder.customer_name}</div>
+              </div>
+              <div className="text-sm">
+                <div className="text-xs text-gray-600">Jadwal:</div>
+                <div className="font-bold text-gray-800">
+                  {formatDisplayDate(selectedAppointmentForReminder.date, selectedAppointmentForReminder.time)}
+                </div>
+              </div>
+              <div className="text-sm">
+                <div className="text-xs text-gray-600">Email Member:</div>
+                <div className="font-bold text-gray-800 text-xs break-all">
+                  {selectedAppointmentForReminder.member_id ? `ID: ${selectedAppointmentForReminder.member_id}` : 'N/A'}
+                </div>
+              </div>
+            </div>
+
+            {/* Reminder Status */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Status Reminder</h4>
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+                {reminderStatus?.reminder_sent ? (
+                  <div className="flex items-start gap-2">
+                    <div className="text-green-600 mt-0.5">✓</div>
+                    <div>
+                      <div className="text-xs font-bold text-green-700">Reminder Sudah Dikirim</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Waktu: {new Date(reminderStatus.reminder_sent_at).toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <div className="text-orange-600 mt-0.5">⚠</div>
+                    <div>
+                      <div className="text-xs font-bold text-orange-700">Reminder Belum Dikirim</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        Klik "Kirim Sekarang" untuk mengirim reminder manual
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Reminder Hours Setting */}
+            <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <label className="block text-xs font-bold text-blue-900 uppercase tracking-wide">
+                Atur Jam Reminder
+              </label>
+              <select 
+                value={reminderHours}
+                onChange={(e) => setReminderHours(parseInt(e.target.value))}
+                className="w-full border border-blue-300 rounded-md px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value={1}>1 Jam sebelumnya</option>
+                <option value={2}>2 Jam sebelumnya</option>
+                <option value={3}>3 Jam sebelumnya</option>
+                <option value={4}>4 Jam sebelumnya</option>
+                <option value={24}>1 Hari sebelumnya</option>
+              </select>
+              <div className="text-xs text-blue-700 bg-white p-2 rounded border border-blue-100">
+                <strong>Dipilih:</strong> Reminder akan dikirim {reminderHours} jam sebelum appointment
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-xs text-yellow-800">
+              <strong>Catatan:</strong> Kirim reminder secara manual atau biarkan sistem otomatis mengirim sesuai jadwal
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              {reminderStatus?.reminder_sent && (
+                <button 
+                  onClick={resetReminder}
+                  disabled={reminderSending}
+                  className="flex-1 py-2 px-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors text-sm"
+                >
+                  {reminderSending ? '⏳ Proses...' : 'Reset Reminder'}
+                </button>
+              )}
+              <button 
+                onClick={closeReminderModal}
+                className="flex-1 py-2 px-3 text-gray-600 font-bold rounded-lg hover:bg-gray-100 transition-colors text-sm"
+              >
+                Tutup
+              </button>
+              <button 
+                onClick={sendReminderNow}
+                disabled={reminderSending || reminderStatus?.reminder_sent}
+                className={`flex-1 py-2 px-3 font-bold rounded-lg transition-colors text-sm ${
+                  reminderStatus?.reminder_sent
+                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50'
+                }`}
+              >
+                {reminderSending ? '⏳ Mengirim...' : reminderStatus?.reminder_sent ? 'Sudah Terkirim' : '📧 Kirim Sekarang'}
               </button>
             </div>
           </div>
@@ -1206,6 +1472,30 @@ const Appointment = () => {
                 
                 <div className="text-xs text-gray-500">
                   Catatan: Mengubah status akan memperbarui statistik terapis
+                </div>
+              </div>
+
+              {/* Reminder Hours */}
+              <div className="space-y-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <label className="block text-xs font-bold text-blue-900 uppercase tracking-widest mb-1">
+                  Setting Reminder (Jam sebelum appointment)
+                </label>
+                <div className="flex items-center gap-3">
+                  <select 
+                    name="reminder_hours_before" 
+                    value={formData.reminder_hours_before || 2} 
+                    onChange={(e) => setFormData({ ...formData, reminder_hours_before: parseInt(e.target.value) })}
+                    className="flex-1 border border-blue-300 rounded-md px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value={1}>1 Jam sebelumnya</option>
+                    <option value={2}>2 Jam sebelumnya</option>
+                    <option value={3}>3 Jam sebelumnya</option>
+                    <option value={4}>4 Jam sebelumnya</option>
+                    <option value={24}>1 Hari sebelumnya</option>
+                  </select>
+                </div>
+                <div className="text-xs text-blue-700 bg-white p-2 rounded border border-blue-100">
+                  <strong>Dipilih:</strong> Reminder akan dikirim {formData.reminder_hours_before || 2} jam sebelum appointment
                 </div>
               </div>
             </div>
