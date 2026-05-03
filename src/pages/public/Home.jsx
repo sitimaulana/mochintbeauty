@@ -83,7 +83,8 @@ const Home = () => {
           });
         });
         
-        // Filter dan sort reviews (terbaru dulu) - HILANGKAN FILTER LOKASI
+        // Filter dan sort reviews (terbaru dulu)
+        // Tampilkan SEMUA review yang punya data lengkap (langsung tampil tanpa perlu approve)
         const validReviews = reviewsData
           .filter(review => {
             const isValid = review.name && review.comment && review.rating;
@@ -309,6 +310,21 @@ const Home = () => {
                       key={item.id || item._id || index} 
                       className="min-w-[300px] md:min-w-[350px] bg-[#FDFBF7] p-8 rounded-[40px] border border-gray-100 shadow-sm snap-center flex-shrink-0 text-left transition-all duration-300 hover:shadow-xl"
                     >
+                      {/* User Info - PINDAH KE ATAS */}
+                      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+                        <div className="w-10 h-10 bg-[#3E2723] rounded-2xl flex items-center justify-center text-white font-bold shrink-0 font-display">
+                          {(item.name || 'M').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="font-display font-bold text-[#3E2723] text-sm">
+                            {item.name || 'Anonim'}
+                          </h4>
+                          <p className="font-sans text-[10px] text-[#A1887F] font-black uppercase tracking-widest">
+                            {item.location || item.member_address || item.display_location || 'Member Terverifikasi'}
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Rating Stars */}
                       <div className="flex gap-1 text-yellow-400 mb-4">
                         {[...Array(5)].map((_, i) => (
@@ -322,24 +338,21 @@ const Home = () => {
                       </div>
                       
                       {/* Review Comment */}
-                      <p className="font-sans text-[#4E342E] italic mb-6 leading-relaxed line-clamp-4 font-medium text-base">
+                      <p className="font-sans text-[#4E342E] italic mb-6 leading-relaxed font-medium text-base">
                         "{item.comment}"
                       </p>
-                      
-                      {/* User Info */}
-                      <div className="flex items-center gap-4 mt-auto border-t border-gray-100 pt-6">
-                        <div className="w-10 h-10 bg-[#3E2723] rounded-2xl flex items-center justify-center text-white font-bold shrink-0 font-display">
-                          {(item.name || 'M').charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h4 className="font-display font-bold text-[#3E2723] text-sm">
-                            {item.name || 'Anonim'}
-                          </h4>
-                          <p className="font-sans text-[10px] text-[#A1887F] font-black uppercase tracking-widest">
-                            {item.location || item.member_address || item.display_location || 'Member Terverifikasi'}
+
+                      {/* Admin Reply (jika ada) */}
+                      {item.adminReply && (
+                        <div className="bg-[#E8DDD9] rounded-xl p-4 border-l-4 border-[#3E2723]">
+                          <div className="flex items-start gap-2 mb-2">
+                            <p className="font-semibold text-[#3E2723] text-xs">Balasan dari Mochint</p>
+                          </div>
+                          <p className="text-[#3E2723] text-sm leading-relaxed">
+                            {item.adminReply}
                           </p>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })

@@ -23,6 +23,7 @@ import AdminTherapistDetail from '../pages/admin/TherapistDetail';
 import AdminInformation from '../pages/admin/Information';
 import AdminPageContent from '../pages/admin/PageContent';
 import AdminBedManagement from '../pages/admin/BedManagement';
+import ReviewManagement from '../pages/admin/ReviewManagement';
 
 // --- PAGES: AUTH & PUBLIC ---
 import Login from '../pages/auth/Login';
@@ -316,6 +317,7 @@ const AppRoutes = () => {
                 <Route path="product" element={<AdminProduct />} />
                 <Route path="therapist" element={<AdminTherapist />} />
                 <Route path="therapist/:id" element={<AdminTherapistDetail />} />
+                <Route path="review-management" element={<ReviewManagement />} />
                 <Route path="information" element={<AdminInformation />} />
                 <Route path="page-content" element={<AdminPageContent />} />
               </Route>

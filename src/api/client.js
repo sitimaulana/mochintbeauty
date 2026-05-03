@@ -378,6 +378,17 @@ const reviewsAPI = {
       throw error;
     }
   },
+
+  getFeatured: async () => {
+    try {
+      log('Fetching featured reviews...');
+      const response = await enhancedFetch(`${API_URL}/reviews/featured`);
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error fetching featured reviews:', error);
+      throw error;
+    }
+  },
   
   create: async (reviewData) => {
     try {
@@ -407,6 +418,80 @@ const reviewsAPI = {
       return await handleResponse(response);
     } catch (error) {
       logError('Error updating review:', error);
+      throw error;
+    }
+  },
+
+  addAdminReply: async (id, replyData) => {
+    try {
+      log('Adding admin reply to review ID:', id);
+      const response = await enhancedFetch(`${API_URL}/reviews/${id}/admin-reply`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(replyData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error adding admin reply:', error);
+      throw error;
+    }
+  },
+
+  updateAdminReply: async (id, replyData) => {
+    try {
+      log('Updating admin reply for review ID:', id);
+      const response = await enhancedFetch(`${API_URL}/reviews/${id}/admin-reply`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(replyData)
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error updating admin reply:', error);
+      throw error;
+    }
+  },
+
+  deleteAdminReply: async (id) => {
+    try {
+      log('Deleting admin reply for review ID:', id);
+      const response = await enhancedFetch(`${API_URL}/reviews/${id}/admin-reply`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error deleting admin reply:', error);
+      throw error;
+    }
+  },
+
+  toggleFeatured: async (id, isFeatured) => {
+    try {
+      log('Toggling featured status for review ID:', id);
+      const response = await enhancedFetch(`${API_URL}/reviews/${id}/featured`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ isFeatured })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error toggling featured:', error);
+      throw error;
+    }
+  },
+
+  toggleApproved: async (id, isApproved) => {
+    try {
+      log('Toggling approved status for review ID:', id);
+      const response = await enhancedFetch(`${API_URL}/reviews/${id}/approved`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ isApproved })
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      logError('Error toggling approved:', error);
       throw error;
     }
   },
@@ -759,3 +844,15 @@ export {
   testAPIConnection,
   testDatabaseConnection
 };
+
+// Convenience exports untuk Reviews
+export const getReviews = () => reviewsAPI.getAll();
+export const getReview = (id) => reviewsAPI.getById(id);
+export const getReviewsByUser = (userId) => reviewsAPI.getByUserId(userId);
+export const getFeaturedReviews = () => reviewsAPI.getFeatured();
+export const postReview = (reviewData) => reviewsAPI.create(reviewData);
+export const updateReview = (id, reviewData) => reviewsAPI.update(id, reviewData);
+export const addAdminReply = (id, replyData) => reviewsAPI.addAdminReply(id, replyData);export const updateAdminReply = (id, replyData) => reviewsAPI.updateAdminReply(id, replyData);
+export const deleteAdminReply = (id) => reviewsAPI.deleteAdminReply(id);export const toggleFeatured = (id, isFeatured) => reviewsAPI.toggleFeatured(id, isFeatured);
+export const toggleApproved = (id, isApproved) => reviewsAPI.toggleApproved(id, isApproved);
+export const deleteReview = (id) => reviewsAPI.delete(id);
