@@ -127,14 +127,14 @@ app.get('/health', async (req, res) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // NOW serve static files (after all API routes)
-app.use(express.static(path.join(__dirname, '../public_html')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // PERHATIAN: Jangan gunakan tanda kutip (' atau ") di dalam kurung!
 // Gunakan garis miring /.*/ yang merupakan format RegExp JavaScript.
 // HANYA untuk GET requests (SPA routing)
 
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../public_html', 'index.html'));
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
 // 404 handler untuk method lain
