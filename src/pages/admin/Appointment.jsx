@@ -17,6 +17,8 @@ import {
   X
 } from 'lucide-react';
 import Preloader from '../../components/common/Preloader';
+import AdminMedicalRecordsModal from '../../components/admin/AdminMedicalRecordsModal';
+
 const Appointment = () => {
   // API URLs
   const APPOINTMENTS_API_URL = '/api/appointments';
@@ -69,6 +71,10 @@ const Appointment = () => {
   const [reminderStatus, setReminderStatus] = useState(null);
   const [reminderHours, setReminderHours] = useState(2);
   const [reminderSending, setReminderSending] = useState(false);
+  
+  // State untuk medical records management
+  const [medicalRecordsModalOpen, setMedicalRecordsModalOpen] = useState(false);
+  const [selectedAppointmentForMedical, setSelectedAppointmentForMedical] = useState(null);
   
   // State untuk notification modal
   const [notification, setNotification] = useState({
@@ -275,6 +281,29 @@ const Appointment = () => {
     } finally {
       setReminderSending(false);
     }
+  };
+
+  // Medical Records Management Functions
+  const openMedicalRecordsModal = (appointment) => {
+    setSelectedAppointmentForMedical(appointment);
+    setMedicalRecordsModalOpen(true);
+  };
+
+  const closeMedicalRecordsModal = () => {
+    setMedicalRecordsModalOpen(false);
+    setSelectedAppointmentForMedical(null);
+  };
+
+  const handleMedicalRecordsSaved = (medicalRecord) => {
+    // Refresh appointment data
+    setRefreshKey(prev => prev + 1);
+    
+    setNotification({
+      show: true,
+      type: 'success',
+      title: 'Rekam Medis Tersimpan!',
+      message: 'Data rekam medis berhasil disimpan'
+    });
   };
 
   const addToMemberHistory = async (appointment) => {
@@ -972,12 +1001,19 @@ const Appointment = () => {
                       )}
                     </td>
                     <td className="p-2 sm:p-4 text-center">
-                      <div className="flex justify-center gap-1 sm:gap-2">
+                      <div className="flex justify-center gap-1 sm:gap-2 flex-wrap">
                         <button 
                           onClick={() => handleEdit(app)} 
                           className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors duration-200"
                         >
                           Edit
+                        </button>
+                        <button 
+                          onClick={() => openMedicalRecordsModal(app)}
+                          className="bg-purple-600 text-white px-2 sm:px-3 py-1 rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors duration-200"
+                          title="Manage medical records for this appointment"
+                        >
+                          📋 Medis
                         </button>
                         <button 
                           onClick={async () => { 
@@ -1520,6 +1556,15 @@ const Appointment = () => {
           </div>
         </div>
       )}
+
+      {/* Medical Records Modal */}
+      <AdminMedicalRecordsModal
+        isOpen={medicalRecordsModalOpen}
+        onClose={closeMedicalRecordsModal}
+        appointment={selectedAppointmentForMedical}
+        onSuccess={handleMedicalRecordsSaved}
+        token={Token}
+      />
     </div>
   );
 };
