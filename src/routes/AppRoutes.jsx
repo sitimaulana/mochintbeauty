@@ -23,6 +23,7 @@ import AdminTherapistDetail from '../pages/admin/TherapistDetail';
 import AdminInformation from '../pages/admin/Information';
 import AdminPageContent from '../pages/admin/PageContent';
 import AdminBedManagement from '../pages/admin/BedManagement';
+import ReviewManagement from '../pages/admin/ReviewManagement';
 
 // --- PAGES: AUTH & PUBLIC ---
 import Login from '../pages/auth/Login';
@@ -38,6 +39,7 @@ import PublicProduct from '../pages/public/Product';
 import PublicInformation from '../pages/public/Information';
 import InformationDetail from '../pages/public/InformationDetail'; 
 import Promo from '../pages/public/Promo';
+import AISkinAnalysis from '../pages/public/AISkinAnalysis';
 
 // --- PAGES: MEMBER ---
 import MemberApp from '../pages/member/MemberApp';
@@ -265,6 +267,7 @@ const AppRoutes = () => {
                 <Route path="information" element={<PublicInformation />} />
                 <Route path="information/:id" element={<InformationDetail />} />
                 <Route path="promo" element={<Promo />} />
+                <Route path="ai-skin-analysis" element={<AISkinAnalysis />} />
                 
                 {/* Route untuk redirect ke login jika mencoba akses protected */}
                 <Route path="member" element={<LoginRedirect />} />
@@ -316,6 +319,7 @@ const AppRoutes = () => {
                 <Route path="product" element={<AdminProduct />} />
                 <Route path="therapist" element={<AdminTherapist />} />
                 <Route path="therapist/:id" element={<AdminTherapistDetail />} />
+                <Route path="review-management" element={<ReviewManagement />} />
                 <Route path="information" element={<AdminInformation />} />
                 <Route path="page-content" element={<AdminPageContent />} />
               </Route>

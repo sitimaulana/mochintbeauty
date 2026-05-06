@@ -61,6 +61,7 @@ const Navbar = () => {
     { name: 'Skincare', path: '/product' },
     { name: 'Reseller', path: '/promo' },
     { name: 'Blog', path: '/information' },
+    { name: 'AI Skin Analysis', path: '/ai-skin-analysis' },
     { name: 'Aplikasi Member', path: userType === 'member' ? '/member' : '/member-app', isMember: true },
   ];
 

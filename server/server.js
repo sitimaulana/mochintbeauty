@@ -23,6 +23,7 @@ const articlesRoutes = require('./routes/articlesRoutes');
 const timeslotRoutes = require('./routes/timeslotRoutes');
 const pageInfoRoutes = require('./routes/pageInfoRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
 
 // Import Reminder Service
 const reminderService = require('./services/reminderService');
@@ -100,7 +101,8 @@ console.log('  ✅ /api/contact - Contact routes');
 console.log('  ✅ /api/appointments - Appointment routes (protected)');
 console.log('  ✅ /api/reminders - Appointment Reminder routes (protected)');
 console.log('  ✅ /api/members - Member routes (protected)');
-console.log('  ✅ /api/timeslots - Timeslot routes (protected)\n');
+console.log('  ✅ /api/timeslots - Timeslot routes (protected)');
+console.log('  ✅ /api/medical-records - Medical Records routes (protected)\n');
 
 // optional DB init (if file exists) - COMMENTED OUT UNTUK PRODUCTION
 // if (createAllTables && typeof createAllTables === 'function') {
@@ -123,6 +125,7 @@ app.use('/api/appointments', authenticateToken, appointmentRoutes);
 app.use('/api/reminders', authenticateToken, appointmentReminderRoutes);
 app.use('/api/members', authenticateToken, memberRoutes);
 app.use('/api/timeslots', authenticateToken, timeslotRoutes);
+app.use('/api/medical-records', authenticateToken, medicalRecordRoutes);
 app.use('/api/treatment-options', treatmentOptionsRoutes); // Categories and facilities management
 
 app.get('/', (req, res) => {
@@ -142,14 +145,14 @@ app.get('/health', async (req, res) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // NOW serve static files (after all API routes)
-app.use(express.static(path.join(__dirname, '../public_html')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // PERHATIAN: Jangan gunakan tanda kutip (' atau ") di dalam kurung!
 // Gunakan garis miring /.*/ yang merupakan format RegExp JavaScript.
 // HANYA untuk GET requests (SPA routing)
 
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../public_html', 'index.html'));
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
 // 404 handler untuk method lain

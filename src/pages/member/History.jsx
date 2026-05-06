@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, ChevronDown, Loader2 } from 'lucide-react';
+import axios from 'axios';
 import { appointmentAPI } from '../../services/api';
-import { mockHistory } from '../../api/mockData'; 
+import { mockHistory } from '../../api/mockData';
+import MemberMedicalRecordsModal from '../../components/member/MemberMedicalRecordsModal'; 
 
 const History = () => {
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Medical Records Modal State
+  const [medicalRecordsModalOpen, setMedicalRecordsModalOpen] = useState(false);
+  const [selectedMedicalRecord, setSelectedMedicalRecord] = useState(null);
+  const [loadingMedical, setLoadingMedical] = useState(false);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -59,6 +66,7 @@ const History = () => {
         // Mapping data dari database ke format yang dibutuhkan
         const formattedHistory = completedAppointments.map(item => ({
           id: item.id,
+          appointment_id: item.appointment_id,
           treatmentName: item.treatment_name || 'Treatment tidak tersedia',
           date: item.date ? new Date(item.date).toLocaleDateString('id-ID', {
             year: 'numeric',
@@ -102,6 +110,34 @@ const History = () => {
       {label} <ChevronDown size={14} />
     </button>
   );
+
+  const openMedicalRecordsModal = async (appointmentId) => {
+    setLoadingMedical(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `/api/medical-records/appointment/${appointmentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.data) {
+        setSelectedMedicalRecord(response.data.data);
+        setMedicalRecordsModalOpen(true);
+      } else {
+        alert('Rekam medis belum tersedia untuk appointment ini');
+      }
+    } catch (error) {
+      console.error('Error fetching medical record:', error);
+      alert('Gagal memuat rekam medis: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoadingMedical(false);
+    }
+  };
+
+  const closeMedicalRecordsModal = () => {
+    setMedicalRecordsModalOpen(false);
+    setSelectedMedicalRecord(null);
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-4 md:p-8 font-sans">
@@ -170,6 +206,9 @@ const History = () => {
                       <th className="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider font-sans">
                         Harga
                       </th>
+                      <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider font-sans">
+                        Rekam Medis
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -206,11 +245,20 @@ const History = () => {
                               Rp {item.price.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </span>
                           </td>
+                          <td className="px-6 py-5 text-center">
+                            <button
+                              onClick={() => openMedicalRecordsModal(item.id)}
+                              disabled={loadingMedical}
+                              className="px-4 py-2 bg-[#8D6E63] text-white text-xs font-bold rounded-lg hover:bg-[#6D4C41] transition-colors disabled:opacity-50"
+                            >
+                              {loadingMedical ? '⏳ Loading...' : '📋 Lihat Medis'}
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="px-6 py-16 text-center">
+                        <td colSpan="5" className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center gap-3">
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                               <span className="text-3xl">📋</span>
@@ -284,6 +332,19 @@ const History = () => {
                           Rp {item.price.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                       </div>
+
+                      <div className="h-px bg-gray-100"></div>
+
+                      {/* Medical Records Button */}
+                      <div className="pt-2">
+                        <button
+                          onClick={() => openMedicalRecordsModal(item.id)}
+                          disabled={loadingMedical}
+                          className="w-full px-4 py-3 bg-[#8D6E63] text-white font-bold rounded-lg hover:bg-[#6D4C41] transition-colors disabled:opacity-50 text-sm"
+                        >
+                          {loadingMedical ? '⏳ Loading...' : '📋 Lihat Rekam Medis'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -309,6 +370,13 @@ const History = () => {
           </>
         )}
       </div>
+
+      {/* Medical Records Modal */}
+      <MemberMedicalRecordsModal
+        isOpen={medicalRecordsModalOpen}
+        onClose={closeMedicalRecordsModal}
+        medicalRecord={selectedMedicalRecord}
+      />
     </div>
   );
 };

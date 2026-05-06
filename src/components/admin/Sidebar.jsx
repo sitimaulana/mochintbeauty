@@ -10,6 +10,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Perawatan', path: '/admin/treatment' },
     { name: 'Produk', path: '/admin/product' },
     { name: 'Terapis', path: '/admin/therapist' },
+    { name: 'Review', path: '/admin/review-management' },
     { name: 'Informasi', path: '/admin/information' },
     { name: 'Konten Halaman', path: '/admin/page-content' },
   ];
