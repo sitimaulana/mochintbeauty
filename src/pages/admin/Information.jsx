@@ -23,7 +23,7 @@ const Information = () => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   // API base URL
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_BASE = '/api';  // Use proxy path instead of env variable
   const API_URL = `${API_BASE}/articles`;
   const Token = localStorage.getItem('token');
 
@@ -39,8 +39,6 @@ const Information = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching articles from:', API_URL);
-      console.log('Token:', Token ? 'Present' : 'Missing');
       
       const response = await axios.get(API_URL, {
         headers: {
@@ -64,12 +62,6 @@ const Information = () => {
       }
       
       setError(errorMessage);
-      console.error('Error memuat artikel:', {
-        status: err.response?.status,
-        message: err.message,
-        url: API_URL,
-        error: err.response?.data
-      });
       setArticles([]);
     } finally {
       setLoading(false);

@@ -64,7 +64,7 @@ const BedManagement = () => {
       
       setAppointments(filteredAppointments);
     } catch (err) {
-      console.error('Error fetching appointments:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -84,15 +84,12 @@ const BedManagement = () => {
       const data = await response.json();
       setDisabledTimeslots(data.data || []);
     } catch (err) {
-      console.error('Error fetching disabled timeslots:', err);
       setDisabledTimeslots([]);
     }
   };
 
   const toggleTimeslot = async (timeSlot) => {
     try {
-      console.log('🔄 Toggling timeslot:', { timeSlot, selectedDate, url: `${TIMESLOTS_API_URL}/toggle` });
-      
       const response = await fetch(`${TIMESLOTS_API_URL}/toggle`, {
         method: 'POST',
         headers: {
@@ -106,12 +103,9 @@ const BedManagement = () => {
         })
       });
       
-      console.log('📡 Response status:', response.status);
-      
       if (!response.ok) throw new Error('Gagal toggle timeslot');
       
       const data = await response.json();
-      console.log('✅ Toggle success:', data);
       
       // Refresh disabled timeslots
       fetchDisabledTimeslots();
@@ -119,7 +113,6 @@ const BedManagement = () => {
       // Show notification
       alert(data.message || 'Status timeslot berhasil diubah');
     } catch (err) {
-      console.error('❌ Error toggling timeslot:', err);
       alert('Gagal mengubah status timeslot: ' + err.message);
     }
   };

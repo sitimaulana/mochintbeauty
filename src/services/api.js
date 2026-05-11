@@ -92,4 +92,19 @@ export const treatmentAPI = {
   delete: (id) => api.delete(`/treatments/${id}`),
 };
 
+export const medicalRecordsAPI = {
+  getByAppointment: (appointmentId) => api.get(`/medical-records/appointment/${appointmentId}`),
+  getByMember: (memberId) => api.get(`/medical-records/member/${memberId}`),
+  getById: (id) => api.get(`/medical-records/${id}`),
+  create: (formData) => {
+    // Don't set Content-Type header - let axios/browser handle it with proper boundary
+    return api.post('/medical-records', formData);
+  },
+  update: (id, formData) => {
+    // Don't set Content-Type header - let axios/browser handle it with proper boundary
+    return api.put(`/medical-records/${id}`, formData);
+  },
+  delete: (id) => api.delete(`/medical-records/${id}`),
+};
+
 export default api;

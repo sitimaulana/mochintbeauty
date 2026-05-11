@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Clock, MapPin, CheckCircle, Printer, ArrowLeft } from 'lucide-react';
+import { Home, Calendar, Clock, MapPin, CheckCircle, Printer, ArrowLeft, Camera } from 'lucide-react';
 import { appointmentAPI } from '../../services/api';
 import { mockAppointments } from '../../api/mockData';
 import Preloader from '../../components/common/Preloader';
+import MemberBeforePhotoUpload from '../../components/member/MemberBeforePhotoUpload';
 
 const AppointmentDetail = () => {
   const { id } = useParams();
@@ -11,6 +12,8 @@ const AppointmentDetail = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
+  const [appointmentDataForModal, setAppointmentDataForModal] = useState(null);
 
   useEffect(() => {
     const fetchAppointmentDetail = async () => {
@@ -54,6 +57,8 @@ const AppointmentDetail = () => {
         };
 
         setData(formattedData);
+        // Store full appointment data for modal
+        setAppointmentDataForModal(appointmentData);
       } catch (error) {
         console.error("❌ Server API error:", error);
         console.error("❌ Error details:", {
@@ -438,6 +443,15 @@ const AppointmentDetail = () => {
                     <span>Kembali</span>
                   </button>
                   <button 
+                    onClick={() => setShowPhotoUploadModal(true)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-3.5 bg-white text-[#8D6E63] font-bold rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-[#8D6E63] hover:bg-[#8D6E63]/10 transition-all text-[9px] sm:text-xs md:text-[11px] uppercase tracking-wider md:tracking-widest font-sans shadow-sm"
+                  >
+                    <Camera size={14} className="sm:hidden" />
+                    <Camera size={16} className="hidden sm:block md:hidden" />
+                    <Camera size={18} className="hidden md:block" />
+                    <span>Foto Before</span>
+                  </button>
+                  <button 
                     onClick={() => window.print()}
                     className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 md:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-[#8D6E63] to-[#6D4C41] text-white font-bold rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg shadow-[#8D6E63]/30 hover:shadow-xl hover:shadow-[#8D6E63]/40 hover:from-[#6D4C41] hover:to-[#5D4037] transition-all text-[9px] sm:text-xs md:text-[11px] uppercase tracking-wider md:tracking-widest font-sans"
                   >
@@ -464,6 +478,18 @@ const AppointmentDetail = () => {
           </p>
         </div>
       </div>
+
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && appointmentDataForModal && (
+        <MemberBeforePhotoUpload
+          appointment={appointmentDataForModal}
+          onSuccess={() => {
+            // Optional: Refresh appointment data or show success message
+            console.log('✅ Photo uploaded successfully');
+          }}
+          onClose={() => setShowPhotoUploadModal(false)}
+        />
+      )}
     </>
   );
 };
