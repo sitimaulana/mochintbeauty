@@ -24,6 +24,7 @@ import AdminInformation from '../pages/admin/Information';
 import AdminPageContent from '../pages/admin/PageContent';
 import AdminBedManagement from '../pages/admin/BedManagement';
 import ReviewManagement from '../pages/admin/ReviewManagement';
+import AdminMedicalRecords from '../pages/admin/MedicalRecords';
 
 // --- PAGES: AUTH & PUBLIC ---
 import Login from '../pages/auth/Login';
@@ -314,7 +315,10 @@ const AppRoutes = () => {
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="appointment" element={<AdminAppointment />} />                <Route path="bed-management" element={<AdminBedManagement />} />                <Route path="member" element={<AdminMemberManajemen />} />
+                <Route path="appointment" element={<AdminAppointment />} />
+                <Route path="bed-management" element={<AdminBedManagement />} />
+                <Route path="medical-records" element={<AdminMedicalRecords />} />
+                <Route path="member" element={<AdminMemberManajemen />} />
                 <Route path="treatment" element={<AdminTreatment />} />
                 <Route path="product" element={<AdminProduct />} />
                 <Route path="therapist" element={<AdminTherapist />} />

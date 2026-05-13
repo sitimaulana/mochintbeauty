@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, X, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { medicalRecordsAPI } from '../../services/api';
 
@@ -19,6 +19,22 @@ const MemberBeforePhotoUpload = ({
   const fileInputRef = useRef(null);
   const cameraRef = useRef(null);
   const canvasRef = useRef(null);
+
+  // Auto-start camera when upload mode changes to 'camera'
+  useEffect(() => {
+    if (uploadMode === 'camera' && !cameraActive) {
+      console.log('🎬 useEffect: uploadMode is camera, starting camera...');
+      startCamera();
+    }
+    
+    return () => {
+      // Cleanup: stop camera if component unmounts
+      if (uploadMode === 'camera' && cameraRef.current?.srcObject) {
+        console.log('🎬 useEffect cleanup: Stopping camera...');
+        stopCamera();
+      }
+    };
+  }, [uploadMode]);
 
   // File upload handler
   const handleFileUpload = (e) => {
@@ -50,27 +66,99 @@ const MemberBeforePhotoUpload = ({
   const startCamera = async () => {
     try {
       setError(null);
+      console.log('📷 Starting camera with facingMode:', facingMode);
       
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setError('❌ Browser tidak mendukung akses kamera');
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+      let stream = null;
+
+      // Try dengan constraint yang lebih ketat dulu
+      try {
+        console.log('🔧 Attempting strict constraints...');
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        console.log('✅ Got stream with strict constraints');
+      } catch (constraintErr) {
+        if (constraintErr.name === 'OverconstrainedError') {
+          console.warn('⚠️ Strict constraints not supported, trying relaxed constraints...');
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode },
+            audio: false
+          });
+          console.log('✅ Got stream with relaxed constraints');
+        } else {
+          throw constraintErr;
+        }
+      }
+
+      // Now set the stream to video element
+      if (!cameraRef.current) {
+        console.error('❌ Camera ref not available');
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        setError('❌ Video element reference tidak ditemukan');
+        return;
+      }
+
+      console.log('🎥 Attaching stream to video element...');
+      cameraRef.current.srcObject = stream;
+
+      // Wait for video to be ready with a timeout
+      const videoReadyPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video initialization timeout - stream not responding'));
+        }, 5000);
+
+        const handleCanPlay = () => {
+          console.log('✅ Video can play');
+          clearTimeout(timeout);
+          cameraRef.current?.removeEventListener('canplay', handleCanPlay);
+          resolve();
+        };
+
+        const handleLoadedMetadata = () => {
+          console.log('✅ Video metadata loaded:', {
+            videoWidth: cameraRef.current?.videoWidth,
+            videoHeight: cameraRef.current?.videoHeight
+          });
+          clearTimeout(timeout);
+          cameraRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          resolve();
+        };
+
+        if (cameraRef.current) {
+          cameraRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+          cameraRef.current.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+
+          // Ensure play is called
+          const playPromise = cameraRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              console.error('❌ Play failed:', e);
+              clearTimeout(timeout);
+              reject(e);
+            });
+          }
         }
       });
-      
-      if (cameraRef.current) {
-        cameraRef.current.srcObject = stream;
-        console.log('✅ Kamera aktif');
-        setCameraActive(true);
-      }
+
+      await videoReadyPromise;
+      console.log('✅ Video stream ready!');
+      setCameraActive(true);
+
     } catch (err) {
       console.error('❌ Camera error:', err);
+      setCameraActive(false);
       
       // Handle specific camera errors
       if (err.name === 'NotAllowedError') {
@@ -79,10 +167,13 @@ const MemberBeforePhotoUpload = ({
         setError('❌ Kamera tidak ditemukan di perangkat ini.');
       } else if (err.name === 'NotReadableError') {
         setError('❌ Kamera sedang digunakan oleh aplikasi lain.');
+      } else if (err.name === 'OverconstrainedError') {
+        setError('❌ Kamera tidak mendukung constraint yang diminta. Coba device lain.');
+      } else if (err.message?.includes('timeout')) {
+        setError('❌ Kamera timeout - coba berikan izin dan refresh halaman.');
       } else {
         setError(`❌ Error akses kamera: ${err.message}`);
       }
-      setCameraActive(false);
     }
   };
 
@@ -97,7 +188,8 @@ const MemberBeforePhotoUpload = ({
   const switchCamera = async () => {
     stopCamera();
     setFacingMode(facingMode === 'user' ? 'environment' : 'user');
-    setTimeout(() => startCamera(), 300);
+    // Give more time for the previous stream to fully stop
+    setTimeout(() => startCamera(), 500);
   };
 
   const capturePhoto = () => {
@@ -109,9 +201,21 @@ const MemberBeforePhotoUpload = ({
 
       const video = cameraRef.current;
       
-      // Validasi video dimensions
+      // Validasi video dimensions dengan tolerance
       if (video.videoWidth === 0 || video.videoHeight === 0) {
+        console.warn('⚠️ Video belum siap:', { width: video.videoWidth, height: video.videoHeight });
+        console.warn('⚠️ Mencoba menunggu video siap...', {
+          readyState: video.readyState,
+          networkState: video.networkState
+        });
         setError('❌ Kamera belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+
+      // Additional check - ensure video is playing
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        console.warn('⚠️ Video readyState:', video.readyState, '(HAVE_ENOUGH_DATA=4)');
+        setError('❌ Video stream belum siap. Tunggu sebentar dan coba lagi.');
         return;
       }
 
@@ -127,39 +231,62 @@ const MemberBeforePhotoUpload = ({
         return;
       }
 
-      // Set canvas size
+      // Set canvas size to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      
+      console.log('📸 Drawing video to canvas:', { 
+        videoWidth: video.videoWidth, 
+        videoHeight: video.videoHeight,
+        readyState: video.readyState
+      });
       
       // Draw video to canvas
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       
-      // Convert to blob
+      // Convert canvas to JPEG blob with better error handling
       canvas.toBlob(
         (blob) => {
           if (!blob) {
-            setError('❌ Gagal membuat blob dari canvas');
+            console.error('❌ toBlob returned null');
+            setError('❌ Gagal membuat blob dari canvas. Coba lagi.');
             return;
           }
 
-          const file = new File([blob], `before_photo_${Date.now()}.jpg`, { 
-            type: 'image/jpeg' 
-          });
-          
-          console.log('📸 Photo captured:', {
-            size: file.size,
-            type: file.type,
-            name: file.name
-          });
+          try {
+            const file = new File([blob], `before_photo_${Date.now()}.jpg`, { 
+              type: 'image/jpeg' 
+            });
+            
+            console.log('📸 Photo captured successfully:', {
+              size: file.size,
+              type: file.type,
+              name: file.name,
+              blobSize: blob.size
+            });
 
-          setPhoto(file);
-          setPhotoPreview(canvas.toDataURL('image/jpeg'));
-          stopCamera();
-          setUploadMode(null);
-          setError(null);
+            setPhoto(file);
+            
+            // Get data URL for preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setPhotoPreview(reader.result);
+              stopCamera();
+              setUploadMode(null);
+              setError(null);
+            };
+            reader.onerror = () => {
+              console.error('❌ FileReader error');
+              setError('❌ Error membaca foto. Coba lagi.');
+            };
+            reader.readAsDataURL(blob);
+          } catch (fileErr) {
+            console.error('❌ Error creating file:', fileErr);
+            setError('❌ Error memproses foto. Coba lagi.');
+          }
         },
         'image/jpeg',
-        0.95
+        0.9
       );
     } catch (err) {
       console.error('❌ Capture photo error:', err);
@@ -183,13 +310,15 @@ const MemberBeforePhotoUpload = ({
   // Submit photo
   const handleSubmitPhoto = async () => {
     if (!photo || !appointment?.id) {
-      setError('Foto dan appointment ID diperlukan');
+      setError('❌ Foto dan appointment ID diperlukan');
       return;
     }
 
-    if (!appointment?.member_id) {
+    // Use appointment.member_id or appointment.id as fallback
+    const memberId = appointment?.member_id || appointment?.id;
+    if (!memberId) {
       setError('⚠️ Member ID tidak ditemukan. Silakan refresh halaman.');
-      console.error('Missing data:', { appointment });
+      console.error('Missing member_id in appointment:', { appointment });
       return;
     }
 
@@ -198,19 +327,34 @@ const MemberBeforePhotoUpload = ({
 
     try {
       const formData = new FormData();
-      formData.append('appointment_id', appointment.id);
-      formData.append('member_id', appointment.member_id);
+      
+      // Use explicit appointment ID (numeric or string)
+      const appointmentId = String(appointment.id);
+      
+      formData.append('appointment_id', appointmentId);
+      formData.append('member_id', String(memberId));
       formData.append('treatment_name', appointment.treatment_name || 'Perawatan');
-      formData.append('before_image', photo);
       formData.append('status', 'draft');
+      formData.append('before_image', photo, photo.name || 'before_photo.jpg');
 
       console.log('📤 Uploading photo with data:', {
-        appointment_id: appointment.id,
-        member_id: appointment.member_id,
+        appointment_id: appointmentId,
+        member_id: memberId,
         treatment_name: appointment.treatment_name,
         file_size: photo.size,
-        file_type: photo.type
+        file_type: photo.type,
+        file_name: photo.name
       });
+
+      // Log FormData entries for debugging
+      console.log('📋 FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (key === 'before_image') {
+          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
 
       const response = await medicalRecordsAPI.create(formData);
 
@@ -225,13 +369,31 @@ const MemberBeforePhotoUpload = ({
       }, 2000);
     } catch (error) {
       console.error('❌ Error submitting photo:', error);
-      console.error('❌ Error response:', error.response);
-      setError(
-        error.response?.data?.error || 
-        error.response?.data?.message ||
-        error.message || 
-        'Gagal mengunggah foto. Silakan coba lagi.'
-      );
+      console.error('❌ Error response data:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error config:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+      
+      let errorMessage = 'Gagal mengunggah foto. Silakan coba lagi.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage = '❌ Data tidak valid. Pastikan semua field terisi dengan benar.';
+      } else if (error.response?.status === 404) {
+        errorMessage = '❌ Appointment tidak ditemukan. Silakan refresh halaman.';
+      } else if (error.response?.status === 500) {
+        errorMessage = '❌ Error server. Silakan hubungi support.';
+      } else if (error.message) {
+        errorMessage = `❌ Error: ${error.message}`;
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -293,7 +455,6 @@ const MemberBeforePhotoUpload = ({
               <button
                 onClick={() => {
                   setUploadMode('camera');
-                  setTimeout(() => startCamera(), 100);
                 }}
                 className="w-full flex items-center justify-center gap-3 p-4 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
               >
@@ -337,45 +498,59 @@ const MemberBeforePhotoUpload = ({
           {/* Camera View */}
           {uploadMode === 'camera' && !photoPreview && (
             <div className="space-y-4">
+              {/* Loading indicator */}
               {!cameraActive && (
-                <div className="relative bg-black rounded-lg overflow-hidden flex items-center justify-center h-64">
-                  <Loader2 size={40} className="animate-spin text-white" />
-                  <p className="absolute top-4 left-4 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                <div className="flex items-center justify-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Loader2 size={16} className="animate-spin text-yellow-600" />
+                  <p className="text-sm text-yellow-700">
                     Mengaktifkan kamera...
                   </p>
                 </div>
               )}
-              
+
+              {/* Video Element - Always rendered */}
+              <div className="relative bg-black rounded-lg overflow-hidden">
+                <video
+                  ref={cameraRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-64 object-cover"
+                  onCanPlay={() => {
+                    console.log('✅ Video can play');
+                  }}
+                  onLoadedMetadata={() => {
+                    console.log('✅ Video metadata loaded:', {
+                      videoWidth: cameraRef.current?.videoWidth,
+                      videoHeight: cameraRef.current?.videoHeight
+                    });
+                  }}
+                />
+                <div className="absolute inset-0 border-4 border-white/20 pointer-events-none rounded-lg" />
+              </div>
+
+              <canvas
+                ref={canvasRef}
+                className="hidden"
+              />
+
+              {/* Buttons - only show when camera is active */}
               {cameraActive && (
-                <>
-                  <div className="relative bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={cameraRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-                  <canvas
-                    ref={canvasRef}
-                    className="hidden"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={switchCamera}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-semibold"
-                    >
-                      <RefreshCw size={16} />
-                      Ganti Kamera
-                    </button>
-                    <button
-                      onClick={capturePhoto}
-                      className="flex-1 px-4 py-2 bg-[#8D6E63] text-white rounded-lg hover:bg-[#6D4C41] transition-all font-semibold text-lg"
-                    >
-                      📸 Ambil Foto
-                    </button>
-                  </div>
-                </>
+                <div className="flex gap-2">
+                  <button
+                    onClick={switchCamera}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-semibold"
+                  >
+                    <RefreshCw size={16} />
+                    Ganti Kamera
+                  </button>
+                  <button
+                    onClick={capturePhoto}
+                    className="flex-1 px-4 py-2 bg-[#8D6E63] text-white rounded-lg hover:bg-[#6D4C41] transition-all font-semibold text-lg"
+                  >
+                    📸 Ambil Foto
+                  </button>
+                </div>
               )}
               
               <button

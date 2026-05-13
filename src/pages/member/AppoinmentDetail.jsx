@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Clock, MapPin, CheckCircle, Printer, ArrowLeft, Camera } from 'lucide-react';
+import { Home, Calendar, Clock, MapPin, CheckCircle, Printer, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
 import { appointmentAPI } from '../../services/api';
 import { mockAppointments } from '../../api/mockData';
 import Preloader from '../../components/common/Preloader';
 import MemberBeforePhotoUpload from '../../components/member/MemberBeforePhotoUpload';
+import axios from 'axios';
 
 const AppointmentDetail = () => {
   const { id } = useParams();
@@ -14,6 +15,8 @@ const AppointmentDetail = () => {
   const [error, setError] = useState(null);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [appointmentDataForModal, setAppointmentDataForModal] = useState(null);
+  const [medicalRecords, setMedicalRecords] = useState(null);
+  const [loadingMedical, setLoadingMedical] = useState(false);
 
   useEffect(() => {
     const fetchAppointmentDetail = async () => {
@@ -35,6 +38,17 @@ const AppointmentDetail = () => {
         console.log('✅ API Response:', response.data);
 
         const appointmentData = response.data.data;
+        
+        console.log('📋 Appointment data details:', {
+          id: appointmentData.id,
+          member_id: appointmentData.member_id,
+          treatment_name: appointmentData.treatment_name,
+          customer_name: appointmentData.customer_name,
+          date: appointmentData.date,
+          time: appointmentData.time,
+          amount: appointmentData.amount,
+          status: appointmentData.status
+        });
 
         const formattedData = {
           id: appointmentData.id,
@@ -93,6 +107,37 @@ const AppointmentDetail = () => {
       fetchAppointmentDetail();
     }
   }, [id]);
+
+  // Fetch medical records for this appointment
+  useEffect(() => {
+    const fetchMedicalRecords = async () => {
+      if (!id) return;
+      
+      try {
+        setLoadingMedical(true);
+        const token = localStorage.getItem('token');
+        
+        const response = await axios.get(
+          `/api/medical-records/appointment/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data.data) {
+          setMedicalRecords(response.data.data);
+          console.log('✅ Medical records loaded:', response.data.data);
+        }
+      } catch (err) {
+        console.log('⚠️ No medical records found for this appointment');
+        // It's okay if there's no medical record yet
+      } finally {
+        setLoadingMedical(false);
+      }
+    };
+
+    if (id && !loading) {
+      fetchMedicalRecords();
+    }
+  }, [id, loading]);
 
   if (loading) {
     return <Preloader type="fullscreen" text="Memuat data..." bgColor="bg-[#FDFBF7]" />;
@@ -430,6 +475,56 @@ const AppointmentDetail = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Medical Records - Before/After Photos */}
+                {medicalRecords && (medicalRecords.before_image_url || medicalRecords.after_image_url) && (
+                  <div className="no-print mt-4 sm:mt-6 md:mt-8">
+                    <div className="flex items-center gap-2 mb-3 md:mb-4">
+                      <ImageIcon size={18} className="text-[#8D6E63]" />
+                      <h4 className="text-[9px] sm:text-[10px] md:text-xs font-black text-[#8D6E63] uppercase tracking-wider md:tracking-widest font-sans">
+                        Foto Treatment
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                      {medicalRecords.before_image_url && (
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg sm:rounded-xl md:rounded-2xl p-3 md:p-4 border border-blue-200/50">
+                          <p className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-blue-700 uppercase tracking-wider mb-2 md:mb-3 font-sans">📷 Foto Before</p>
+                          <img
+                            src={medicalRecords.before_image_url}
+                            alt="Before"
+                            className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-md md:rounded-lg border border-blue-200"
+                          />
+                          <a
+                            href={medicalRecords.before_image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-[7px] sm:text-[8px] md:text-xs text-blue-600 font-bold hover:underline"
+                          >
+                            Lihat Fullsize
+                          </a>
+                        </div>
+                      )}
+                      {medicalRecords.after_image_url && (
+                        <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg sm:rounded-xl md:rounded-2xl p-3 md:p-4 border border-green-200/50">
+                          <p className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-green-700 uppercase tracking-wider mb-2 md:mb-3 font-sans">📷 Foto After</p>
+                          <img
+                            src={medicalRecords.after_image_url}
+                            alt="After"
+                            className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-md md:rounded-lg border border-green-200"
+                          />
+                          <a
+                            href={medicalRecords.after_image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-[7px] sm:text-[8px] md:text-xs text-green-600 font-bold hover:underline"
+                          >
+                            Lihat Fullsize
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="no-print flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6 md:mt-8">

@@ -16,6 +16,14 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Remove Content-Type header for FormData requests
+    // Let axios/browser handle it automatically with proper boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+      console.log('📤 Sending FormData without explicit Content-Type header');
+    }
+    
     return config;
   },
   (error) => {

@@ -122,22 +122,41 @@ exports.createMedicalRecord = async (req, res) => {
       status = 'draft'
     } = req.body;
 
+    console.log('📥 Creating medical record with data:', {
+      appointment_id,
+      member_id,
+      treatment_name,
+      status,
+      hasBeforeImage: !!req.files?.before_image,
+      hasAfterImage: !!req.files?.after_image
+    });
+
     // Validate required fields
     if (!appointment_id) {
+      console.error('❌ Missing appointment_id');
       return res.status(400).json({
         success: false,
         error: 'Appointment ID is required'
       });
     }
 
+    console.log('🔍 Fetching appointment details for ID:', appointment_id);
+    
     // Get appointment details
     const appointment = await Appointment.getByIdWithDetails(appointment_id);
     if (!appointment) {
+      console.error('❌ Appointment not found for ID:', appointment_id);
       return res.status(404).json({
         success: false,
         error: 'Appointment not found'
       });
     }
+
+    console.log('✅ Appointment found:', {
+      id: appointment.id,
+      member_id: appointment.member_id,
+      treatment_name: appointment.treatment_name
+    });
 
     // Handle file uploads
     let beforeImageUrl = null;
@@ -149,6 +168,7 @@ exports.createMedicalRecord = async (req, res) => {
       if (req.files.before_image) {
         const beforeFile = req.files.before_image[0];
         beforeImageUrl = `/uploads/medical_records/${beforeFile.filename}`;
+        console.log('📷 Before image uploaded:', beforeFile.filename);
         imagesJson.push({
           type: 'before',
           url: beforeImageUrl,
@@ -161,6 +181,7 @@ exports.createMedicalRecord = async (req, res) => {
       if (req.files.after_image) {
         const afterFile = req.files.after_image[0];
         afterImageUrl = `/uploads/medical_records/${afterFile.filename}`;
+        console.log('📷 After image uploaded:', afterFile.filename);
         imagesJson.push({
           type: 'after',
           url: afterImageUrl,
@@ -184,11 +205,27 @@ exports.createMedicalRecord = async (req, res) => {
       status
     };
 
+    console.log('💾 Saving medical record with data:', {
+      appointment_id: recordData.appointment_id,
+      member_id: recordData.member_id,
+      treatment_name: recordData.treatment_name,
+      before_image_url: recordData.before_image_url,
+      status: recordData.status
+    });
+
     const result = await MedicalRecord.create(recordData);
+    console.log('✅ Medical record created with ID:', result.insertId);
+    
     const createdRecord = await MedicalRecord.getById(result.insertId);
 
-    // Update appointment flag
-    await Appointment.update(appointment_id, { has_medical_records: true });
+    // Try to update appointment flag if the field exists
+    // This is optional and won't cause error if field doesn't exist
+    try {
+      await Appointment.update(appointment_id, { has_medical_records: true });
+      console.log('✅ Appointment updated with medical records flag');
+    } catch (updateErr) {
+      console.warn('⚠️ Could not update appointment flag (field might not exist):', updateErr.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -196,11 +233,20 @@ exports.createMedicalRecord = async (req, res) => {
       data: createdRecord
     });
   } catch (error) {
-    console.error('Error creating medical record:', error);
+    console.error('❌ Error creating medical record:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState
+    });
+    
     res.status(500).json({
       success: false,
       error: 'Failed to create medical record',
-      message: error.message
+      message: error.message,
+      details: error.code || error.sqlState
     });
   }
 };
