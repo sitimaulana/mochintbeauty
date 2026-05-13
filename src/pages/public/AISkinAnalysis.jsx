@@ -216,15 +216,6 @@ const AISkinAnalysis = () => {
         <div className="max-w-2xl w-full">
           {/* Intro Content */}
           <div className="text-center space-y-8">
-            {/* Icon Animation */}
-            <div className="flex justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#C4A57B]/20 rounded-full blur-2xl animate-pulse" style={{width: '200px', height: '200px', left: '-100px', top: '-100px'}}></div>
-                <div className="relative w-32 h-32 mx-auto bg-gradient-to-br from-[#C4A57B] to-[#8D6E63] rounded-full flex items-center justify-center shadow-2xl">
-                  <Sparkles className="w-16 h-16 text-white" />
-                </div>
-              </div>
-            </div>
 
             {/* Title */}
             <div className="space-y-4">
