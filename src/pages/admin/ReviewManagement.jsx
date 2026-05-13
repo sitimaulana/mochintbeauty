@@ -40,7 +40,6 @@ const ReviewManagement = () => {
         setReviews(response.data);
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
       alert('Gagal mengambil data review');
     } finally {
       setLoading(false);
@@ -83,7 +82,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error adding reply:', error);
       alert('Gagal menambahkan balasan');
     } finally {
       setSubmitting(false);
@@ -98,7 +96,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error toggling featured:', error);
       alert('Gagal mengubah status featured');
     }
   };
@@ -111,7 +108,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error toggling approved:', error);
       alert('Gagal mengubah status approved');
     }
   };
@@ -126,7 +122,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
       alert('Gagal menghapus review');
     }
   };
@@ -155,7 +150,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error updating reply:', error);
       alert('Gagal memperbarui balasan');
     } finally {
       setSubmitting(false);
@@ -172,7 +166,6 @@ const ReviewManagement = () => {
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error deleting reply:', error);
       alert('Gagal menghapus balasan');
     }
   };

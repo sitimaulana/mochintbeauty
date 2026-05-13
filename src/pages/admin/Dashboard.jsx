@@ -11,6 +11,7 @@ const Dashboard = () => {
 
   const Token = localStorage.getItem('token');
 
+  // State declarations
   const [appointments, setAppointments] = useState([]);
   const [members, setMembers] = useState([]);
   const [therapists, setTherapists] = useState([]);
@@ -22,6 +23,14 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [showDateRangePicker, setShowDateRangePicker] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  // Check token on mount
+  useEffect(() => {
+    if (!Token) {
+      setError('⚠️ Token tidak ditemukan. Silakan login kembali.');
+      console.warn('❌ No token in localStorage for admin access');
+    }
+  }, [Token]);
 
   useEffect(() => {
     fetchAllData();
@@ -46,7 +55,6 @@ const Dashboard = () => {
       setTherapists(therapistsRes.data.data || []);
       setError(null);
     } catch (err) {
-      console.error('Error mengambil data dashboard:', err);
       setError('Gagal memuat data dashboard. Silakan coba lagi.');
     } finally {
       setLoading({
@@ -69,13 +77,11 @@ const Dashboard = () => {
       );
 
       if (result.success) {
-        // Show success message
-        console.log(result.message);
+        // PDF generated successfully
       } else {
         alert('Gagal membuat PDF: ' + result.message);
       }
     } catch (error) {
-      console.error('Error downloading PDF:', error);
       alert('Terjadi kesalahan saat membuat PDF');
     } finally {
       setIsGeneratingPDF(false);
@@ -147,7 +153,6 @@ const Dashboard = () => {
           }
         });
       } catch (error) {
-        console.warn('Error parsing tanggal appointment:', app.date, error);
         return false;
       }
     });
@@ -193,7 +198,6 @@ const Dashboard = () => {
       fetchAllData();
 
     } catch (err) {
-      console.error('Error memperbarui status appointment:', err);
       alert('Gagal memperbarui status appointment');
     }
   };
@@ -310,9 +314,6 @@ const Dashboard = () => {
       }
     })
     .slice(0, 5);
-
-    console.log(recentTreatments);
-    
 
   const calculateTotalRevenue = () => {
     return appointments

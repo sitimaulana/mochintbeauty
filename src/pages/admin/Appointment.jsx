@@ -29,7 +29,13 @@ const Appointment = () => {
 
   const Token = localStorage.getItem('token')
 
-  // State
+  // Check token on mount
+  useEffect(() => {
+    if (!Token) {
+      setError('⚠️ Token tidak ditemukan. Silakan login kembali.');
+      console.warn('❌ No token in localStorage for admin access');
+    }
+  }, [Token]);
   const [appointments, setAppointments] = useState([]);
   const [members, setMembers] = useState([]);
   const [therapists, setTherapists] = useState([]);
@@ -130,8 +136,14 @@ const Appointment = () => {
       
       setError(null);
     } catch (err) { 
-      console.error("Gagal memuat data", err); 
-      setError('Gagal memuat data. Silakan coba lagi.');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Gagal memuat data';
+      setError(`❌ ${errorMessage}`);
+      console.error('Error fetching data:', {
+        status: err.response?.status,
+        message: err.message,
+        data: err.response?.data,
+        token: Token ? 'ada' : 'tidak ada'
+      });
     } finally { 
       setLoading({
         appointments: false,
@@ -174,7 +186,6 @@ const Appointment = () => {
       );
       setReminderStatus(response.data);
     } catch (err) {
-      console.error('Error fetching reminder status:', err);
       setReminderStatus({
         reminder_sent: appointment.reminder_sent || false,
         reminder_sent_at: appointment.reminder_sent_at || null
@@ -225,7 +236,6 @@ const Appointment = () => {
       });
       
     } catch (err) {
-      console.error('Error sending reminder:', err);
       setNotification({
         show: true,
         type: 'error',
@@ -271,7 +281,6 @@ const Appointment = () => {
       });
       
     } catch (err) {
-      console.error('Error resetting reminder:', err);
       setNotification({
         show: true,
         type: 'error',
@@ -314,7 +323,6 @@ const Appointment = () => {
 
       const member = members.find(m => m.id == appointment.member_id);
       if (!member) {
-        console.error('Member tidak ditemukan untuk ID:', appointment.member_id);
         return;
       }
 
@@ -332,10 +340,8 @@ const Appointment = () => {
       };
 
       await axios.post(MEMBER_HISTORY_API_URL, historyData);
-      console.log('Menambahkan appointment ke riwayat member:', appointment.id);
-      
     } catch (err) {
-      console.error('Error menambahkan ke riwayat member:', err);
+      // Silent fail
     }
   };
 
@@ -361,10 +367,8 @@ const Appointment = () => {
       );
       
       await addToMemberHistory(appointment);
-      console.log(`Memperbarui data member ${memberId} dan riwayat`);
-      
     } catch (err) {
-      console.error('Error memperbarui data member:', err);
+      // Silent fail
     }
   };
 
@@ -375,7 +379,6 @@ const Appointment = () => {
       const therapistsList = therapists.data || therapists || [];
       const therapist = therapistsList.find(t => t.name === therapistName);
       if (!therapist) {
-        console.error('Terapis tidak ditemukan:', therapistName);
         return;
       }
 
@@ -389,7 +392,7 @@ const Appointment = () => {
       setTherapists(therapistsResponse.data);
       
     } catch (err) {
-      console.error('Error memperbarui statistik terapis:', err);
+      // Silent fail
     }
   };
 
@@ -465,8 +468,6 @@ const Appointment = () => {
       });
       
     } catch (err) { 
-      console.error('Error memperbarui status appointment:', err);
-      
       setNotification({
         show: true,
         type: 'error',
@@ -679,8 +680,6 @@ const Appointment = () => {
       
       handleCancel();
     } catch (err) { 
-      console.error('Error menyimpan appointment:', err);
-      
       setNotification({
         show: true,
         type: 'error',
@@ -1039,8 +1038,6 @@ const Appointment = () => {
                                   message: 'Janji temu berhasil dihapus'
                                 });
                               } catch (err) {
-                                console.error('Error menghapus:', err);
-                                
                                 setNotification({
                                   show: true,
                                   type: 'error',

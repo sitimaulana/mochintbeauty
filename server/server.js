@@ -144,6 +144,9 @@ app.get('/health', async (req, res) => {
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Serve uploads (for medical records and other files)
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 // NOW serve static files (after all API routes)
 app.use(express.static(path.join(__dirname, '../dist')));
 

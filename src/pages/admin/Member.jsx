@@ -10,9 +10,15 @@ const Member = () => {
 
   const Token = localStorage.getItem('token');
   
+  // State declarations
   const [members, setMembers] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [editingMember, setEditingMember] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState({
+    members: true,
+    appointments: true
+  });
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,8 +38,14 @@ const Member = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [viewingHistory, setViewingHistory] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Check token on mount
+  useEffect(() => {
+    if (!Token) {
+      setError('⚠️ Token tidak ditemukan. Silakan login kembali.');
+      console.warn('❌ No token in localStorage for admin access');
+    }
+  }, [Token]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -114,7 +126,6 @@ const Member = () => {
       setError(null);
     } catch (err) {
       setError('Gagal memuat data. Silakan coba lagi.');
-      console.error('Error memuat data:', err);
     } finally {
       setLoading(false);
     }
@@ -157,7 +168,7 @@ const Member = () => {
       total_visits: totalVisits,
       last_visit: lastVisit
     }).catch(err => {
-      console.error('Error memperbarui statistik member:', err);
+      // Silent fail
     });
   };
 
@@ -166,37 +177,19 @@ const Member = () => {
     try {
       setHistoryLoading(true);
       
-      if (debugMode) {
-        console.log(`📡 [DEBUG] Mengambil riwayat untuk member ID: ${memberId}`);
-        console.log(`📡 [DEBUG] API URL: ${HISTORY_API_URL}/${memberId}`);
-      }
-      
       // Coba dari API terlebih dahulu
       try {
         const response = await axios.get(`${HISTORY_API_URL}/${memberId}`, {
           headers: { Authorization: `Bearer ${Token}` }
         }); 
         
-        if (debugMode) {
-          console.log(`📡 [DEBUG] Status Response API Riwayat: ${response.status}`);
-          console.log(`📡 [DEBUG] Data Riwayat Diterima:`, response.data);
-        }
-        
         if (response.data && response.data.length > 0) {
-          if (debugMode) {
-            console.log(`📡 [DEBUG] Ditemukan ${response.data.length} catatan riwayat dari API`);
-          }
           return response.data;
         } else {
-          if (debugMode) {
-            console.log(`📡 [DEBUG] Tidak ada catatan riwayat dari API, menggunakan fallback`);
-          }
+          // Fallback to local calculation
         }
       } catch (apiError) {
-        console.warn('⚠️ API Riwayat tidak tersedia, menggunakan fallback:', apiError.message);
-        if (debugMode) {
-          console.warn(`📡 [DEBUG] Detail Error API:`, apiError.response?.data || apiError.message);
-        }
+        // API not available, use fallback
       }
       
       // Fallback: ambil dari appointments yang selesai
@@ -205,10 +198,6 @@ const Member = () => {
         app.member_id.toString() === memberId.toString() &&
         app.status === 'completed'
       );
-      
-      if (debugMode) {
-        console.log(`📡 [DEBUG] Ditemukan ${completedAppointments.length} appointments selesai untuk fallback`);
-      }
       
       // Konversi appointments ke format riwayat
       const fallbackHistory = completedAppointments.map(app => ({
@@ -229,7 +218,6 @@ const Member = () => {
       return fallbackHistory;
       
     } catch (err) {
-      console.error('❌ Error dalam fetchMemberHistory:', err);
       return [];
     } finally {
       setHistoryLoading(false);
@@ -407,7 +395,7 @@ const Member = () => {
       
       handleCancel();
     } catch (err) {
-      console.error('Error menyimpan member:', err);
+      // Silent fail
       
       // Tampilkan notifikasi error
       setNotification({
@@ -461,7 +449,7 @@ const Member = () => {
         message: 'Member berhasil dihapus dari sistem'
       });
     } catch (err) {
-      console.error('Error menghapus member:', err);
+      // Silent fail
       
       // Tampilkan notifikasi error
       setNotification({
@@ -500,7 +488,7 @@ const Member = () => {
       setViewingHistory({...member, history: history});
       
     } catch (error) {
-      console.error('❌ Error dalam viewHistory:', error);
+      // Silent fail - use fallback
       // Fallback ke appointments jika semua gagal
       const fallbackHistory = appointments.filter(app => 
         app.member_id && app.member_id.toString() === member.id.toString() &&

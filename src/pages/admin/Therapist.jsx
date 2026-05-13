@@ -33,9 +33,19 @@ const Therapist = () => {
 
   const Token = localStorage.getItem('token');
 
-  // Ambil data terapis dan appointments dari API
+  // Check token on mount
   useEffect(() => {
-    fetchAllData();
+    if (!Token) {
+      setError('⚠️ Token tidak ditemukan. Silakan login kembali.');
+      console.warn('❌ No token in localStorage for admin access');
+    }
+  }, [Token]);
+
+  // Fetch data on mount
+  useEffect(() => {
+    if (Token) {
+      fetchAllData();
+    }
   }, []);
 
   // Auto-hide notification after 3 seconds
@@ -62,9 +72,6 @@ const Therapist = () => {
         })
       ]);
 
-      console.log('Therapists from API:', therapistsResponse.data); // DEBUG
-      console.log('Appointments from API:', appointmentsResponse.data); // DEBUG
-
       // Extract array from response
       const therapistsData = therapistsResponse.data?.data || therapistsResponse.data || [];
       const appointmentsData = appointmentsResponse.data?.data || appointmentsResponse.data || [];
@@ -73,8 +80,13 @@ const Therapist = () => {
       setAppointments(Array.isArray(appointmentsData) ? appointmentsData : []);
       setAppointmentsLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Gagal memuat data. Silakan coba lagi.');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Gagal memuat data';
+      setError(`❌ ${errorMessage}`);
+      console.error('Error fetching therapist data:', {
+        status: error.response?.status,
+        message: error.message,
+        token: Token ? 'ada' : 'tidak ada'
+      });
       setTherapists([]);
       setAppointments([]);
     } finally {

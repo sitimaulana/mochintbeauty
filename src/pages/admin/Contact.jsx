@@ -43,6 +43,14 @@ const Contact = () => {
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const API_URL = '/api/contact';
+  const Token = localStorage.getItem('token');
+
+  // Check token on mount
+  useEffect(() => {
+    if (!Token) {
+      showNotification('Error', 'Token tidak ditemukan. Silakan login kembali.', 'error');
+    }
+  }, [Token]);
 
   useEffect(() => {
     fetchContactData();
@@ -70,8 +78,13 @@ const Contact = () => {
         setContactData(response.data.data);
       }
     } catch (err) {
-      console.error('Error fetching contact data:', err);
-      showNotification('Gagal Memuat', 'Gagal memuat data kontak', 'error');
+      const errorMessage = err.response?.data?.error || err.message || 'Gagal memuat data kontak';
+      showNotification('Gagal Memuat', errorMessage, 'error');
+      console.error('Error fetching contact data:', {
+        status: err.response?.status,
+        message: err.message,
+        token: Token ? 'ada' : 'tidak ada'
+      });
     } finally {
       setLoading(false);
     }
@@ -127,8 +140,13 @@ const Contact = () => {
       setContactData(response.data.data);
       showNotification('Berhasil!', 'Informasi kontak berhasil diperbarui', 'success');
     } catch (err) {
-      console.error('Error saving contact data:', err);
-      showNotification('Gagal Menyimpan', err.response?.data?.error || 'Gagal menyimpan data kontak', 'error');
+      const errorMessage = err.response?.data?.error || err.message || 'Gagal menyimpan data kontak';
+      showNotification('Gagal Menyimpan', errorMessage, 'error');
+      console.error('Error saving contact data:', {
+        status: err.response?.status,
+        message: err.message,
+        token: Token ? 'ada' : 'tidak ada'
+      });
     } finally {
       setSaving(false);
     }
