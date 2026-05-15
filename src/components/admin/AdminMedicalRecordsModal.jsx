@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload, Loader2, CheckCircle, AlertCircle, Camera, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 
 const AdminMedicalRecordsModal = ({ 
@@ -28,6 +28,26 @@ const AdminMedicalRecordsModal = ({
   const [success, setSuccess] = useState(false);
   const [existingRecord, setExistingRecord] = useState(null);
 
+  // Camera states for before image
+  const [beforeCameraActive, setBeforeCameraActive] = useState(false);
+  const [beforeUploadMode, setBeforeUploadMode] = useState(null);
+  const [beforeFacingMode, setBeforeFacingMode] = useState('user');
+  const [beforeCameraLoading, setBeforeCameraLoading] = useState(false);
+
+  // Camera states for after image
+  const [afterCameraActive, setAfterCameraActive] = useState(false);
+  const [afterUploadMode, setAfterUploadMode] = useState(null);
+  const [afterFacingMode, setAfterFacingMode] = useState('user');
+  const [afterCameraLoading, setAfterCameraLoading] = useState(false);
+
+  // Refs
+  const beforeCameraRef = useRef(null);
+  const afterCameraRef = useRef(null);
+  const beforeCanvasRef = useRef(null);
+  const afterCanvasRef = useRef(null);
+  const beforeFileInputRef = useRef(null);
+  const afterFileInputRef = useRef(null);
+
   // Initialize form with appointment data and fetch existing record if any
   useEffect(() => {
     if (isOpen && appointment) {
@@ -40,6 +60,38 @@ const AdminMedicalRecordsModal = ({
       fetchExistingRecord(appointment.id);
     }
   }, [isOpen, appointment]);
+
+  // Cleanup cameras on unmount
+  useEffect(() => {
+    return () => {
+      stopBeforeCamera();
+      stopAfterCamera();
+    };
+  }, []);
+
+  // Auto-start before camera when upload mode changes
+  useEffect(() => {
+    if (beforeUploadMode === 'camera' && !beforeCameraActive) {
+      startBeforeCamera();
+    }
+    return () => {
+      if (beforeUploadMode === 'camera') {
+        stopBeforeCamera();
+      }
+    };
+  }, [beforeUploadMode]);
+
+  // Auto-start after camera when upload mode changes
+  useEffect(() => {
+    if (afterUploadMode === 'camera' && !afterCameraActive) {
+      startAfterCamera();
+    }
+    return () => {
+      if (afterUploadMode === 'camera') {
+        stopAfterCamera();
+      }
+    };
+  }, [afterUploadMode]);
 
   const fetchExistingRecord = async (appointmentId) => {
     try {
@@ -95,14 +147,408 @@ const AdminMedicalRecordsModal = ({
         if (imageType === 'before') {
           setBeforeImage(file);
           setBeforeImagePreview(reader.result);
+          setBeforeUploadMode(null);
         } else {
           setAfterImage(file);
           setAfterImagePreview(reader.result);
+          setAfterUploadMode(null);
         }
       };
       reader.readAsDataURL(file);
       setError(null);
     }
+  };
+
+  // CAMERA FUNCTIONS FOR BEFORE IMAGE
+  const startBeforeCamera = async () => {
+    try {
+      setBeforeCameraLoading(true);
+      setError(null);
+      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Browser tidak mendukung akses kamera');
+        setBeforeCameraLoading(false);
+        return;
+      }
+
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: beforeFacingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+      } catch (constraintErr) {
+        if (constraintErr.name === 'OverconstrainedError') {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: beforeFacingMode },
+            audio: false
+          });
+        } else {
+          throw constraintErr;
+        }
+      }
+
+      if (!beforeCameraRef.current) {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        setError('Video element tidak ditemukan');
+        setBeforeCameraLoading(false);
+        return;
+      }
+
+      beforeCameraRef.current.srcObject = stream;
+
+      const videoReadyPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video initialization timeout'));
+        }, 5000);
+
+        const handleCanPlay = () => {
+          clearTimeout(timeout);
+          beforeCameraRef.current?.removeEventListener('canplay', handleCanPlay);
+          resolve();
+        };
+
+        const handleLoadedMetadata = () => {
+          clearTimeout(timeout);
+          beforeCameraRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          resolve();
+        };
+
+        if (beforeCameraRef.current) {
+          beforeCameraRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+          beforeCameraRef.current.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+
+          const playPromise = beforeCameraRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              clearTimeout(timeout);
+              reject(e);
+            });
+          }
+        }
+      });
+
+      await videoReadyPromise;
+      setBeforeCameraActive(true);
+      setBeforeCameraLoading(false);
+    } catch (err) {
+      console.error('Camera error:', err);
+      setBeforeCameraActive(false);
+      setBeforeCameraLoading(false);
+      
+      if (err.name === 'NotAllowedError') {
+        setError('Izin kamera ditolak. Berikan izin di browser settings.');
+      } else if (err.name === 'NotFoundError') {
+        setError('Kamera tidak ditemukan di perangkat ini.');
+      } else if (err.name === 'NotReadableError') {
+        setError('Kamera sedang digunakan oleh aplikasi lain.');
+      } else {
+        setError(`Error akses kamera: ${err.message}`);
+      }
+    }
+  };
+
+  const stopBeforeCamera = () => {
+    if (beforeCameraRef.current?.srcObject) {
+      const tracks = beforeCameraRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      setBeforeCameraActive(false);
+    }
+  };
+
+  const switchBeforeCamera = async () => {
+    stopBeforeCamera();
+    setBeforeFacingMode(beforeFacingMode === 'user' ? 'environment' : 'user');
+    setTimeout(() => startBeforeCamera(), 500);
+  };
+
+  const captureBeforePhoto = () => {
+    try {
+      if (!beforeCameraRef.current) {
+        setError('Referensi kamera tidak ditemukan');
+        return;
+      }
+
+      const video = beforeCameraRef.current;
+      
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setError('Kamera belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        setError('Video stream belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+
+      const canvas = beforeCanvasRef.current;
+      if (!canvas) {
+        setError('Canvas tidak ditemukan');
+        return;
+      }
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        setError('Tidak bisa mengakses canvas context');
+        return;
+      }
+
+      const canvasWidth = Math.max(video.videoWidth, 320);
+      const canvasHeight = Math.max(video.videoHeight, 240);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            setError('Gagal membuat blob dari canvas. Coba lagi.');
+            return;
+          }
+
+          try {
+            const file = new File([blob], `before_photo_${Date.now()}.jpg`, { 
+              type: 'image/jpeg' 
+            });
+
+            setBeforeImage(file);
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setBeforeImagePreview(reader.result);
+              stopBeforeCamera();
+              setBeforeUploadMode(null);
+              setError(null);
+            };
+            reader.onerror = () => {
+              setError('Error membaca foto. Coba lagi.');
+            };
+            reader.readAsDataURL(blob);
+          } catch (fileErr) {
+            console.error('Error creating file:', fileErr);
+            setError('Error memproses foto. Coba lagi.');
+          }
+        },
+        'image/jpeg',
+        1.0
+      );
+    } catch (err) {
+      console.error('Capture photo error:', err);
+      setError(`Error menangkap foto: ${err.message}`);
+    }
+  };
+
+  const resetBeforeUpload = () => {
+    try {
+      stopBeforeCamera();
+    } catch (e) {
+      console.error('Error stopping camera:', e);
+    }
+    setBeforeUploadMode(null);
+    setError(null);
+  };
+
+  // CAMERA FUNCTIONS FOR AFTER IMAGE
+  const startAfterCamera = async () => {
+    try {
+      setAfterCameraLoading(true);
+      setError(null);
+      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Browser tidak mendukung akses kamera');
+        setAfterCameraLoading(false);
+        return;
+      }
+
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: afterFacingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+      } catch (constraintErr) {
+        if (constraintErr.name === 'OverconstrainedError') {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: afterFacingMode },
+            audio: false
+          });
+        } else {
+          throw constraintErr;
+        }
+      }
+
+      if (!afterCameraRef.current) {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        setError('Video element tidak ditemukan');
+        setAfterCameraLoading(false);
+        return;
+      }
+
+      afterCameraRef.current.srcObject = stream;
+
+      const videoReadyPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Video initialization timeout'));
+        }, 5000);
+
+        const handleCanPlay = () => {
+          clearTimeout(timeout);
+          afterCameraRef.current?.removeEventListener('canplay', handleCanPlay);
+          resolve();
+        };
+
+        const handleLoadedMetadata = () => {
+          clearTimeout(timeout);
+          afterCameraRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          resolve();
+        };
+
+        if (afterCameraRef.current) {
+          afterCameraRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+          afterCameraRef.current.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+
+          const playPromise = afterCameraRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              clearTimeout(timeout);
+              reject(e);
+            });
+          }
+        }
+      });
+
+      await videoReadyPromise;
+      setAfterCameraActive(true);
+      setAfterCameraLoading(false);
+    } catch (err) {
+      console.error('Camera error:', err);
+      setAfterCameraActive(false);
+      setAfterCameraLoading(false);
+      
+      if (err.name === 'NotAllowedError') {
+        setError('Izin kamera ditolak. Berikan izin di browser settings.');
+      } else if (err.name === 'NotFoundError') {
+        setError('Kamera tidak ditemukan di perangkat ini.');
+      } else if (err.name === 'NotReadableError') {
+        setError('Kamera sedang digunakan oleh aplikasi lain.');
+      } else {
+        setError(`Error akses kamera: ${err.message}`);
+      }
+    }
+  };
+
+  const stopAfterCamera = () => {
+    if (afterCameraRef.current?.srcObject) {
+      const tracks = afterCameraRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      setAfterCameraActive(false);
+    }
+  };
+
+  const switchAfterCamera = async () => {
+    stopAfterCamera();
+    setAfterFacingMode(afterFacingMode === 'user' ? 'environment' : 'user');
+    setTimeout(() => startAfterCamera(), 500);
+  };
+
+  const captureAfterPhoto = () => {
+    try {
+      if (!afterCameraRef.current) {
+        setError('Referensi kamera tidak ditemukan');
+        return;
+      }
+
+      const video = afterCameraRef.current;
+      
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setError('Kamera belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        setError('Video stream belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+
+      const canvas = afterCanvasRef.current;
+      if (!canvas) {
+        setError('Canvas tidak ditemukan');
+        return;
+      }
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        setError('Tidak bisa mengakses canvas context');
+        return;
+      }
+
+      const canvasWidth = Math.max(video.videoWidth, 320);
+      const canvasHeight = Math.max(video.videoHeight, 240);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            setError('Gagal membuat blob dari canvas. Coba lagi.');
+            return;
+          }
+
+          try {
+            const file = new File([blob], `after_photo_${Date.now()}.jpg`, { 
+              type: 'image/jpeg' 
+            });
+
+            setAfterImage(file);
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setAfterImagePreview(reader.result);
+              stopAfterCamera();
+              setAfterUploadMode(null);
+              setError(null);
+            };
+            reader.onerror = () => {
+              setError('Error membaca foto. Coba lagi.');
+            };
+            reader.readAsDataURL(blob);
+          } catch (fileErr) {
+            console.error('Error creating file:', fileErr);
+            setError('Error memproses foto. Coba lagi.');
+          }
+        },
+        'image/jpeg',
+        1.0
+      );
+    } catch (err) {
+      console.error('Capture photo error:', err);
+      setError(`Error menangkap foto: ${err.message}`);
+    }
+  };
+
+  const resetAfterUpload = () => {
+    try {
+      stopAfterCamera();
+    } catch (e) {
+      console.error('Error stopping camera:', e);
+    }
+    setAfterUploadMode(null);
+    setError(null);
   };
 
   const handleInputChange = (e) => {
@@ -251,61 +697,131 @@ const AdminMedicalRecordsModal = ({
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Foto Sebelum Perawatan (Before)
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 py-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer overflow-hidden"
-              onClick={() => document.getElementById('before-image-input').click()}
-            >
-              {beforeImagePreview ? (
-                <div className="w-full flex justify-center py-1">
-                  <div className="relative inline-block">
-                    <img 
-                      src={beforeImagePreview} 
-                      alt="Before" 
-                      className="max-h-40 rounded-lg object-contain"
-                      onError={(e) => {
-                        console.error('❌ Image failed to load: Before', {
-                          url: beforeImagePreview,
-                          status: e.target.status,
-                          complete: e.target.complete,
-                          naturalHeight: e.target.naturalHeight,
-                          error: e.target.error
-                        });
-                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3EImage Failed to Load%3C/text%3E%3C/svg%3E';
-                      }}
-                      onLoadStart={() => console.log('📷 Before image loading...', beforeImagePreview)}
-                      onLoad={() => console.log('✅ Before image loaded successfully')}
-                    />
+
+            {/* Mode Selection or Preview */}
+            {!beforeImagePreview && beforeUploadMode === null && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setBeforeUploadMode('camera')}
+                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                >
+                  <Camera size={20} className="text-[#8D6E63]" />
+                  <div className="text-left">
+                    <p className="font-bold text-[#8D6E63]">Foto dari Kamera</p>
+                    <p className="text-xs text-gray-500">Ambil foto langsung</p>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => beforeFileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                >
+                  <Upload size={20} className="text-[#8D6E63]" />
+                  <div className="text-left">
+                    <p className="font-bold text-[#8D6E63]">Upload dari Galeri</p>
+                    <p className="text-xs text-gray-500">Pilih foto dari device</p>
+                  </div>
+                </button>
+
+                <input
+                  ref={beforeFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'before')}
+                  className="hidden"
+                />
+              </div>
+            )}
+
+            {/* Camera View for Before */}
+            {beforeUploadMode === 'camera' && !beforeImagePreview && (
+              <div className="space-y-4">
+                {!beforeCameraActive && (
+                  <div className="flex items-center justify-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <Loader2 size={16} className="animate-spin text-yellow-600" />
+                    <p className="text-sm text-yellow-700">Mengaktifkan kamera...</p>
+                  </div>
+                )}
+
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref={beforeCameraRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 border-4 border-white/20 pointer-events-none rounded-lg" />
+                </div>
+
+                <canvas ref={beforeCanvasRef} className="hidden" />
+
+                {beforeCameraActive && (
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setBeforeImage(null);
-                        setBeforeImagePreview(null);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                      onClick={switchBeforeCamera}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-semibold"
                     >
-                      <X size={16} />
+                      <RefreshCw size={16} />
+                      Ganti Kamera
+                    </button>
+                    <button
+                      type="button"
+                      onClick={captureBeforePhoto}
+                      className="flex-1 px-4 py-2 bg-[#8D6E63] text-white rounded-lg hover:bg-[#6D4C41] transition-all font-semibold"
+                    >
+                      📸 Ambil Foto
                     </button>
                   </div>
+                )}
+                
+                <button
+                  type="button"
+                  onClick={resetBeforeUpload}
+                  className="w-full py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all text-sm font-semibold"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
+
+            {/* Preview */}
+            {beforeImagePreview && (
+              <div className="space-y-3">
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+                  <img 
+                    src={beforeImagePreview} 
+                    alt="Before" 
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBeforeImage(null);
+                      setBeforeImagePreview(null);
+                      setBeforeUploadMode(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-              ) : (
-                <div className="py-8">
-                  <Upload size={32} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600">Klik untuk upload foto before</p>
-                  {existingRecord?.before_image_url && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Current: {existingRecord.before_image_url}
-                    </p>
-                  )}
-                </div>
-              )}
-              <input
-                id="before-image-input"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, 'before')}
-                className="hidden"
-              />
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBeforeImage(null);
+                    setBeforeImagePreview(null);
+                    setBeforeUploadMode(null);
+                  }}
+                  className="w-full py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all text-sm font-semibold"
+                >
+                  Ganti Foto
+                </button>
+              </div>
+            )}
           </div>
 
           {/* After Image Upload */}
@@ -313,61 +829,131 @@ const AdminMedicalRecordsModal = ({
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Foto Setelah Perawatan (After)
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 py-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer overflow-hidden"
-              onClick={() => document.getElementById('after-image-input').click()}
-            >
-              {afterImagePreview ? (
-                <div className="w-full flex justify-center py-1">
-                  <div className="relative inline-block">
-                    <img 
-                      src={afterImagePreview} 
-                      alt="After" 
-                      className="max-h-40 rounded-lg object-contain"
-                      onError={(e) => {
-                        console.error('❌ Image failed to load: After', {
-                          url: afterImagePreview,
-                          status: e.target.status,
-                          complete: e.target.complete,
-                          naturalHeight: e.target.naturalHeight,
-                          error: e.target.error
-                        });
-                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3EImage Failed to Load%3C/text%3E%3C/svg%3E';
-                      }}
-                      onLoadStart={() => console.log('📷 After image loading...', afterImagePreview)}
-                      onLoad={() => console.log('✅ After image loaded successfully')}
-                    />
+
+            {/* Mode Selection or Preview */}
+            {!afterImagePreview && afterUploadMode === null && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setAfterUploadMode('camera')}
+                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                >
+                  <Camera size={20} className="text-[#8D6E63]" />
+                  <div className="text-left">
+                    <p className="font-bold text-[#8D6E63]">Foto dari Kamera</p>
+                    <p className="text-xs text-gray-500">Ambil foto langsung</p>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => afterFileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                >
+                  <Upload size={20} className="text-[#8D6E63]" />
+                  <div className="text-left">
+                    <p className="font-bold text-[#8D6E63]">Upload dari Galeri</p>
+                    <p className="text-xs text-gray-500">Pilih foto dari device</p>
+                  </div>
+                </button>
+
+                <input
+                  ref={afterFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'after')}
+                  className="hidden"
+                />
+              </div>
+            )}
+
+            {/* Camera View for After */}
+            {afterUploadMode === 'camera' && !afterImagePreview && (
+              <div className="space-y-4">
+                {!afterCameraActive && (
+                  <div className="flex items-center justify-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <Loader2 size={16} className="animate-spin text-yellow-600" />
+                    <p className="text-sm text-yellow-700">Mengaktifkan kamera...</p>
+                  </div>
+                )}
+
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref={afterCameraRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 border-4 border-white/20 pointer-events-none rounded-lg" />
+                </div>
+
+                <canvas ref={afterCanvasRef} className="hidden" />
+
+                {afterCameraActive && (
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAfterImage(null);
-                        setAfterImagePreview(null);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                      onClick={switchAfterCamera}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-semibold"
                     >
-                      <X size={16} />
+                      <RefreshCw size={16} />
+                      Ganti Kamera
+                    </button>
+                    <button
+                      type="button"
+                      onClick={captureAfterPhoto}
+                      className="flex-1 px-4 py-2 bg-[#8D6E63] text-white rounded-lg hover:bg-[#6D4C41] transition-all font-semibold"
+                    >
+                      📸 Ambil Foto
                     </button>
                   </div>
+                )}
+                
+                <button
+                  type="button"
+                  onClick={resetAfterUpload}
+                  className="w-full py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all text-sm font-semibold"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
+
+            {/* Preview */}
+            {afterImagePreview && (
+              <div className="space-y-3">
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+                  <img 
+                    src={afterImagePreview} 
+                    alt="After" 
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAfterImage(null);
+                      setAfterImagePreview(null);
+                      setAfterUploadMode(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-              ) : (
-                <div className="py-8">
-                  <Upload size={32} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600">Klik untuk upload foto after</p>
-                  {existingRecord?.after_image_url && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Current: {existingRecord.after_image_url}
-                    </p>
-                  )}
-                </div>
-              )}
-              <input
-                id="after-image-input"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, 'after')}
-                className="hidden"
-              />
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAfterImage(null);
+                    setAfterImagePreview(null);
+                    setAfterUploadMode(null);
+                  }}
+                  className="w-full py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all text-sm font-semibold"
+                >
+                  Ganti Foto
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Treatment Name */}
