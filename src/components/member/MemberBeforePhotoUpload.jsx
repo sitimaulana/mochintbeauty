@@ -231,20 +231,25 @@ const MemberBeforePhotoUpload = ({
         return;
       }
 
-      // Set canvas size to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Set canvas size to match video (ensure minimum size)
+      const canvasWidth = Math.max(video.videoWidth, 320);
+      const canvasHeight = Math.max(video.videoHeight, 240);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
       
       console.log('📸 Drawing video to canvas:', { 
         videoWidth: video.videoWidth, 
         videoHeight: video.videoHeight,
+        canvasWidth: canvasWidth,
+        canvasHeight: canvasHeight,
         readyState: video.readyState
       });
       
       // Draw video to canvas
-      context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
       
       // Convert canvas to JPEG blob with better error handling
+      // Use higher quality (1.0) for better image fidelity
       canvas.toBlob(
         (blob) => {
           if (!blob) {
@@ -262,8 +267,15 @@ const MemberBeforePhotoUpload = ({
               size: file.size,
               type: file.type,
               name: file.name,
-              blobSize: blob.size
+              blobSize: blob.size,
+              dimensions: `${canvasWidth}x${canvasHeight}`
             });
+
+            // Validate file size (should be at least 1KB for a real image)
+            if (file.size < 1024) {
+              console.warn('⚠️ File size very small:', file.size, 'bytes');
+              console.warn('⚠️ Canvas might be too small or empty');
+            }
 
             setPhoto(file);
             
@@ -286,7 +298,7 @@ const MemberBeforePhotoUpload = ({
           }
         },
         'image/jpeg',
-        0.9
+        1.0
       );
     } catch (err) {
       console.error('❌ Capture photo error:', err);

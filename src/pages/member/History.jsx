@@ -28,8 +28,8 @@ const History = () => {
         const userStr = localStorage.getItem('user');
         const token = localStorage.getItem('token');
         
-        console.log('🔍 Debug History - Token:', token ? 'EXISTS' : 'NOT FOUND');
-        console.log('🔍 Debug History - User data:', activeUserStr || userStr ? 'EXISTS' : 'NOT FOUND');
+        console.log('Debug History - Token:', token ? 'EXISTS' : 'NOT FOUND');
+        console.log(' Debug History - User data:', activeUserStr || userStr ? 'EXISTS' : 'NOT FOUND');
         
         let userData = null;
         if (activeUserStr) {
@@ -251,7 +251,7 @@ const History = () => {
                               disabled={loadingMedical}
                               className="px-4 py-2 bg-[#8D6E63] text-white text-xs font-bold rounded-lg hover:bg-[#6D4C41] transition-colors disabled:opacity-50"
                             >
-                              {loadingMedical ? '⏳ Loading...' : '📋 Lihat Medis'}
+                              {loadingMedical ? '⏳ Loading...' : 'Lihat Medis'}
                             </button>
                           </td>
                         </tr>
@@ -261,7 +261,7 @@ const History = () => {
                         <td colSpan="5" className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center gap-3">
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                              <span className="text-3xl">📋</span>
+                              <span className="text-3xl"></span>
                             </div>
                             <p className="text-gray-400 font-medium font-sans">
                               Belum ada riwayat perawatan
@@ -342,7 +342,7 @@ const History = () => {
                           disabled={loadingMedical}
                           className="w-full px-4 py-3 bg-[#8D6E63] text-white font-bold rounded-lg hover:bg-[#6D4C41] transition-colors disabled:opacity-50 text-sm"
                         >
-                          {loadingMedical ? '⏳ Loading...' : '📋 Lihat Rekam Medis'}
+                          {loadingMedical ? ' Loading...' : ' Lihat Rekam Medis'}
                         </button>
                       </div>
                     </div>
@@ -352,7 +352,7 @@ const History = () => {
                 <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-12">
                   <div className="flex flex-col items-center gap-3 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-3xl">📋</span>
+                      <span className="text-3xl"></span>
                     </div>
                     <p className="text-gray-400 font-medium font-sans">
                       Belum ada riwayat perawatan

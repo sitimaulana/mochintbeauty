@@ -207,6 +207,15 @@ class MedicalRecord {
     return rows[0].count > 0;
   }
 
+  // Count medical records by appointment ID
+  static async countByAppointmentId(appointmentId) {
+    const [rows] = await promisePool.query(
+      'SELECT COUNT(*) as count FROM medical_records WHERE appointment_id = ?',
+      [appointmentId]
+    );
+    return rows[0].count;
+  }
+
   // Get medical records for completed appointments by member
   static async getCompletedByMember(memberId) {
     const [rows] = await promisePool.query(`

@@ -415,3 +415,28 @@ exports.updateMedicalRecordStatus = async (req, res) => {
     });
   }
 };
+
+// Get medical record count by appointment ID
+exports.getMedicalRecordCountByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    const count = await MedicalRecord.countByAppointmentId(appointmentId);
+
+    res.json({
+      success: true,
+      data: {
+        appointmentId,
+        count,
+        hasRecords: count > 0
+      }
+    });
+  } catch (error) {
+    console.error('Error getting medical record count:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get medical record count',
+      message: error.message
+    });
+  }
+};

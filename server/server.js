@@ -144,8 +144,26 @@ app.get('/health', async (req, res) => {
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Serve uploads (for medical records and other files)
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// Serve uploads with proper headers and MIME types
+// Use express.static middleware with proper MIME type detection
+const mime = require('mime-types');
+
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for all upload requests
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+  
+  // Get the file extension and set proper MIME type
+  const ext = path.extname(req.path).toLowerCase();
+  const mimeType = mime.lookup(ext) || 'application/octet-stream';
+  res.set('Content-Type', mimeType);
+  
+  next();
+}, express.static(path.join(__dirname, 'public/uploads'), {
+  maxAge: '1y',
+  etag: false
+}));
 
 // NOW serve static files (after all API routes)
 app.use(express.static(path.join(__dirname, '../dist')));

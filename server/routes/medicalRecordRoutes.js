@@ -60,6 +60,9 @@ router.get('/member/:memberId', medicalRecordController.getMedicalRecordsByMembe
 // GET /api/medical-records/member/:memberId/completed - Get completed records by member
 router.get('/member/:memberId/completed', medicalRecordController.getCompletedMedicalRecordsByMember);
 
+// GET /api/medical-records/appointment/:appointmentId/count - Get count for appointment
+router.get('/appointment/:appointmentId/count', medicalRecordController.getMedicalRecordCountByAppointment);
+
 // POST /api/medical-records - Create medical record with file upload
 router.post(
   '/',

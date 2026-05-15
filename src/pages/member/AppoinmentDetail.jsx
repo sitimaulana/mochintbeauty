@@ -39,7 +39,7 @@ const AppointmentDetail = () => {
 
         const appointmentData = response.data.data;
         
-        console.log('📋 Appointment data details:', {
+        console.log('Appointment data details:', {
           id: appointmentData.id,
           member_id: appointmentData.member_id,
           treatment_name: appointmentData.treatment_name,
@@ -86,7 +86,7 @@ const AppointmentDetail = () => {
         } else if (error.response?.status === 404) {
           setError('Data appointment tidak ditemukan.');
         } else {
-          console.log("⚠️ Menggunakan data fallback dari mockData.js");
+          console.log(" Menggunakan data fallback dari mockData.js");
           const foundData = mockAppointments.find(item => item.id === id);
           if (foundData) {
             setData({
@@ -124,10 +124,10 @@ const AppointmentDetail = () => {
 
         if (response.data.data) {
           setMedicalRecords(response.data.data);
-          console.log('✅ Medical records loaded:', response.data.data);
+          console.log(' Medical records loaded:', response.data.data);
         }
       } catch (err) {
-        console.log('⚠️ No medical records found for this appointment');
+        console.log(' No medical records found for this appointment');
         // It's okay if there's no medical record yet
       } finally {
         setLoadingMedical(false);

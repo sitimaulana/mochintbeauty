@@ -81,6 +81,7 @@ const Appointment = () => {
   // State untuk medical records management
   const [medicalRecordsModalOpen, setMedicalRecordsModalOpen] = useState(false);
   const [selectedAppointmentForMedical, setSelectedAppointmentForMedical] = useState(null);
+  const [medicalRecordsCounts, setMedicalRecordsCounts] = useState({}); // Track medical records count per appointment
   
   // State untuk notification modal
   const [notification, setNotification] = useState({
@@ -134,6 +135,9 @@ const Appointment = () => {
       
       calculateStatistics(appointmentsData);
       
+      // Fetch medical records count for each appointment
+      await fetchMedicalRecordsCounts(appointmentsData);
+      
       setError(null);
     } catch (err) { 
       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Gagal memuat data';
@@ -152,6 +156,35 @@ const Appointment = () => {
         treatments: false,
         stats: false
       });
+    }
+  };
+
+  // Fetch medical records count for all appointments
+  const fetchMedicalRecordsCounts = async (appointmentsData) => {
+    try {
+      const counts = {};
+      
+      // Fetch count for each appointment
+      const countPromises = appointmentsData.map(app =>
+        axios.get(`/api/medical-records/appointment/${app.id}/count`, {
+          headers: { Authorization: `Bearer ${Token}` }
+        })
+        .then(res => {
+          if (res.data.success) {
+            counts[app.id] = res.data.data.count;
+          }
+        })
+        .catch(err => {
+          console.warn(`Could not fetch medical records count for appointment ${app.id}:`, err.message);
+          counts[app.id] = 0;
+        })
+      );
+      
+      await Promise.all(countPromises);
+      setMedicalRecordsCounts(counts);
+      console.log('📊 Medical records counts fetched:', counts);
+    } catch (error) {
+      console.error('Error fetching medical records counts:', error);
     }
   };
 
@@ -1000,19 +1033,24 @@ const Appointment = () => {
                       )}
                     </td>
                     <td className="p-2 sm:p-4 text-center">
-                      <div className="flex justify-center gap-1 sm:gap-2 flex-wrap">
+                      <div className="flex justify-center gap-1 sm:gap-2 flex-nowrap items-center">
                         <button 
                           onClick={() => handleEdit(app)} 
-                          className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors duration-200"
+                          className="bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
                         >
                           Edit
                         </button>
                         <button 
                           onClick={() => openMedicalRecordsModal(app)}
-                          className="bg-purple-600 text-white px-2 sm:px-3 py-1 rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors duration-200"
+                          className="bg-purple-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-700 transition-colors duration-200 relative whitespace-nowrap flex-shrink-0"
                           title="Manage medical records for this appointment"
                         >
-                          📋 Medis
+                          Rekam Medis
+                          {medicalRecordsCounts[app.id] > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {medicalRecordsCounts[app.id]}
+                            </span>
+                          )}
                         </button>
                         <button 
                           onClick={async () => { 
@@ -1047,9 +1085,10 @@ const Appointment = () => {
                               }
                             }
                           }} 
-                          className="bg-red-100 text-red-600 px-2 sm:px-3 py-1 rounded-lg text-xs hover:bg-red-200 transition-colors duration-200"
+                          className="bg-red-100 text-red-600 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm hover:bg-red-200 transition-colors duration-200 whitespace-nowrap flex-shrink-0"
+                          title="Hapus appointment"
                         >
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>

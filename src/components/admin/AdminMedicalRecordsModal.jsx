@@ -58,11 +58,16 @@ const AdminMedicalRecordsModal = ({
           recommendations: record.recommendations || '',
           status: record.status || 'completed'
         }));
+        // Add cache busting parameter to force fresh image loads
         if (record.before_image_url) {
-          setBeforeImagePreview(record.before_image_url);
+          const cacheBustUrl = `${record.before_image_url}?t=${Date.now()}`;
+          console.log('📷 Loading before image:', cacheBustUrl);
+          setBeforeImagePreview(cacheBustUrl);
         }
         if (record.after_image_url) {
-          setAfterImagePreview(record.after_image_url);
+          const cacheBustUrl = `${record.after_image_url}?t=${Date.now()}`;
+          console.log('📷 Loading after image:', cacheBustUrl);
+          setAfterImagePreview(cacheBustUrl);
         }
       }
     } catch (error) {
@@ -198,7 +203,7 @@ const AdminMedicalRecordsModal = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-[#8D6E63] to-[#6D4C41] px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#8D6E63] to-[#6D4C41] px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white font-display">
             {existingRecord ? 'Update Rekam Medis' : 'Tambah Rekam Medis'}
           </h2>
@@ -246,28 +251,51 @@ const AdminMedicalRecordsModal = ({
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Foto Sebelum Perawatan (Before)
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer"
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 py-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer overflow-hidden"
               onClick={() => document.getElementById('before-image-input').click()}
             >
               {beforeImagePreview ? (
-                <div className="relative">
-                  <img src={beforeImagePreview} alt="Before" className="max-h-64 mx-auto rounded-lg" />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setBeforeImage(null);
-                      setBeforeImagePreview(null);
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
+                <div className="w-full flex justify-center py-1">
+                  <div className="relative inline-block">
+                    <img 
+                      src={beforeImagePreview} 
+                      alt="Before" 
+                      className="max-h-40 rounded-lg object-contain"
+                      onError={(e) => {
+                        console.error('❌ Image failed to load: Before', {
+                          url: beforeImagePreview,
+                          status: e.target.status,
+                          complete: e.target.complete,
+                          naturalHeight: e.target.naturalHeight,
+                          error: e.target.error
+                        });
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3EImage Failed to Load%3C/text%3E%3C/svg%3E';
+                      }}
+                      onLoadStart={() => console.log('📷 Before image loading...', beforeImagePreview)}
+                      onLoad={() => console.log('✅ Before image loaded successfully')}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setBeforeImage(null);
+                        setBeforeImagePreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="py-8">
                   <Upload size={32} className="mx-auto text-gray-400 mb-2" />
                   <p className="text-gray-600">Klik untuk upload foto before</p>
+                  {existingRecord?.before_image_url && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Current: {existingRecord.before_image_url}
+                    </p>
+                  )}
                 </div>
               )}
               <input
@@ -285,28 +313,51 @@ const AdminMedicalRecordsModal = ({
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Foto Setelah Perawatan (After)
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer"
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 py-4 text-center hover:border-[#8D6E63] transition-colors cursor-pointer overflow-hidden"
               onClick={() => document.getElementById('after-image-input').click()}
             >
               {afterImagePreview ? (
-                <div className="relative">
-                  <img src={afterImagePreview} alt="After" className="max-h-64 mx-auto rounded-lg" />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAfterImage(null);
-                      setAfterImagePreview(null);
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
+                <div className="w-full flex justify-center py-1">
+                  <div className="relative inline-block">
+                    <img 
+                      src={afterImagePreview} 
+                      alt="After" 
+                      className="max-h-40 rounded-lg object-contain"
+                      onError={(e) => {
+                        console.error('❌ Image failed to load: After', {
+                          url: afterImagePreview,
+                          status: e.target.status,
+                          complete: e.target.complete,
+                          naturalHeight: e.target.naturalHeight,
+                          error: e.target.error
+                        });
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2214%22 fill=%22%23999%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3EImage Failed to Load%3C/text%3E%3C/svg%3E';
+                      }}
+                      onLoadStart={() => console.log('📷 After image loading...', afterImagePreview)}
+                      onLoad={() => console.log('✅ After image loaded successfully')}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAfterImage(null);
+                        setAfterImagePreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="py-8">
                   <Upload size={32} className="mx-auto text-gray-400 mb-2" />
                   <p className="text-gray-600">Klik untuk upload foto after</p>
+                  {existingRecord?.after_image_url && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Current: {existingRecord.after_image_url}
+                    </p>
+                  )}
                 </div>
               )}
               <input
