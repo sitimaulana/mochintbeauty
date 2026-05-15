@@ -50,7 +50,10 @@ const Member = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [memberHistory, setMemberHistory] = useState([]);
+  const [memberMedicalRecords, setMemberMedicalRecords] = useState([]);
   const [debugMode, setDebugMode] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState({ show: false, url: '', title: '' });
+  const [selectedMedicalRecord, setSelectedMedicalRecord] = useState(null);
   
   // State untuk notification modal
   const [notification, setNotification] = useState({
@@ -170,6 +173,31 @@ const Member = () => {
     }).catch(err => {
       // Silent fail
     });
+  };
+
+  // Ambil medical records untuk member
+  const fetchMemberMedicalRecords = async (memberId) => {
+    try {
+      const response = await axios.get(
+        `/api/medical-records/member/${memberId}`,
+        { headers: { Authorization: `Bearer ${Token}` } }
+      );
+      return response.data.data || [];
+    } catch (err) {
+      console.error('Error fetching medical records:', err);
+      return [];
+    }
+  };
+
+  // Fungsi untuk menemukan medical record yang sesuai dengan appointment
+  const getMedicalRecordForAppointment = (appointmentId) => {
+    if (!viewingHistory.medical_records || viewingHistory.medical_records.length === 0) {
+      return null;
+    }
+    return viewingHistory.medical_records.find(
+      mr => mr.appointment_id === appointmentId || 
+            mr.appointment_id === (appointmentId ? appointmentId.toString() : null)
+    ) || null;
   };
 
   // Ambil riwayat member dari API dengan fallback
@@ -481,11 +509,16 @@ const Member = () => {
     console.log('👁️ [RIWAYAT] Melihat riwayat untuk member:', member);
     setHistoryLoading(true);
     try {
-      const history = await fetchMemberHistory(member.id);
+      const [history, medicalRecords] = await Promise.all([
+        fetchMemberHistory(member.id),
+        fetchMemberMedicalRecords(member.id)
+      ]);
       console.log('👁️ [RIWAYAT] Riwayat diambil:', history);
+      console.log('📋 [MEDICAL] Medical records diambil:', medicalRecords);
       
       setMemberHistory(history);
-      setViewingHistory({...member, history: history});
+      setMemberMedicalRecords(medicalRecords);
+      setViewingHistory({...member, history: history, medical_records: medicalRecords});
       
     } catch (error) {
       // Silent fail - use fallback
@@ -507,7 +540,8 @@ const Member = () => {
       }));
       
       setMemberHistory(fallbackHistory);
-      setViewingHistory({...member, history: fallbackHistory});
+      setMemberMedicalRecords([]);
+      setViewingHistory({...member, history: fallbackHistory, medical_records: []});
     } finally {
       setHistoryLoading(false);
     }
@@ -516,6 +550,7 @@ const Member = () => {
   const closeHistory = () => {
     setViewingHistory(null);
     setMemberHistory([]);
+    setMemberMedicalRecords([]);
   };
 
   // Format mata uang
@@ -1237,7 +1272,7 @@ const Member = () => {
                           <th className="pb-3 font-medium">Jumlah</th>
                           <th className="pb-3 font-medium">ID Janji Temu</th>
                           <th className="pb-3 font-medium">Status</th>
-                          <th className="pb-3 font-medium">Catatan</th>
+                          <th className="pb-3 font-medium">Rekam Medis</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1274,8 +1309,20 @@ const Member = () => {
                                 {record.status === 'completed' ? 'Selesai' : record.status || 'Selesai'}
                               </span>
                             </td>
-                            <td className="py-3 text-sm text-gray-500 max-w-xs">
-                              {record.notes || 'Tidak ada catatan'}
+                            <td className="py-3 text-sm">
+                              {(() => {
+                                const medicalRecord = getMedicalRecordForAppointment(record.appointment_id || record.appointmentId);
+                                return medicalRecord ? (
+                                  <button
+                                    onClick={() => setSelectedMedicalRecord(medicalRecord)}
+                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium"
+                                  >
+                                    📋 Lihat
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                );
+                              })()}
                             </td>
                           </tr>
                         ))}
@@ -1299,8 +1346,19 @@ const Member = () => {
                           }`}>
                             {record.status === 'completed' ? 'Selesai' : record.status || 'Selesai'}
                           </span>
+                          {(() => {
+                            const medicalRecord = getMedicalRecordForAppointment(record.appointment_id || record.appointmentId);
+                            return medicalRecord ? (
+                              <button
+                                onClick={() => setSelectedMedicalRecord(medicalRecord)}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium ml-2"
+                              >
+                                📋 Lihat
+                              </button>
+                            ) : null;
+                          })()}
                         </div>
-                        <div className="space-y-1.5 text-xs">
+                          <div className="space-y-1.5 text-xs">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Terapis:</span>
                             <span className="font-medium text-brown-600">{record.therapist}</span>
@@ -1313,12 +1371,6 @@ const Member = () => {
                             <span className="text-gray-600">ID Janji Temu:</span>
                             <span className="font-medium bg-gray-100 px-2 py-0.5 rounded">{record.appointment_id || record.appointmentId || 'N/A'}</span>
                           </div>
-                          {record.notes && (
-                            <div className="pt-2 border-t border-gray-200">
-                              <span className="text-gray-600">Catatan: </span>
-                              <span className="text-gray-700">{record.notes}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -1343,6 +1395,8 @@ const Member = () => {
                 </div>
               )}
             </div>
+
+            {/* Medical Records Section - REMOVED */}
 
             {/* Treatment Statistics */}
             {viewingHistory.history && viewingHistory.history.length > 0 && (
@@ -1379,6 +1433,151 @@ const Member = () => {
               <button
                 onClick={closeHistory}
                 className="w-full sm:w-auto px-4 py-2 bg-brown-600 text-white rounded-lg hover:bg-brown-700 transition-colors duration-200 text-sm sm:text-base"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Preview Modal */}
+      {photoPreview.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">{photoPreview.title}</h3>
+              <button
+                onClick={() => setPhotoPreview({ show: false, url: '', title: '' })}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Photo Content */}
+            <div className="p-4 flex flex-col items-center justify-center">
+              <img
+                src={photoPreview.url}
+                alt={photoPreview.title}
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+            
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center gap-3">
+              <a
+                href={photoPreview.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+              >
+                Buka Fullsize
+              </a>
+              <button
+                onClick={() => setPhotoPreview({ show: false, url: '', title: '' })}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Medical Records Detail Modal */}
+      {selectedMedicalRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{selectedMedicalRecord.treatment_name}</h3>
+                <p className="text-sm text-gray-600">{new Date(selectedMedicalRecord.created_at).toLocaleDateString('id-ID')}</p>
+              </div>
+              <button
+                onClick={() => setSelectedMedicalRecord(null)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Status Badge */}
+              <div>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  selectedMedicalRecord.status === 'completed'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {selectedMedicalRecord.status === 'completed' ? 'Selesai' : 'Draft'}
+                </span>
+              </div>
+
+              {/* Diagnosis */}
+              {selectedMedicalRecord.diagnosis && (
+                <div className="pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Diagnosis</p>
+                  <p className="text-sm text-gray-700">{selectedMedicalRecord.diagnosis}</p>
+                </div>
+              )}
+
+              {/* Treatment Detail */}
+              {selectedMedicalRecord.treatment_detail && (
+                <div className="pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Detail Treatment</p>
+                  <p className="text-sm text-gray-700">{selectedMedicalRecord.treatment_detail}</p>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {selectedMedicalRecord.recommendations && (
+                <div className="pb-3 border-b border-gray-200">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Rekomendasi</p>
+                  <p className="text-sm text-gray-700">{selectedMedicalRecord.recommendations}</p>
+                </div>
+              )}
+
+              {/* Before & After Photos */}
+              {(selectedMedicalRecord.before_image_url || selectedMedicalRecord.after_image_url) && (
+                <div>
+                  <p className="text-xs text-gray-600 font-medium mb-3">📷 Foto</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedMedicalRecord.before_image_url && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-700">Before</p>
+                        <img
+                          src={selectedMedicalRecord.before_image_url}
+                          alt="Before"
+                          onClick={() => setPhotoPreview({ show: true, url: selectedMedicalRecord.before_image_url, title: 'Before' })}
+                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </div>
+                    )}
+                    {selectedMedicalRecord.after_image_url && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-700">After</p>
+                        <img
+                          src={selectedMedicalRecord.after_image_url}
+                          alt="After"
+                          onClick={() => setPhotoPreview({ show: true, url: selectedMedicalRecord.after_image_url, title: 'After' })}
+                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4">
+              <button
+                onClick={() => setSelectedMedicalRecord(null)}
+                className="w-full px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
               >
                 Tutup
               </button>
