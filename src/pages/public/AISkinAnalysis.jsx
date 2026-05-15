@@ -220,7 +220,7 @@ const AISkinAnalysis = () => {
             {/* Title */}
             <div className="space-y-4">
               <h1 className="text-5xl md:text-6xl font-bold text-[#3E2723] tracking-tight">
-                AI Skin Analysis
+                Mochint Skin Reveal
               </h1>
               <p className="text-xl text-gray-600 font-sans leading-relaxed">
                 Temukan jenis kulit Anda dan dapatkan rekomendasi treatment personal dari AI kami

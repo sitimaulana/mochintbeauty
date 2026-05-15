@@ -140,11 +140,29 @@ const register = async (req, res) => {
 // Google OAuth callback handler
 const googleCallback = async (req, res) => {
   try {
+    // req.user sudah di-set oleh middleware passport
     const user = req.user;
     
     if (!user) {
-      return res.redirect('http://localhost:5173/login?error=google_auth_failed');
+      console.error('❌ No user in googleCallback');
+      return res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Error</title><meta charset="utf-8"></head>
+          <body>
+            <script>
+              console.error('❌ No user received');
+              if (window.opener) {
+                window.opener.postMessage({ success: false, error: 'User not found' }, '*');
+                window.close();
+              }
+            </script>
+          </body>
+        </html>
+      `);
     }
+
+    console.log('✅ User dari Passport:', user.email);
 
     const token = jwt.sign(
       { id: user.id, email: user.email, user_type: 'member' },
@@ -162,16 +180,98 @@ const googleCallback = async (req, res) => {
       user_type: 'member',
       google_id: user.google_id || null,
       profile_picture: user.profile_picture || null,
-      needsPassword: needsPassword // Flag untuk frontend
+      needsPassword: needsPassword
     };
 
     console.log(`🔐 Google OAuth - User ${user.email}, needsPassword: ${needsPassword}`);
 
-    // Redirect ke frontend dengan token di URL
-    res.redirect(`http://localhost:5173/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(userData))}`);
+    // Return HTML dengan proper postMessage handling dan fallback
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Processing Login...</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body style="margin: 0; padding: 20px; font-family: sans-serif;">
+          <div style="text-align: center; margin-top: 50px;">
+            <p>Processing your login...</p>
+          </div>
+          <script>
+            console.log('🔐 OAuth Callback Started');
+            
+            const token = '${token}';
+            const userData = ${JSON.stringify(userData)};
+            const frontendUrl = '${frontendUrl}';
+            
+            console.log('✅ OAuth Data Prepared, Token length:', token.length);
+            console.log('window.opener:', !!window.opener);
+            console.log('window.parent !== window.self:', window.parent !== window.self);
+            
+            function sendMessage() {
+              try {
+                const message = {
+                  success: true,
+                  token: token,
+                  user: userData
+                };
+                
+                if (window.opener) {
+                  console.log('📤 Sending postMessage to window.opener');
+                  window.opener.postMessage(message, '*');
+                  console.log('✅ Message sent to opener');
+                  setTimeout(() => { window.close(); }, 500);
+                  return;
+                }
+                
+                if (window.parent && window.parent !== window.self) {
+                  console.log('📤 Sending postMessage to window.parent');
+                  window.parent.postMessage(message, '*');
+                  console.log('✅ Message sent to parent');
+                  return;
+                }
+                
+                console.log('⚠️ No popup/parent found, falling back to redirect');
+                const url = frontendUrl + '/auth/google/callback?token=' + encodeURIComponent(token) + '&user=' + encodeURIComponent(JSON.stringify(userData));
+                window.location.href = url;
+              } catch (err) {
+                console.error('❌ Error:', err);
+                window.location.href = frontendUrl + '/auth/login?error=callback_error';
+              }
+            }
+            
+            sendMessage();
+            setTimeout(sendMessage, 1000);
+          </script>
+        </body>
+      </html>
+    `);
   } catch (error) {
     console.error('Google callback error:', error);
-    res.redirect('http://localhost:5173/login?error=server_error');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Error</title><meta charset="utf-8"></head>
+        <body>
+          <script>
+            const message = { success: false, error: '${error.message}' };
+            const frontendUrl = '${frontendUrl}';
+            
+            if (window.opener) {
+              window.opener.postMessage(message, '*');
+              window.close();
+            } else if (window.parent !== window.self) {
+              window.parent.postMessage(message, '*');
+            } else {
+              window.location.href = frontendUrl + '/auth/login?error=server_error';
+            }
+          </script>
+        </body>
+      </html>
+    `);
   }
 };
 
@@ -189,8 +289,8 @@ const sendOTP = async (req, res) => {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Store OTP with expiry (5 minutes)
-    const expiryTime = Date.now() + 5 * 60 * 1000; // 5 minutes
+    // Store OTP with expiry (10 minutes for sufficient verification time)
+    const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
     const normalizedEmail = email.toLowerCase().trim();
     
     otpStorage.set(normalizedEmail, {
@@ -217,7 +317,7 @@ const sendOTP = async (req, res) => {
         console.log(`To: ${email}`);
         console.log(`Name: ${name || 'Member'}`);
         console.log(`OTP Code: ${otp}`);
-        console.log(`Expires in: 5 minutes`);
+        console.log(`Expires in: 10 minutes`);
         console.log('=================================');
         
         return res.json({ 
