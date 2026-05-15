@@ -521,13 +521,14 @@ const MemberBeforePhotoUpload = ({
               )}
 
               {/* Video Element - Always rendered */}
-              <div className="relative bg-black rounded-lg overflow-hidden">
+              <div className="relative bg-black rounded-lg overflow-hidden h-80">
                 <video
                   ref={cameraRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-64 object-cover"
+                  className="w-full h-full object-cover"
+                  style={{ transform: 'scaleX(-1)' }}
                   onCanPlay={() => {
                     console.log('✅ Video can play');
                   }}
@@ -538,7 +539,78 @@ const MemberBeforePhotoUpload = ({
                     });
                   }}
                 />
-                <div className="absolute inset-0 border-4 border-white/20 pointer-events-none rounded-lg" />
+                
+                {/* Bounding Box Guide Overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Dark corners (vignette effect) */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/30" />
+                  
+                  {/* Main bounding box frame */}
+                  <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                    {/* Outer frame - head positioning guide */}
+                    <rect
+                      x="15%"
+                      y="10%"
+                      width="70%"
+                      height="80%"
+                      fill="none"
+                      stroke="#22C55E"
+                      strokeWidth="3"
+                      strokeDasharray="5,5"
+                      opacity="0.8"
+                    />
+                    
+                    {/* Center guides - horizontal line */}
+                    <line
+                      x1="15%"
+                      y1="50%"
+                      x2="85%"
+                      y2="50%"
+                      stroke="#22C55E"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
+                      opacity="0.6"
+                    />
+                    
+                    {/* Center guides - vertical line */}
+                    <line
+                      x1="50%"
+                      y1="10%"
+                      x2="50%"
+                      y2="90%"
+                      stroke="#22C55E"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
+                      opacity="0.6"
+                    />
+                    
+                    {/* Eye level guide line */}
+                    <line
+                      x1="15%"
+                      y1="30%"
+                      x2="85%"
+                      y2="30%"
+                      stroke="#F59E0B"
+                      strokeWidth="2"
+                      opacity="0.5"
+                    />
+                    
+                    {/* Corner markers - top left */}
+                    <circle cx="15%" cy="10%" r="6" fill="none" stroke="#22C55E" strokeWidth="2" opacity="0.8" />
+                    {/* Corner markers - top right */}
+                    <circle cx="85%" cy="10%" r="6" fill="none" stroke="#22C55E" strokeWidth="2" opacity="0.8" />
+                    {/* Corner markers - bottom left */}
+                    <circle cx="15%" cy="90%" r="6" fill="none" stroke="#22C55E" strokeWidth="2" opacity="0.8" />
+                    {/* Corner markers - bottom right */}
+                    <circle cx="85%" cy="90%" r="6" fill="none" stroke="#22C55E" strokeWidth="2" opacity="0.8" />
+                  </svg>
+                  
+                  {/* Instruction text */}
+                  <div className="absolute top-4 left-4 right-4 text-white text-xs bg-black/50 px-3 py-2 rounded-lg">
+                    <p className="font-bold">📍 Posisikan wajah di dalam kotak hijau</p>
+                    <p className="text-white/80 text-xs">Sejajarkan mata dengan garis oranye</p>
+                  </div>
+                </div>
               </div>
 
               <canvas
@@ -586,6 +658,7 @@ const MemberBeforePhotoUpload = ({
                     src={photoPreview}
                     alt="Preview"
                     className="w-full h-64 object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
                   />
                 </div>
               </div>
