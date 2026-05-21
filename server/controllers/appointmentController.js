@@ -109,6 +109,24 @@ exports.updateAppointment = async (req, res) => {
     const { id } = req.params;
     const appointmentData = req.body;
     
+    // Ambil data lama sebelum update
+    const { promisePool } = require('../config/database');
+    const [appointmentBefore] = await promisePool.query(
+      'SELECT status, member_id FROM appointments WHERE id = ?',
+      [id]
+    );
+    
+    if (appointmentBefore.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Appointment not found' 
+      });
+    }
+    
+    const oldStatus = appointmentBefore[0].status;
+    const memberId = appointmentBefore[0].member_id;
+    const newStatus = appointmentData.status || oldStatus;
+    
     const affectedRows = await Appointment.update(id, appointmentData);
     
     if (affectedRows === 0) {
@@ -116,6 +134,39 @@ exports.updateAppointment = async (req, res) => {
         success: false, 
         error: 'Appointment not found' 
       });
+    }
+    
+    // AUTO-SYNC: Jika status berubah ke 'completed', sinkronkan data member
+    if (newStatus === 'completed' && oldStatus !== 'completed' && memberId) {
+      console.log(`🔄 Auto-syncing member ${memberId} after appointment status changed to completed`);
+      
+      try {
+        const Member = require('../models/Member');
+        
+        // Query untuk mendapatkan completed appointments
+        const [completedAppointments] = await promisePool.query(
+          `SELECT date FROM appointments 
+           WHERE member_id = ? AND status = 'completed'
+           ORDER BY date DESC`,
+          [memberId]
+        );
+        
+        const totalVisits = completedAppointments.length;
+        const lastVisit = completedAppointments.length > 0 
+          ? completedAppointments[0].date 
+          : 'Belum Pernah';
+        
+        // Update member
+        await Member.update(memberId, {
+          total_visits: totalVisits,
+          last_visit: lastVisit
+        });
+        
+        console.log(`✅ Member ${memberId} synced: ${totalVisits} visits`);
+      } catch (syncError) {
+        console.error(`⚠️ Error auto-syncing member ${memberId}:`, syncError);
+        // Jangan fail, hanya log warning
+      }
     }
     
     // Ambil data lengkap dengan JOIN untuk response
@@ -179,6 +230,22 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
     
+    // Ambil data appointment sebelum update untuk mendapatkan member_id
+    const { promisePool } = require('../config/database');
+    const [appointmentBefore] = await promisePool.query(
+      'SELECT member_id FROM appointments WHERE id = ?',
+      [id]
+    );
+    
+    if (appointmentBefore.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Appointment not found' 
+      });
+    }
+    
+    const memberId = appointmentBefore[0].member_id;
+    
     const affectedRows = await Appointment.updateStatus(id, status);
     
     if (affectedRows === 0) {
@@ -186,6 +253,39 @@ exports.updateAppointmentStatus = async (req, res) => {
         success: false, 
         error: 'Appointment not found' 
       });
+    }
+    
+    // AUTO-SYNC: Jika status diubah ke 'completed', sinkronkan data member
+    if (status === 'completed' && memberId) {
+      console.log(`🔄 Auto-syncing member ${memberId} after appointment completed`);
+      
+      try {
+        const Member = require('../models/Member');
+        
+        // Query untuk mendapatkan completed appointments
+        const [completedAppointments] = await promisePool.query(
+          `SELECT date FROM appointments 
+           WHERE member_id = ? AND status = 'completed'
+           ORDER BY date DESC`,
+          [memberId]
+        );
+        
+        const totalVisits = completedAppointments.length;
+        const lastVisit = completedAppointments.length > 0 
+          ? completedAppointments[0].date 
+          : 'Belum Pernah';
+        
+        // Update member
+        await Member.update(memberId, {
+          total_visits: totalVisits,
+          last_visit: lastVisit
+        });
+        
+        console.log(`✅ Member ${memberId} synced: ${totalVisits} visits`);
+      } catch (syncError) {
+        console.error(`⚠️ Error auto-syncing member ${memberId}:`, syncError);
+        // Jangan fail, hanya log warning
+      }
     }
     
     res.json({ 

@@ -198,6 +198,160 @@ exports.searchMembers = async (req, res) => {
   }
 };
 
+// Sinkronkan data member dengan appointment
+exports.syncMemberWithAppointments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔄 Syncing member:', id, 'with appointments');
+    
+    // Dapatkan member
+    const member = await Member.getById(id);
+    if (!member) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Member not found' 
+      });
+    }
+    
+    // Ambil appointments dari database
+    const { promisePool } = require('../config/database');
+    
+    // Query untuk mendapatkan appointments yang selesai
+    const [completedAppointments] = await promisePool.query(
+      `SELECT 
+        a.*,
+        m.name as member_name,
+        t.name as treatment_name,
+        th.name as therapist_name
+      FROM appointments a
+      LEFT JOIN members m ON a.member_id = m.id
+      LEFT JOIN treatments t ON a.treatment_id = t.id
+      LEFT JOIN therapists th ON a.therapist_id = th.id
+      WHERE a.member_id = ? AND a.status = 'completed'
+      ORDER BY a.date DESC`,
+      [id]
+    );
+    
+    console.log('📊 Found completed appointments:', completedAppointments.length);
+    
+    if (completedAppointments.length === 0) {
+      // Update member dengan 0 visits dan never
+      await Member.update(id, {
+        total_visits: 0,
+        last_visit: 'Belum Pernah'
+      });
+      
+      console.log('✅ Member synced: 0 visits');
+      
+      return res.json({ 
+        success: true, 
+        message: 'Member synced successfully',
+        data: {
+          total_visits: 0,
+          last_visit: 'Belum Pernah'
+        }
+      });
+    }
+    
+    // Hitung total visits
+    const totalVisits = completedAppointments.length;
+    
+    // Ambil last visit (yang paling baru)
+    const lastVisit = completedAppointments[0].date;
+    
+    // Update member di database
+    await Member.update(id, {
+      total_visits: totalVisits,
+      last_visit: lastVisit
+    });
+    
+    console.log(`✅ Member synced: ${totalVisits} visits, last visit: ${lastVisit}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Member synced successfully',
+      data: {
+        total_visits: totalVisits,
+        last_visit: lastVisit,
+        appointment_count: completedAppointments.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error syncing member:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to sync member',
+      message: error.message 
+    });
+  }
+};
+
+// Sinkronkan semua members dengan appointments
+exports.syncAllMembers = async (req, res) => {
+  try {
+    console.log('🔄 Syncing all members with appointments');
+    
+    const { promisePool } = require('../config/database');
+    
+    // Ambil semua members
+    const [allMembers] = await promisePool.query('SELECT id FROM members');
+    
+    console.log(`📊 Found ${allMembers.length} members to sync`);
+    
+    let syncedCount = 0;
+    const results = [];
+    
+    for (const member of allMembers) {
+      try {
+        // Query untuk mendapatkan completed appointments per member
+        const [completedAppointments] = await promisePool.query(
+          `SELECT date FROM appointments 
+           WHERE member_id = ? AND status = 'completed'
+           ORDER BY date DESC`,
+          [member.id]
+        );
+        
+        const totalVisits = completedAppointments.length;
+        const lastVisit = completedAppointments.length > 0 
+          ? completedAppointments[0].date 
+          : 'Belum Pernah';
+        
+        // Update member
+        await Member.update(member.id, {
+          total_visits: totalVisits,
+          last_visit: lastVisit
+        });
+        
+        syncedCount++;
+        results.push({
+          member_id: member.id,
+          total_visits: totalVisits,
+          last_visit: lastVisit
+        });
+      } catch (err) {
+        console.error(`Error syncing member ${member.id}:`, err);
+      }
+    }
+    
+    console.log(`✅ Synced ${syncedCount} members`);
+    
+    res.json({ 
+      success: true, 
+      message: `All members synced successfully (${syncedCount}/${allMembers.length})`,
+      synced_count: syncedCount,
+      data: results 
+    });
+  } catch (error) {
+    console.error('❌ Error syncing all members:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to sync all members',
+      message: error.message 
+    });
+  }
+};
+
 // Get member statistics
 exports.getMemberStats = async (req, res) => {
   try {

@@ -86,6 +86,17 @@ const Member = () => {
         axios.get(APPOINTMENTS_API_URL, {headers: {Authorization: `Bearer ${Token}`}})
       ]);
       
+      // SYNC: Sinkronkan semua members dengan appointments data
+      console.log('🔄 Syncing all members with appointments...');
+      try {
+        await axios.post('/api/members/sync-all/members', {}, 
+          {headers: {Authorization: `Bearer ${Token}`}}
+        );
+        console.log('✅ All members synced successfully');
+      } catch (syncErr) {
+        console.warn('⚠️ Sync failed, continuing with local calculation:', syncErr.message);
+      }
+      
       // Proses members dengan data dari appointments
       const processedMembers = membersRes.data.data.map(member => {
 
@@ -227,14 +238,14 @@ const Member = () => {
         app.status === 'completed'
       );
       
-      // Konversi appointments ke format riwayat
+      // Konversi appointments ke format riwayat dengan field yang benar
       const fallbackHistory = completedAppointments.map(app => ({
         id: app.id,
         member_id: app.member_id,
         appointment_id: app.appointment_id || `APT-${app.id}`,
-        customer_name: app.customer_name,
-        treatment_name: app.treatment,
-        therapist: app.therapist,
+        customer_name: app.customer_name || app.member_name,
+        treatment_name: app.treatment_name || 'Treatment Tidak Tercatat',
+        therapist_name: app.therapist_name || 'Terapis Tidak Tercatat',
         date: app.date,
         time: app.time,
         amount: app.amount,
@@ -509,6 +520,26 @@ const Member = () => {
     console.log('👁️ [RIWAYAT] Melihat riwayat untuk member:', member);
     setHistoryLoading(true);
     try {
+      // SYNC: Sinkronkan member data sebelum tampil history
+      console.log('🔄 [SYNC] Syncing member data...');
+      try {
+        const syncRes = await axios.post(`${MEMBERS_API_URL}/${member.id}/sync`, {}, 
+          {headers: {Authorization: `Bearer ${Token}`}}
+        );
+        console.log('✅ [SYNC] Member synced:', syncRes.data.data);
+        
+        // Update local state dengan data terbaru
+        setMembers(prevMembers => 
+          prevMembers.map(m => 
+            m.id.toString() === member.id.toString()
+              ? { ...m, total_visits: syncRes.data.data.total_visits, last_visit: syncRes.data.data.last_visit }
+              : m
+          )
+        );
+      } catch (syncErr) {
+        console.warn('⚠️ [SYNC] Sync failed, continuing:', syncErr.message);
+      }
+      
       const [history, medicalRecords] = await Promise.all([
         fetchMemberHistory(member.id),
         fetchMemberMedicalRecords(member.id)
@@ -529,9 +560,9 @@ const Member = () => {
       ).map(app => ({
         id: app.id,
         appointment_id: app.appointment_id || `APT-${app.id}`,
-        customer_name: app.customer_name,
-        treatment_name: app.treatment,
-        therapist: app.therapist,
+        customer_name: app.customer_name || app.member_name,
+        treatment_name: app.treatment_name || 'Treatment Tidak Tercatat',
+        therapist_name: app.therapist_name || 'Terapis Tidak Tercatat',
         date: app.date,
         time: app.time,
         amount: app.amount,
@@ -1288,7 +1319,7 @@ const Member = () => {
                               <div className="text-sm font-medium">{record.treatment_name || record.treatment}</div>
                             </td>
                             <td className="py-3">
-                              <div className="text-sm text-brown-600 font-medium">{record.therapist}</div>
+                              <div className="text-sm text-brown-600 font-medium">{record.therapist_name || 'Terapis Tidak Tercatat'}</div>
                             </td>
                             <td className="py-3">
                               <div className="text-sm font-bold text-green-700">
@@ -1361,7 +1392,7 @@ const Member = () => {
                           <div className="space-y-1.5 text-xs">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Terapis:</span>
-                            <span className="font-medium text-brown-600">{record.therapist}</span>
+                            <span className="font-medium text-brown-600">{record.therapist_name || 'Terapis Tidak Tercatat'}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Jumlah:</span>
@@ -1415,7 +1446,7 @@ const Member = () => {
                   </div>
                   <div className="text-center bg-white p-3 rounded-lg">
                     <div className="text-xl sm:text-2xl font-bold text-gray-800">
-                      {new Set(viewingHistory.history.map(h => h.therapist)).size}
+                      {new Set(viewingHistory.history.map(h => h.therapist_name)).size}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600">Terapis Berbeda</div>
                   </div>
