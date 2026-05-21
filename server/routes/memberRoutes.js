@@ -18,4 +18,10 @@ router.put('/:id', memberController.updateMember);
 // DELETE member
 router.delete('/:id', memberController.deleteMember);
 
+// Sinkronkan single member dengan appointments
+router.post('/:id/sync', memberController.syncMemberWithAppointments);
+
+// Sinkronkan semua members dengan appointments
+router.post('/sync-all/members', memberController.syncAllMembers);
+
 module.exports = router;
