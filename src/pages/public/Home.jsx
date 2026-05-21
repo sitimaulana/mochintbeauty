@@ -269,7 +269,7 @@ const Home = () => {
       </section>
 
       {/* Testimonials Section -  MARGIN ADDED */}
-      <section className="py-20 bg-white overflow-hidden relative text-center">
+      <section className="py-20 pb-0 bg-white overflow-hidden relative text-center">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 max-w-[1400px]">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-5xl font-display font-bold text-[#3E2723] tracking-tighter">Apa Kata Mereka?</h2>
@@ -295,7 +295,7 @@ const Home = () => {
             >
               {isLoading ? (
                 <div className="w-full text-center py-12">
-                  <p className="text-gray-400">Memuat ulasan...</p>
+                  <p className="text-[#D7CCC8]">Memuat ulasan...</p>
                 </div>
               ) : testimonials.length > 0 ? (
                 testimonials.map((item, index) => {
@@ -361,7 +361,7 @@ const Home = () => {
                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Star size={32} className="text-gray-300" />
                   </div>
-                  <p className="text-gray-400 italic text-center font-sans">
+                  <p className="text-[#D7CCC8] italic text-center font-sans">
                     Belum ada ulasan saat ini. Jadilah yang pertama memberikan review!
                   </p>
                 </div>
@@ -379,7 +379,7 @@ const Home = () => {
       </section>
 
       {/* Footer Section - MARGIN ADDED */}
-      <footer className="py-20 bg-[#3E2723] text-white rounded-t-[50px] mt-10 text-left">
+      <footer className="pt-0 pb-20 bg-[#3E2723] text-white rounded-t-[50px] text-left">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 max-w-[1400px]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             
@@ -438,7 +438,6 @@ const Home = () => {
 
           </div>
           <div className="border-t border-white/5 mt-16 pt-8 text-center text-[#A1887F] text-xs font-sans font-black uppercase tracking-[0.3em]">
-            Â© 2026 Mochint Beauty Care.
           </div>
         </div>
       </footer>

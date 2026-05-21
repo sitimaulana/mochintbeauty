@@ -1,6 +1,8 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from "../components/member/Navbar";
+import Footer from "../components/common/Footer";
+
 const PublicLayout = () => {
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -12,7 +14,8 @@ const PublicLayout = () => {
         <Outlet />
       </main>
 
-      {/* 3. (Opsional) Footer bisa ditaruh disini nanti */}
+      {/* 3. Footer component */}
+      <Footer />
     </div>
   );
 };

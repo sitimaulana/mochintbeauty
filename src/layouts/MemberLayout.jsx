@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/member/Sidebar';
+import Footer from '../components/common/Footer';
 
 const MemberLayout = () => {
   const navigate = useNavigate();
@@ -56,12 +57,16 @@ const MemberLayout = () => {
   console.log('User authenticated, rendering member layout');
   
   return (
-    <div className="flex">
-      <Sidebar />
-      
-      <div className="flex-1 p-8">
-        <Outlet />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex flex-1">
+        <Sidebar />
+        
+        <div className="flex-1 p-8">
+          <Outlet />
+        </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };
