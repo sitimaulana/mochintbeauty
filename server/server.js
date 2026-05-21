@@ -24,6 +24,7 @@ const timeslotRoutes = require('./routes/timeslotRoutes');
 const pageInfoRoutes = require('./routes/pageInfoRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
+const aiSkinAnalysisRoutes = require('./routes/aiSkinAnalysisRoutes');
 
 // Import Reminder Service
 const reminderService = require('./services/reminderService');
@@ -98,6 +99,7 @@ console.log('  ✅ /api/reviews - Review routes');
 console.log('  ✅ /api/articles - Article routes');
 console.log('  ✅ /api/page-info - Page info routes');
 console.log('  ✅ /api/contact - Contact routes');
+console.log('  ✅ /api/ai - AI Skin Analysis routes');
 console.log('  ✅ /api/appointments - Appointment routes (protected)');
 console.log('  ✅ /api/reminders - Appointment Reminder routes (protected)');
 console.log('  ✅ /api/members - Member routes (protected)');
@@ -119,6 +121,7 @@ app.use('/api/reviews', reviewsRoutes); // Register route sekali saja
 app.use('/api/articles', articlesRoutes);
 app.use('/api/page-info', pageInfoRoutes); // Dynamic page content management
 app.use('/api/contact', contactRoutes); // Contact information management
+app.use('/api/ai', aiSkinAnalysisRoutes); // AI Skin Analysis routes
 
 // Protected routes (require token) - MUST BE BEFORE STATIC FILES
 app.use('/api/appointments', authenticateToken, appointmentRoutes);

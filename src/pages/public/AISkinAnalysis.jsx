@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, Sparkles, AlertCircle, CheckCircle, Loader, X } from 'lucide-react';
+import { Upload, Camera, Sparkles, AlertCircle, CheckCircle, Loader, X, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 
 const AISkinAnalysis = () => {
@@ -53,8 +53,8 @@ const AISkinAnalysis = () => {
     }
     brightness = brightness / (canvas.width * canvas.height);
     
-    // Check if lighting is sufficient (brightness between 30-240)
-    setIsLighting(brightness > 30 && brightness < 240);
+    // Check if lighting is sufficient (very permissive - brightness between 20-250)
+    setIsLighting(brightness > 20 && brightness < 250);
 
     // Detect face using edge detection (simple method)
     // Look for skin tones in center area
@@ -133,52 +133,15 @@ const AISkinAnalysis = () => {
       const positionValid = Math.abs(darkPixelX - centerX) < centerTolerance && 
                            Math.abs(darkPixelY - centerY) < centerTolerance;
       setIsFacePosition(positionValid && faceDetectedNow);
+      
+      // Check if face is inside the center box
+      // Use the fresh positionValid value, not state
+      const isInBox = faceDetectedNow && positionValid;
+      setFaceInBox(isInBox);
     } else {
       setIsFacePosition(false);
+      setFaceInBox(false);
     }
-    
-    // Check if looking at camera (detect eyes - simplified)
-    // Look for high contrast areas in upper half (eyes region)
-    const eyeRegionHeight = canvas.height * 0.4;
-    let eyeContrast = 0;
-    let eyePixels = 0;
-    
-    for (let y = canvas.height * 0.15; y < canvas.height * 0.35; y++) {
-      for (let x = canvas.width * 0.2; x < canvas.width * 0.8; x++) {
-        const index = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
-        const r = data[index];
-        const g = data[index + 1];
-        const b = data[index + 2];
-        const brightness = (r + g + b) / 3;
-        
-        eyeContrast += Math.abs(brightness - 128);
-        eyePixels++;
-      }
-    }
-    
-    eyeContrast = eyeContrast / eyePixels;
-    setIsLooking(eyeContrast > 30 && faceDetectedNow);
-
-    // Check if face is inside the center box (140x180px)
-    // Use a simpler approach - check if detected face is roughly in center
-    const faceRight = faceBounds.x + faceBounds.width;
-    const faceBottom = faceBounds.y + faceBounds.height;
-    const faceCenterX = faceBounds.x + faceBounds.width / 2;
-    const faceCenterY = faceBounds.y + faceBounds.height / 2;
-    
-    const canvasCenterX = canvas.width / 2;
-    const canvasCenterY = canvas.height / 2;
-    
-    // Check if face center is reasonably close to canvas center
-    const distanceX = Math.abs(faceCenterX - canvasCenterX);
-    const distanceY = Math.abs(faceCenterY - canvasCenterY);
-    
-    // Allow face to be off-center by up to 40% of canvas width/height
-    const maxDistanceX = canvas.width * 0.4;
-    const maxDistanceY = canvas.height * 0.4;
-    
-    const isInBox = distanceX < maxDistanceX && distanceY < maxDistanceY;
-    setFaceInBox(isInBox && faceDetectedNow);
   };
 
   // --- FACE DETECTION LOOP ---
@@ -311,6 +274,31 @@ const AISkinAnalysis = () => {
     }
   };
 
+  // --- HANDLE REFRESH CAMERA ---
+  const handleRefreshCamera = async () => {
+    try {
+      // Stop current stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+      
+      // Restart camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraActive(true);
+        setError(null);
+      }
+    } catch (err) {
+      setError('Gagal me-refresh kamera. Silakan coba lagi.');
+      console.error('Refresh camera error:', err);
+    }
+  };
+
   // --- HANDLE ANALYZE BUTTON ---
   const handleAnalyze = async () => {
     if (!uploadedImage) {
@@ -322,44 +310,26 @@ const AISkinAnalysis = () => {
     setError(null);
 
     try {
-      // TODO: Replace dengan actual API endpoint nanti setelah backend AI ready
-      // Untuk sekarang, kita mock dengan delay dan dummy data
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call real API endpoint with image data
+      const response = await axios.post('/api/ai/analyze-skin', {
+        image: imagePreview
+      });
 
-      // Mock analysis result
-      const mockResult = {
-        skinType: 'Kombinasi',
-        skinCondition: [
-          { issue: 'Komedo', severity: 'sedang', color: 'yellow' },
-          { issue: 'Kulit Berminyak', severity: 'ringan', color: 'orange' },
-          { issue: 'Pigmentasi', severity: 'ringan', color: 'red' }
-        ],
-        recommendations: [
-          {
-            id: 1,
-            treatment: 'Facial HydraFacial',
-            reason: 'Untuk membersihkan pori-pori dan menghilangkan komedo',
-            price: 350000
-          },
-          {
-            id: 2,
-            treatment: 'Chemical Peel',
-            reason: 'Untuk mengatasi pigmentasi dan mencerahkan kulit',
-            price: 250000
-          },
-          {
-            id: 3,
-            treatment: 'Hydrating Mask Treatment',
-            reason: 'Untuk menyeimbangkan kelembaban kulit kombinasi',
-            price: 150000
-          }
-        ],
-        confidence: 87
+      if (response.data && response.data.error) {
+        setError(response.data.error);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Map API response to expected format
+      const analysisResult = {
+        skinType: response.data.skinType,
+        confidence: response.data.confidence,
+        skinCondition: response.data.skinCondition,
+        recommendations: response.data.recommendations
       };
 
-      setAnalysisResult(mockResult);
+      setAnalysisResult(analysisResult);
       setShowResults(true);
     } catch (err) {
       setError('Gagal menganalisis foto. Silakan coba lagi.');
@@ -593,10 +563,13 @@ const AISkinAnalysis = () => {
                               style={{
                                 width: '140px',
                                 height: '180px',
-                                border: isLighting && faceInBox && isLooking 
-                                  ? '4px solid #10b981' 
+                                border: faceDetected && faceInBox
+                                  ? '6px solid #10b981' 
                                   : '4px solid #ef4444',
-                                transition: 'border-color 200ms'
+                                transition: 'border-color 200ms, box-shadow 200ms',
+                                boxShadow: faceDetected && faceInBox
+                                  ? '0 0 20px rgba(16, 185, 129, 0.6), inset 0 0 20px rgba(16, 185, 129, 0.2)'
+                                  : 'none'
                               }}
                             />
                           </div>
@@ -610,29 +583,14 @@ const AISkinAnalysis = () => {
                             )}
                             {faceDetected && !faceInBox && (
                               <div className="text-xs text-white bg-red-500/80 px-3 py-1 rounded-full">
-                                ✗ Wajah di dalam kotak
+                                Posisikan wajah anda kedalam kotak!
                               </div>
                             )}
-                            {faceDetected && faceInBox && !isLighting && (
-                              <div className="text-xs text-white bg-yellow-500/80 px-3 py-1 rounded-full">
-                                ⚠ Pencahayaan kurang
-                              </div>
-                            )}
-                            {faceDetected && faceInBox && !isLooking && (
-                              <div className="text-xs text-white bg-yellow-500/80 px-3 py-1 rounded-full">
-                                ⚠ Pandang lurus ke kamera
-                              </div>
-                            )}
-                            {faceDetected && faceInBox && isLighting && isLooking && (
+                            {faceDetected && faceInBox && (
                               <div className="text-xs text-white bg-green-500/80 px-3 py-1 rounded-full animate-pulse">
-                                ✓ Siap ambil foto
+                                Siap ambil foto
                               </div>
                             )}
-                          </div>
-
-                          {/* Face Detection Indicator */}
-                          <div className="absolute bottom-4 left-4 text-xs text-white bg-black/50 px-2 py-1 rounded">
-                            Posisikan wajah anda kedalam kotak!
                           </div>
 
                           {/* Bounding Box dengan Corners */}
@@ -673,10 +631,22 @@ const AISkinAnalysis = () => {
                           <div className="flex gap-3 mt-4">
                             <button
                               onClick={handleCapture}
-                              className="flex-1 py-3 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2"
+                              disabled={!faceInBox}
+                              className={`flex-1 py-3 px-4 font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                                faceInBox
+                                  ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
+                                  : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
+                              }`}
                             >
                               <Camera className="w-5 h-5" />
                               Ambil Foto
+                            </button>
+                            <button
+                              onClick={handleRefreshCamera}
+                              className="py-3 px-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                              title="Refresh kamera"
+                            >
+                              <RotateCcw className="w-5 h-5" />
                             </button>
                             <button
                               onClick={() => setUseCamera(false)}
