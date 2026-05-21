@@ -694,36 +694,58 @@ const AdminMedicalRecordsModal = ({
 
           {/* Before Image Upload */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-3">
               Foto Sebelum Perawatan (Before)
             </label>
 
-            {/* Mode Selection or Preview */}
-            {!beforeImagePreview && beforeUploadMode === null && (
-              <div className="space-y-3">
+            {/* Toggle Camera/Upload Mode */}
+            {!beforeImagePreview && (
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setBeforeUploadMode('upload')}
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm ${
+                    beforeUploadMode === 'upload'
+                      ? 'bg-[#8D6E63] text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <Upload size={16} />
+                  Upload
+                </button>
                 <button
                   type="button"
                   onClick={() => setBeforeUploadMode('camera')}
-                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm ${
+                    beforeUploadMode === 'camera'
+                      ? 'bg-[#8D6E63] text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                 >
-                  <Camera size={20} className="text-[#8D6E63]" />
-                  <div className="text-left">
-                    <p className="font-bold text-[#8D6E63]">Foto dari Kamera</p>
-                    <p className="text-xs text-gray-500">Ambil foto langsung</p>
-                  </div>
+                  <Camera size={16} />
+                  Kamera
                 </button>
-                
-                <button
-                  type="button"
+              </div>
+            )}
+
+            {/* Upload Area */}
+            {beforeUploadMode === 'upload' && !beforeImagePreview && (
+              <>
+                <div
                   onClick={() => beforeFileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                  className="border-3 border-dashed border-[#8D6E63] rounded-xl p-8 text-center cursor-pointer hover:bg-[#FDF8F5] transition-colors"
                 >
-                  <Upload size={20} className="text-[#8D6E63]" />
-                  <div className="text-left">
-                    <p className="font-bold text-[#8D6E63]">Upload dari Galeri</p>
-                    <p className="text-xs text-gray-500">Pilih foto dari device</p>
-                  </div>
-                </button>
+                  <Upload className="w-12 h-12 text-[#8D6E63] mx-auto mb-3" />
+                  <p className="text-[#5D4037] font-semibold mb-2">
+                    Klik untuk upload foto
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    atau drag & drop di sini
+                  </p>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Maksimal 10MB • Format: JPG, PNG, WebP
+                  </p>
+                </div>
 
                 <input
                   ref={beforeFileInputRef}
@@ -732,7 +754,7 @@ const AdminMedicalRecordsModal = ({
                   onChange={(e) => handleImageChange(e, 'before')}
                   className="hidden"
                 />
-              </div>
+              </>
             )}
 
             {/* Camera View for Before */}
@@ -745,7 +767,7 @@ const AdminMedicalRecordsModal = ({
                   </div>
                 )}
 
-                <div className="relative bg-black rounded-lg overflow-hidden h-64">
+                <div className="relative bg-black rounded-lg overflow-hidden aspect-[4/3]">
                   <video
                     ref={beforeCameraRef}
                     autoPlay
@@ -864,11 +886,11 @@ const AdminMedicalRecordsModal = ({
             {/* Preview */}
             {beforeImagePreview && (
               <div className="space-y-3">
-                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden aspect-[4/3]">
                   <img 
                     src={beforeImagePreview} 
                     alt="Before" 
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                     style={{ transform: 'scaleX(-1)' }}
                   />
                   <button
@@ -900,36 +922,58 @@ const AdminMedicalRecordsModal = ({
 
           {/* After Image Upload */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-3">
               Foto Setelah Perawatan (After)
             </label>
 
-            {/* Mode Selection or Preview */}
-            {!afterImagePreview && afterUploadMode === null && (
-              <div className="space-y-3">
+            {/* Toggle Camera/Upload Mode */}
+            {!afterImagePreview && (
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setAfterUploadMode('upload')}
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm ${
+                    afterUploadMode === 'upload'
+                      ? 'bg-[#8D6E63] text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <Upload size={16} />
+                  Upload
+                </button>
                 <button
                   type="button"
                   onClick={() => setAfterUploadMode('camera')}
-                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm ${
+                    afterUploadMode === 'camera'
+                      ? 'bg-[#8D6E63] text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                 >
-                  <Camera size={20} className="text-[#8D6E63]" />
-                  <div className="text-left">
-                    <p className="font-bold text-[#8D6E63]">Foto dari Kamera</p>
-                    <p className="text-xs text-gray-500">Ambil foto langsung</p>
-                  </div>
+                  <Camera size={16} />
+                  Kamera
                 </button>
-                
-                <button
-                  type="button"
+              </div>
+            )}
+
+            {/* Upload Area */}
+            {afterUploadMode === 'upload' && !afterImagePreview && (
+              <>
+                <div
                   onClick={() => afterFileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 p-3 border-2 border-[#8D6E63] rounded-lg hover:bg-[#8D6E63]/10 transition-all"
+                  className="border-3 border-dashed border-[#8D6E63] rounded-xl p-8 text-center cursor-pointer hover:bg-[#FDF8F5] transition-colors"
                 >
-                  <Upload size={20} className="text-[#8D6E63]" />
-                  <div className="text-left">
-                    <p className="font-bold text-[#8D6E63]">Upload dari Galeri</p>
-                    <p className="text-xs text-gray-500">Pilih foto dari device</p>
-                  </div>
-                </button>
+                  <Upload className="w-12 h-12 text-[#8D6E63] mx-auto mb-3" />
+                  <p className="text-[#5D4037] font-semibold mb-2">
+                    Klik untuk upload foto
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    atau drag & drop di sini
+                  </p>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Maksimal 10MB • Format: JPG, PNG, WebP
+                  </p>
+                </div>
 
                 <input
                   ref={afterFileInputRef}
@@ -938,7 +982,7 @@ const AdminMedicalRecordsModal = ({
                   onChange={(e) => handleImageChange(e, 'after')}
                   className="hidden"
                 />
-              </div>
+              </>
             )}
 
             {/* Camera View for After */}
@@ -951,7 +995,7 @@ const AdminMedicalRecordsModal = ({
                   </div>
                 )}
 
-                <div className="relative bg-black rounded-lg overflow-hidden h-64">
+                <div className="relative bg-black rounded-lg overflow-hidden aspect-[4/3]">
                   <video
                     ref={afterCameraRef}
                     autoPlay
@@ -1070,11 +1114,11 @@ const AdminMedicalRecordsModal = ({
             {/* Preview */}
             {afterImagePreview && (
               <div className="space-y-3">
-                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden aspect-[4/3]">
                   <img 
                     src={afterImagePreview} 
                     alt="After" 
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                     style={{ transform: 'scaleX(-1)' }}
                   />
                   <button
