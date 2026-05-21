@@ -1,6 +1,33 @@
 import { FACE_DETECTION, SKIN_TONE_DETECTION, BOUNDING_BOX } from '../constants';
 
 /**
+ * Translate skin condition name from English to Indonesian
+ * @param {string} conditionName - Condition name (English or Indonesian)
+ * @returns {string} Translated condition name
+ */
+export const translateCondition = (conditionName) => {
+  const translations = {
+    'acne': 'Jerawat',
+    'blackheades': 'Komedo',
+    'blackheads': 'Komedo',
+    'dark spots': 'Bintik Hitam',
+    'darkspots': 'Bintik Hitam',
+    'pores': 'Pori-pori',
+    'redness': 'Kemerahan',
+    'wrinkles': 'Kerutan',
+    'jerawat': 'Jerawat',
+    'komedo': 'Komedo',
+    'bintik hitam': 'Bintik Hitam',
+    'pori-pori': 'Pori-pori',
+    'kemerahan': 'Kemerahan',
+    'kerutan': 'Kerutan',
+  };
+
+  const lowerCondition = conditionName?.toLowerCase().trim();
+  return translations[lowerCondition] || conditionName;
+};
+
+/**
  * Detect face and validate face position, lighting, and bounding box
  * @param {HTMLVideoElement} video - Video element from camera
  * @param {Object} setters - Object containing setter functions for state

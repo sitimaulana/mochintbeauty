@@ -13,7 +13,8 @@ export {
   detectFaceAndValidate,
   formatPrice,
   validateImageFile,
-  getSeverityColor
+  getSeverityColor,
+  translateCondition
 } from './utils/faceDetection';
 
 // Export API functions

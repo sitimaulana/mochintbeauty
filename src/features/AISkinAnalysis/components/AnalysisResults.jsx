@@ -1,5 +1,5 @@
 import React from 'react';
-import { getSeverityColor, formatPrice } from '../utils/faceDetection';
+import { getSeverityColor, formatPrice, translateCondition } from '../utils/faceDetection';
 import { COLORS } from '../constants';
 
 const AnalysisResults = ({ result, imagePreview, onReset }) => {
@@ -49,9 +49,7 @@ const AnalysisResults = ({ result, imagePreview, onReset }) => {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-semibold text-[#8D6E63]">
-                        {result.detectedCondition
-                          .replace('_', ' ')
-                          .toUpperCase()}
+                        {translateCondition(result.detectedCondition)}
                       </span>
                       <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded">
                         {result.conditionConfidence}%
@@ -74,7 +72,7 @@ const AnalysisResults = ({ result, imagePreview, onReset }) => {
                       condition.severity
                     )} text-sm font-medium flex items-center justify-between`}
                   >
-                    <span>{condition.issue}</span>
+                    <span>{translateCondition(condition.issue)}</span>
                     <span className="capitalize text-xs">
                       ({condition.severity})
                     </span>
