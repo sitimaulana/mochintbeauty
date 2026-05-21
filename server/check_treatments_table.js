@@ -18,16 +18,17 @@ const promisePool = pool.promise();
 
 async function checkTreatmentsTable() {
   try {
-    console.log('=== SAMPLE DATA (First 3 Records) ===\n');
-    const [records] = await promisePool.query('SELECT id, name, category, duration, price FROM treatments LIMIT 3');
-    records.forEach((rec, i) => {
-      console.log(`Record ${i + 1}:`);
-      console.log(JSON.stringify(rec, null, 2));
-    });
+    console.log('=== TABLE SCHEMA ===');
+    const [schema] = await promisePool.query('DESCRIBE treatments');
+    schema.forEach(col => console.log(`${col.Field}: ${col.Type} (NULL: ${col.Null})`));
     
-    console.log('\n=== TOTAL RECORD COUNT ===');
+    console.log('\n=== SAMPLE DATA ===');
+    const [records] = await promisePool.query('SELECT * FROM treatments LIMIT 3');
+    records.forEach(rec => console.log(JSON.stringify(rec, null, 2)));
+    
+    console.log('\n=== TOTAL RECORDS ===');
     const [count] = await promisePool.query('SELECT COUNT(*) as cnt FROM treatments');
-    console.log(`Total records: ${count[0].cnt}`);
+    console.log(`Total: ${count[0].cnt}`);
     
   } catch (error) {
     console.error('Error:', error.message);

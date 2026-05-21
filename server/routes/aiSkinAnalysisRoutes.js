@@ -25,15 +25,20 @@ router.post('/analyze-skin', async (req, res) => {
     // Determine Python executable path (use venv if available)
     let pythonExe = 'python';
     const isWindows = os.platform() === 'win32';
-    const venvPythonPath = path.join(__dirname, '../.venv/Scripts/python.exe');
-    const venvPythonPathUnix = path.join(__dirname, '../.venv/bin/python');
+    // __dirname is server/routes, so we need to go up 2 levels to project root, then into .venv
+    const venvPythonPath = path.join(__dirname, '../../.venv/Scripts/python.exe');
+    const venvPythonPathUnix = path.join(__dirname, '../../.venv/bin/python');
     
     // Check if virtual environment Python exists
     const fs = require('fs');
     if (isWindows && fs.existsSync(venvPythonPath)) {
       pythonExe = venvPythonPath;
+      console.log(`✅ Found venv Python at: ${venvPythonPath}`);
     } else if (!isWindows && fs.existsSync(venvPythonPathUnix)) {
       pythonExe = venvPythonPathUnix;
+      console.log(`✅ Found venv Python at: ${venvPythonPathUnix}`);
+    } else {
+      console.log(`⚠️ venv Python not found, using system Python`);
     }
     
     console.log(`Using Python: ${pythonExe}`);

@@ -39,7 +39,7 @@ import PublicProduct from '../pages/public/Product';
 import PublicInformation from '../pages/public/Information';
 import InformationDetail from '../pages/public/InformationDetail'; 
 import Promo from '../pages/public/Promo';
-import AISkinAnalysis from '../pages/public/AISkinAnalysis';
+import AISkinAnalysisPage from '../features/AISkinAnalysis/pages/AISkinAnalysisPage';
 
 // --- PAGES: MEMBER ---
 import MemberApp from '../pages/member/MemberApp';
@@ -267,7 +267,7 @@ const AppRoutes = () => {
                 <Route path="information" element={<PublicInformation />} />
                 <Route path="information/:id" element={<InformationDetail />} />
                 <Route path="promo" element={<Promo />} />
-                <Route path="ai-skin-analysis" element={<AISkinAnalysis />} />
+                <Route path="ai-skin-analysis" element={<AISkinAnalysisPage />} />
                 
                 {/* Route untuk redirect ke login jika mencoba akses protected */}
                 <Route path="member" element={<LoginRedirect />} />

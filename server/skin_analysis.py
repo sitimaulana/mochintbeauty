@@ -14,6 +14,8 @@ import torch
 import torch.nn as nn
 from torchvision import models
 import torchvision.transforms as transforms
+import mysql.connector
+from mysql.connector import Error
 
 # Get absolute path to model file (relative to this script)
 import os
@@ -59,6 +61,54 @@ def load_model():
         import traceback
         traceback.print_exc()
         return None
+
+# --- CONDITION MODEL (Your Trained Model) ---
+CONDITION_NAMES = ['acne', 'blackheades', 'dark spots', 'pores', 'redness', 'wrinkles']
+CONDITION_MODEL_PATH = os.path.join(SCRIPT_DIR, 'mochint_model.pth')
+
+def load_condition_model():
+    """Load your trained condition detection model - EfficientNet-B0 with 6 condition classes"""
+    try:
+        device = torch.device('cpu')
+        
+        # Create EfficientNet-B0 architecture with 6 classes (your model)
+        model = models.efficientnet_b0(weights=None)
+        num_features = model.classifier[1].in_features
+        model.classifier[1] = nn.Linear(num_features, 6)  # 6 condition classes
+        
+        # Load your trained model
+        if not os.path.exists(CONDITION_MODEL_PATH):
+            print(f"Condition model not found at {CONDITION_MODEL_PATH}", file=sys.stderr)
+            return None
+            
+        state_dict = torch.load(CONDITION_MODEL_PATH, map_location=device, weights_only=False)
+        model.load_state_dict(state_dict)
+        
+        model.to(device)
+        model.eval()
+        
+        return model
+    except Exception as e:
+        print(f"Condition model loading error: {e}", file=sys.stderr)
+        return None
+
+def predict_skin_condition(model, image_tensor):
+    """Predict skin condition from your trained model"""
+    try:
+        with torch.no_grad():
+            output = model(image_tensor)
+        
+        probabilities = torch.nn.functional.softmax(output, dim=1)
+        confidence, predicted_class = torch.max(probabilities, 1)
+        
+        condition_idx = predicted_class.item()
+        confidence_score = confidence.item() * 100
+        
+        condition = CONDITION_NAMES[condition_idx]
+        
+        return condition, confidence_score
+    except Exception as e:
+        raise Exception(f"Condition prediction error: {str(e)}")
 
 def preprocess_image(image_data):
     """Convert base64 image to tensor"""
@@ -174,8 +224,74 @@ def classify_skin_by_color(image_tensor):
         # If color analysis fails, default to Normal
         return 4, 70
 
-def generate_recommendations(skin_type):
-    """Generate treatment recommendations based on skin type"""
+def get_db_connection():
+    """Create MySQL database connection"""
+    try:
+        connection = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='root',
+            database='mochint_db'
+        )
+        return connection
+    except Error as e:
+        print(f"Database connection error: {e}", file=sys.stderr)
+        return None
+
+def generate_recommendations(skin_type, detected_condition=None):
+    """Generate treatment recommendations based on skin type and detected condition from database"""
+    # First, try to query from database
+    try:
+        connection = get_db_connection()
+        if connection and connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            
+            # Build query: Find treatments matching skin_type, prioritizing those matching condition
+            if detected_condition:
+                # Query with priority for treatments matching BOTH skin_type AND detected_condition
+                query = """
+                SELECT id, name, price, description, skin_type, skin_condition
+                FROM treatments
+                WHERE skin_type = %s
+                ORDER BY 
+                    CASE WHEN skin_condition LIKE %s THEN 0 ELSE 1 END,
+                    price ASC
+                LIMIT 3
+                """
+                condition_pattern = f"%{detected_condition}%"
+                cursor.execute(query, (skin_type, condition_pattern))
+            else:
+                # Query with skin_type only
+                query = """
+                SELECT id, name, price, description, skin_type, skin_condition
+                FROM treatments
+                WHERE skin_type = %s
+                ORDER BY price ASC
+                LIMIT 3
+                """
+                cursor.execute(query, (skin_type,))
+            
+            results = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            
+            # Transform database results to response format
+            if results:
+                recommendations = []
+                for idx, row in enumerate(results, 1):
+                    # Generate reason based on skin_type and detected_condition
+                    reason = generate_treatment_reason(row['name'], skin_type, detected_condition)
+                    recommendations.append({
+                        'id': row['id'],
+                        'treatment': row['name'],
+                        'reason': reason,
+                        'price': int(row['price'])
+                    })
+                return recommendations
+    except Exception as e:
+        print(f"Database query error: {e}", file=sys.stderr)
+    
+    # Fallback to hardcoded recommendations if database query fails
     recommendations = {
         'Kering': [
             {
@@ -321,6 +437,37 @@ def generate_recommendations(skin_type):
     
     return recommendations.get(skin_type, recommendations['Normal'])
 
+def generate_treatment_reason(treatment_name, skin_type, detected_condition=None):
+    """Generate personalized reason for treatment recommendation"""
+    reasons = {
+        'Kering': 'Untuk mengatasi kulit kering dan meningkatkan hidrasi',
+        'Berminyak': 'Untuk mengontrol produksi minyak dan membersihkan pori-pori',
+        'Kombinasi': 'Untuk menyeimbangkan kondisi kulit kombinasi',
+        'Sensitif': 'Untuk kulit sensitif dengan perawatan yang lembut',
+        'Normal': 'Untuk menjaga kesehatan kulit normal',
+        'Berjerawat': 'Untuk mengatasi jerawat dan mencegah munculnya jerawat baru',
+        'Kusam': 'Untuk mencerahkan dan mengembalikan radiance kulit'
+    }
+    
+    # Base reason from skin type
+    reason = reasons.get(skin_type, 'Untuk perawatan kulit optimal')
+    
+    # Add condition-specific note if available
+    if detected_condition:
+        condition_notes = {
+            'acne': ' dan mengatasi jerawat',
+            'blackheads': ' dan menghilangkan komedo',
+            'dark_spots': ' dan mencerahkan noda hitam',
+            'pores': ' dan memperkecil pori-pori',
+            'redness': ' dan mengurangi kemerahan',
+            'wrinkles': ' dan mengurangi garis-garis halus'
+        }
+        condition_note = condition_notes.get(detected_condition.lower(), '')
+        if condition_note:
+            reason += condition_note
+    
+    return reason
+
 def detect_skin_conditions(skin_type):
     """Detect potential skin conditions based on skin type"""
     conditions_by_type = {
@@ -373,16 +520,7 @@ def main():
             print(json.dumps(output))
             sys.exit(1)
         
-        # Load model
-        model = load_model()
-        if model is None:
-            output = {
-                'error': 'Failed to load model'
-            }
-            print(json.dumps(output))
-            sys.exit(1)
-        
-        # Preprocess image
+        # Preprocess image ONCE (use for both models)
         try:
             tensor = preprocess_image(image_base64)
             error = None
@@ -397,25 +535,52 @@ def main():
             print(json.dumps(output))
             sys.exit(1)
         
-        # Run inference using color-based classifier (since NN is untrained)
-        # This analyzes actual image properties instead of untrained weights
-        skin_type_idx, confidence_score = classify_skin_by_color(tensor)
+        # ===== HYBRID APPROACH: Combine both models =====
         
-        # Get skin type name
+        # 1. SKIN TYPE (from color analysis - fallback method)
+        # Using color-based classifier since NN is untrained
+        skin_type_idx, skin_type_confidence = classify_skin_by_color(tensor)
         skin_type = SKIN_TYPES.get(skin_type_idx, 'Unknown')
         
-        # Get skin conditions
-        skin_conditions = detect_skin_conditions(skin_type)
+        # 2. SKIN CONDITION (from your trained model)
+        condition_detected = None
+        condition_confidence = 0
+        condition_model = load_condition_model()
         
-        # Get recommendations
-        recommendations = generate_recommendations(skin_type)
+        if condition_model is not None:
+            try:
+                condition_detected, condition_confidence = predict_skin_condition(condition_model, tensor)
+                print(f"Condition detected: {condition_detected} ({condition_confidence:.1f}%)", file=sys.stderr)
+            except Exception as e:
+                print(f"Condition prediction failed: {e}", file=sys.stderr)
+                condition_detected = None
+        else:
+            print("Condition model not available, using skin type-based conditions", file=sys.stderr)
+        
+        # Build skin conditions list
+        if condition_detected:
+            # Use detected condition with high severity
+            skin_conditions = [
+                {'issue': condition_detected.replace('_', ' ').title(), 'severity': 'sedang'}
+            ]
+            # Add skin type related conditions
+            type_conditions = detect_skin_conditions(skin_type)
+            skin_conditions.extend(type_conditions[:1])  # Add 1 more
+        else:
+            # Fallback to skin type conditions
+            skin_conditions = detect_skin_conditions(skin_type)
+        
+        # Get recommendations (based on skin type AND detected condition from DB)
+        recommendations = generate_recommendations(skin_type, condition_detected)
         
         # Prepare response
         result = {
             'skinType': skin_type,
-            'confidence': int(confidence_score),
+            'confidence': int(skin_type_confidence),
             'skinCondition': skin_conditions,
-            'recommendations': recommendations
+            'recommendations': recommendations,
+            'detectedCondition': condition_detected,  # Additional info
+            'conditionConfidence': int(condition_confidence)
         }
         
         print(json.dumps(result, ensure_ascii=False))
