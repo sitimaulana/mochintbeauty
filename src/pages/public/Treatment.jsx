@@ -155,25 +155,25 @@ const Treatment = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-20 font-sans text-[#5D4037]">
       {/* CONTAINER dengan MARGIN KANAN KIRI */}
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 pt-6 sm:pt-8 max-w-[1400px]">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-4 sm:pt-6 md:pt-8 max-w-[1400px]">
         
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#8D6E63] mb-8 sm:mb-12">
+        <nav className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#8D6E63] mb-6 sm:mb-8 md:mb-12">
           <button onClick={() => navigate('/')} className="hover:opacity-70 transition-all">
-            <Home size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <Home size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
           </button>
           <span className="text-gray-300">/</span>
           <span>Perawatan</span>
         </nav>
 
         {/*HEADER dengan Info & Reset Button */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-2 tracking-tight text-[#3E2723]">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-1 sm:mb-2 tracking-tight text-[#3E2723]">
                 Layanan
               </h2>
-              <p className="text-xs sm:text-sm font-sans text-[#8D6E63] font-bold uppercase tracking-widest">
+              <p className="text-[10px] sm:text-xs md:text-sm font-sans text-[#8D6E63] font-bold uppercase tracking-widest">
                 {filteredTreatments.length} dari {treatments.length} perawatan ditemukan     
               </p>
             </div>
@@ -182,9 +182,9 @@ const Treatment = () => {
             {(selectedCategory !== 'All' || searchQuery.trim() !== '') && (
               <button
                 onClick={handleResetFilter}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white border-2 border-[#8D6E63] text-[#8D6E63] rounded-full font-bold text-xs uppercase tracking-wider hover:bg-[#8D6E63] hover:text-white transition-all"
+                className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-[#8D6E63] text-[#8D6E63] rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-wider hover:bg-[#8D6E63] hover:text-white transition-all"
               >
-                <X size={16} />
+                <X size={14} className="sm:w-4 sm:h-4" />
                 Reset Filter
               </button>
             )}
@@ -193,12 +193,12 @@ const Treatment = () => {
           {/* Mobile Filter Button */}
           <button
             onClick={() => setIsFilterOpen(true)}
-            className="lg:hidden w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8D6E63] text-white rounded-2xl font-bold text-sm shadow-lg"
+            className="lg:hidden w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8D6E63] text-white rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-lg"
           >
-            <SlidersHorizontal size={18} />
+            <SlidersHorizontal size={16} className="sm:w-[18px] sm:h-[18px]" />
             Filter & Pencarian
             {(selectedCategory !== 'All' || searchQuery.trim() !== '') && (
-              <span className="ml-2 px-2 py-0.5 bg-white text-[#8D6E63] rounded-full text-xs font-bold">
+              <span className="ml-2 px-2 py-0.5 bg-white text-[#8D6E63] rounded-full text-[10px] sm:text-xs font-bold">
                 {selectedCategory !== 'All' && searchQuery ? '2' : '1'}
               </span>
             )}

@@ -252,28 +252,28 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
   const isGoogleOAuthEnabled = true;
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-3 sm:p-4 md:p-6 font-sans">
       {/* Notification Toast - Responsive Style */}
       {notification.show && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 animate-slide-in-right">
-          <div className={`rounded-lg shadow-lg p-3 sm:p-4 w-full sm:min-w-[320px] sm:max-w-md ${
+        <div className="fixed top-3 right-3 left-3 sm:left-auto z-50 animate-slide-in-right">
+          <div className={`rounded-lg shadow-lg p-3 sm:p-4 w-full sm:min-w-[300px] md:min-w-[320px] md:max-w-md ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
           }`}>
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex-shrink-0 mt-0.5">
                 {notification.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                  <CheckCircle className="h-4 sm:h-5 md:h-6 w-4 sm:w-5 md:w-6 text-green-600" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+                  <AlertCircle className="h-4 sm:h-5 md:h-6 w-4 sm:w-5 md:w-6 text-red-600" />
                 )}
               </div>
-              <div className="ml-3 flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className={`text-xs sm:text-sm font-medium ${
                   notification.type === 'success' ? 'text-green-800' : 'text-red-800'
                 }`}>
                   {notification.type === 'success' ? 'Berhasil!' : 'Login Gagal!'}
                 </h3>
-                <p className={`mt-1 text-xs sm:text-sm ${
+                <p className={`mt-1 text-xs sm:text-sm break-words ${
                   notification.type === 'success' ? 'text-green-700' : 'text-red-700'
                 }`}>
                   {notification.message}
@@ -281,10 +281,10 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
               </div>
               <button
                 onClick={() => setNotification({ show: false, type: '', message: '' })}
-                className={`ml-4 flex-shrink-0 rounded-md inline-flex ${
+                className={`ml-2 flex-shrink-0 rounded-md inline-flex ${
                   notification.type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
                 }`}>
-                <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-4 sm:h-5 w-4 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
@@ -295,77 +295,77 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
 
       <div className="w-full max-w-md">
         
-        {/* Tombol Kembali - Dibuat lebih subtle */}
+        {/* Tombol Kembali - Responsive */}
         {onBack && (
           <button 
             onClick={onBack}
-            className="group flex items-center text-[#8D6E63] hover:text-[#3E2723] text-sm font-semibold mb-8 transition-all"
+            className="group flex items-center text-[#8D6E63] hover:text-[#3E2723] text-xs sm:text-sm font-semibold mb-6 sm:mb-8 transition-all"
           >
-            <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
+            <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px] mr-2 group-hover:-translate-x-1 transition-transform" /> 
             Kembali ke Beranda
           </button>
         )}
 
         {/* Form Container */}
-        <div className="bg-white rounded-[2rem] shadow-xl shadow-brown-100/20 overflow-hidden">
-          <div className="p-8 md:p-10">
+        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-xl shadow-brown-100/20 overflow-hidden">
+          <div className="p-6 sm:p-8 md:p-10">
             
             {/* Logo Section */}
-            <div className="flex flex-col items-center mb-10">
-              <div className="mb-6">
-                <img src="/logomochint.svg" alt="Mochint Logo" className="w-40 h-40 drop-shadow-2xl" />
+            <div className="flex flex-col items-center mb-8 sm:mb-10">
+              <div className="mb-4 sm:mb-6">
+                <img src="/logomochint.svg" alt="Mochint Logo" className="w-28 sm:w-32 md:w-40 h-28 sm:h-32 md:h-40 drop-shadow-2xl" />
               </div>
-              <h3 className="text-2xl font-bold text-[#3E2723]">Selamat Datang</h3>
-              <p className="text-[#A1887F] text-sm mt-1">Silakan masuk ke akun Anda</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#3E2723]">Selamat Datang</h3>
+              <p className="text-[#A1887F] text-[10px] sm:text-xs md:text-sm mt-1">Silakan masuk ke akun Anda</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
               {/* Input Email */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#A1887F] ml-1 uppercase tracking-wider">
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[11px] font-bold text-[#A1887F] ml-1 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={18} />
+                  <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={16} className="sm:w-[18px] sm:h-[18px]" />
                   <input 
                     type="email" 
                     placeholder="Nama@email.com" 
                     required 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[#FDFBF7] border-2 border-transparent focus:border-[#8D6E63] focus:bg-white transition-all outline-none text-[#3E2723] font-medium" 
+                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FDFBF7] border-2 border-transparent focus:border-[#8D6E63] focus:bg-white transition-all outline-none text-[#3E2723] font-medium text-xs sm:text-sm" 
                   />
                 </div>
               </div>
 
               {/* Input Password */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#A1887F] ml-1 uppercase tracking-wider">
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[11px] font-bold text-[#A1887F] ml-1 uppercase tracking-wider">
                   Password
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={18} />
+                  <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={16} className="sm:w-[18px] sm:h-[18px]" />
                   <input 
                     type={showPassword ? "text" : "password"}
                     placeholder="Masukkan password Anda" 
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-[#FDFBF7] border-2 border-transparent focus:border-[#8D6E63] focus:bg-white transition-all outline-none text-[#3E2723] font-medium" 
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FDFBF7] border-2 border-transparent focus:border-[#8D6E63] focus:bg-white transition-all outline-none text-[#3E2723] font-medium text-xs sm:text-sm" 
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A1887F] hover:text-[#3E2723]"
+                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-[#A1887F] hover:text-[#3E2723] p-1"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />}
                   </button>
                 </div>
                 <div className="flex justify-end pr-1">
                   <button 
                     type="button" 
                     onClick={onForgot || (() => navigate('/auth/forgot-password'))}
-                    className="text-xs text-[#8D6E63] hover:text-[#3E2723] font-bold transition-colors"
+                    className="text-[10px] sm:text-xs text-[#8D6E63] hover:text-[#3E2723] font-bold transition-colors"
                   >
                     Lupa Password?
                   </button>
@@ -376,7 +376,7 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
               <button 
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-4 mt-2 font-bold rounded-2xl shadow-lg transition-all transform active:scale-[0.98] text-sm tracking-wide ${
+                className={`w-full py-3 sm:py-4 mt-2 font-bold rounded-xl sm:rounded-2xl shadow-lg transition-all transform active:scale-[0.98] text-xs sm:text-sm tracking-wide ${
                   isLoading
                     ? 'bg-[#D7CCC8] text-[#8D6E63] cursor-not-allowed' 
                     : 'bg-[#3E2723] text-white hover:bg-[#5D4037] hover:shadow-[#3E2723]/30'
@@ -384,7 +384,7 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-3 sm:w-4 h-3 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     <span>MEMPROSES...</span>
                   </div>
                 ) : "MASUK KE AKUN"}
@@ -393,9 +393,9 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
               {/* Divider - Only show if Google OAuth is enabled */}
               {isGoogleOAuthEnabled && (
                 <>
-                  <div className="flex items-center my-6">
+                  <div className="flex items-center my-4 sm:my-6">
                     <div className="flex-1 border-t border-gray-200"></div>
-                    <span className="px-4 text-xs text-[#A1887F] font-medium">ATAU</span>
+                    <span className="px-3 sm:px-4 text-[10px] sm:text-xs text-[#A1887F] font-medium">ATAU</span>
                     <div className="flex-1 border-t border-gray-200"></div>
                   </div>
 
