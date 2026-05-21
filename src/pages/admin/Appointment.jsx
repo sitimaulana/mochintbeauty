@@ -54,6 +54,8 @@ const Appointment = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('all');
   
+
+  
   const [formData, setFormData] = useState({
     customer_name: '', member_id: '', treatment: '', treatment_id: '', therapist: '', therapist_id: '',
     date: '', time: '', amount: 0, status: 'confirmed', reminder_hours_before: 2
