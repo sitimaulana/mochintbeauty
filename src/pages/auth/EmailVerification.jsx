@@ -47,10 +47,21 @@ const EmailVerification = () => {
       return;
     }
     
-    console.log('ðŸ“¤ Sending OTP to:', userData.email);
+    // Prevent rapid OTP sending - must wait for countdown
+    if (countdown > 0) {
+      console.log('❌ OTP already sent recently, wait countdown:', countdown);
+      setNotification({
+        show: true,
+        type: 'error',
+        message: `Tunggu ${countdown} detik sebelum mengirim OTP baru`
+      });
+      return;
+    }
+    
+    console.log('📤 Sending OTP to:', userData.email);
     setSendingOtp(true);
     
-    // Clear previous OTP
+    // Clear previous OTP inputs
     setOtp(['', '', '', '', '', '']);
     setDevOtpCode('');
     
@@ -68,7 +79,7 @@ const EmailVerification = () => {
           type: 'success',
           message: `Kode OTP telah dikirim ke ${userData.email}`
         });
-        setCountdown(60); // 60 seconds countdown
+        setCountdown(120); // 120 seconds countdown (2 minutes)
         
         // Show OTP in console and store for development
         if (response.data.otp || response.data.devOTP) {
@@ -223,29 +234,6 @@ const EmailVerification = () => {
             Masukkan Kode OTP
           </label>
           
-          {/* Development OTP Display */}
-          {devOtpCode && (
-            <div className="mb-4 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl">
-              <p className="text-xs text-yellow-800 font-bold mb-1 text-center">
-               OTP Code:
-              </p>
-              <p className="text-2xl font-mono font-bold text-yellow-900 text-center tracking-widest">
-                {devOtpCode}
-              </p>
-              <button
-                onClick={() => {
-                  const otpArray = devOtpCode.split('');
-                  setOtp(otpArray);
-                  // Focus last input
-                  setTimeout(() => document.getElementById('otp-5')?.focus(), 100);
-                }}
-                className="mt-2 w-full text-xs text-yellow-700 hover:text-yellow-900 font-medium"
-              >
-                Klik untuk isi otomatis
-              </button>
-            </div>
-          )}
-          
           <div className="flex justify-center gap-2 mb-6">
             {otp.map((digit, index) => (
               <input
@@ -302,7 +290,6 @@ const EmailVerification = () => {
         </div>
       </div>
 
-      {/* Notification */}
       
       {/* Notification - Responsive Style */}
       {notification.show && (
@@ -348,4 +335,3 @@ const EmailVerification = () => {
 };
 
 export default EmailVerification;
-

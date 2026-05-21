@@ -147,8 +147,105 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth endpoint
-    window.location.href = '/api/auth/google';
+    console.log('🔵 Google OAuth flow starting...');
+    setIsLoading(true);
+    
+    // STEP 1: Register message listener FIRST (before opening popup)
+    let messageListenerRegistered = false;
+    let timeoutId = null;
+    
+    const handleMessage = (event) => {
+      console.log('📨 Message received from popup:', {
+        origin: event.origin,
+        expectedOrigin: window.location.origin,
+        hasData: !!event.data,
+        success: event.data?.success
+      });
+      
+      // Verify origin - accept from frontend OR backend (where OAuth callback runs)
+      const backendOrigin = 'http://localhost:5000';
+      if (event.origin !== window.location.origin && event.origin !== backendOrigin) {
+        console.warn('⚠️ Ignoring message from different origin:', event.origin);
+        return;
+      }
+      
+      // Clear timeout
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      // Remove listener
+      window.removeEventListener('message', handleMessage);
+      messageListenerRegistered = false;
+      setIsLoading(false);
+      
+      if (event.data?.success) {
+        console.log('✅ OAuth success! User:', event.data.user.email);
+        const { token, user } = event.data;
+        
+        if (user.needsPassword) {
+          console.log('🔐 Redirecting to verify email');
+          navigate('/auth/verify-email', {
+            state: { user, token },
+            replace: true
+          });
+        } else {
+          console.log('✅ Direct login');
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('active_user', JSON.stringify(user));
+          localStorage.setItem('user_type', 'member');
+          localStorage.setItem('login_time', new Date().toISOString());
+          
+          setNotification({ show: true, type: 'success', message: 'Login berhasil!' });
+          setTimeout(() => navigate('/member'), 1000);
+        }
+      } else {
+        console.error('❌ OAuth error:', event.data?.error);
+        setNotification({ show: true, type: 'error', message: 'Login gagal: ' + (event.data?.error || 'Unknown error') });
+      }
+    };
+    
+    // Register listener
+    console.log('👂 Registering message listener...');
+    window.addEventListener('message', handleMessage, false);
+    messageListenerRegistered = true;
+    
+    // Timeout setelah 5 menit
+    timeoutId = setTimeout(() => {
+      if (messageListenerRegistered) {
+        console.warn('⚠️ OAuth timeout - no response from popup');
+        window.removeEventListener('message', handleMessage);
+        messageListenerRegistered = false;
+        setIsLoading(false);
+        setNotification({ show: true, type: 'error', message: 'Login timeout. Please try again.' });
+      }
+    }, 5 * 60 * 1000);
+    
+    // STEP 2: Open popup setelah listener siap
+    console.log('✅ Listener ready, opening popup...');
+    setTimeout(() => {
+      const width = 600;
+      const height = 700;
+      const left = window.innerWidth / 2 - width / 2;
+      const top = window.innerHeight / 2 - height / 2;
+      
+      const googleAuthUrl = new URL('/api/auth/google', window.location.origin).toString();
+      
+      const popup = window.open(
+        googleAuthUrl,
+        'GoogleLogin',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,menubar=no,toolbar=no`
+      );
+      
+      if (!popup || popup.closed) {
+        console.error('❌ Popup blocked');
+        window.removeEventListener('message', handleMessage);
+        messageListenerRegistered = false;
+        setIsLoading(false);
+        setNotification({ show: true, type: 'error', message: 'Pop-up blocked! Please allow pop-ups.' });
+      } else {
+        console.log('✅ Popup opened successfully');
+      }
+    }, 100);
   };
 
   // Check if Google OAuth is configured

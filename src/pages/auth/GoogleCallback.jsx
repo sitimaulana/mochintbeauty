@@ -7,26 +7,31 @@ const GoogleCallback = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // Get token dan user dari URL params (direct redirect dari backend)
     const token = searchParams.get('token');
-    const userString = searchParams.get('user');
+    const userParam = searchParams.get('user');
 
-    if (token && userString) {
+    console.log('🔍 GoogleCallback - Checking URL params:');
+    console.log('Token:', token ? 'YES (' + token.substring(0, 20) + '...)' : 'NO');
+    console.log('User param:', userParam ? 'YES' : 'NO');
+
+    if (token && userParam) {
       try {
-        const user = JSON.parse(decodeURIComponent(userString));
+        // Parse user data dari URL params
+        const user = JSON.parse(decodeURIComponent(userParam));
         
-        console.log('✅ Google login success');
-        console.log('Token:', token);
-        console.log('User:', user);
+        console.log('✅ Google login success!');
+        console.log('Email:', user.email);
         console.log('Needs password:', user.needsPassword);
         
         if (user.needsPassword) {
-          console.log('🔐 User needs to set password, redirecting to email verification');
+          console.log('🔐 User needs to set password');
           navigate('/auth/verify-email', {
             state: { user, token },
             replace: true
           });
         } else {
-          console.log('✅ User already has password, logging in directly');
+          console.log('✅ User already has password, logging in');
           
           localStorage.setItem('token', token);
           localStorage.setItem('user', JSON.stringify(user));
@@ -34,14 +39,19 @@ const GoogleCallback = () => {
           localStorage.setItem('user_type', 'member');
           localStorage.setItem('login_time', new Date().toISOString());
           
-          navigate('/member', { replace: true });
+          // Force navigate to member page
+          setTimeout(() => {
+            navigate('/member', { replace: true });
+          }, 500);
         }
       } catch (error) {
-        console.error('Error parsing user data:', error);
-        navigate('/auth/login?error=invalid_callback');
+        console.error('❌ Error parsing user data:', error);
+        navigate('/auth/login?error=parse_failed');
       }
     } else {
-      navigate('/auth/login?error=missing_data');
+      console.error('❌ Missing token or user in URL params');
+      console.log('URL:', window.location.href);
+      navigate('/auth/login?error=missing_params');
     }
   }, [navigate, searchParams]);
 

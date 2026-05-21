@@ -6,6 +6,7 @@ const AISkinAnalysis = () => {
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const detectionIntervalRef = useRef(null);
   
   // --- STATE ---
   const [showIntro, setShowIntro] = useState(true);
@@ -17,6 +18,185 @@ const AISkinAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
   const [useCamera, setUseCamera] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [currentSkinTypeIndex, setCurrentSkinTypeIndex] = useState(0);
+  
+  // --- FACE DETECTION STATE ---
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [isLighting, setIsLighting] = useState(false);
+  const [isFacePosition, setIsFacePosition] = useState(false);
+  const [isLooking, setIsLooking] = useState(false);
+  const [faceBounds, setFaceBounds] = useState(null);
+  const [faceInBox, setFaceInBox] = useState(false);
+
+  // --- FACE DETECTION & VALIDATION ---
+  const detectFaceAndValidate = () => {
+    if (!videoRef.current || !cameraActive) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    // Detect brightness (lighting)
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let brightness = 0;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      brightness += (r + g + b) / 3;
+    }
+    brightness = brightness / (canvas.width * canvas.height);
+    
+    // Check if lighting is sufficient (brightness between 30-240)
+    setIsLighting(brightness > 30 && brightness < 240);
+
+    // Detect face using edge detection (simple method)
+    // Look for skin tones in center area
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const scanRadius = Math.min(canvas.width, canvas.height) / 4;
+    
+    let skinToneCount = 0;
+    const sampleSize = 100;
+    let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
+    
+    for (let i = 0; i < sampleSize; i++) {
+      const angle = (Math.random() * Math.PI * 2);
+      const distance = Math.random() * scanRadius;
+      const x = Math.floor(centerX + Math.cos(angle) * distance);
+      const y = Math.floor(centerY + Math.sin(angle) * distance);
+      
+      const index = (y * canvas.width + x) * 4;
+      const r = data[index];
+      const g = data[index + 1];
+      const b = data[index + 2];
+      
+      // Check for skin tone (R > 95 and G > 40 and B > 20)
+      if (r > 95 && g > 40 && b > 20 && r > b) {
+        skinToneCount++;
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+    
+    const faceDetectedNow = skinToneCount > sampleSize * 0.3;
+    setFaceDetected(faceDetectedNow);
+
+    // Calculate face bounding box based on detected skin tones
+    if (faceDetectedNow && minX < maxX && minY < maxY) {
+      const width = maxX - minX;
+      const height = maxY - minY;
+      // Expand the bounding box slightly to be more forgiving
+      const padding = Math.max(width, height) * 0.3;
+      setFaceBounds({
+        x: Math.max(0, minX - padding),
+        y: Math.max(0, minY - padding),
+        width: width + padding * 2,
+        height: height + padding * 2
+      });
+    } else {
+      setFaceBounds(null);
+    }
+    
+    // Check face position (should be centered)
+    // Detect face center by analyzing darker areas
+    let darkPixelX = 0, darkPixelY = 0, darkCount = 0;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const darkness = 255 - (r + g + b) / 3;
+      
+      if (darkness > 100) {
+        const pixelIndex = i / 4;
+        darkPixelX += pixelIndex % canvas.width;
+        darkPixelY += Math.floor(pixelIndex / canvas.width);
+        darkCount++;
+      }
+    }
+    
+    if (darkCount > 0) {
+      darkPixelX /= darkCount;
+      darkPixelY /= darkCount;
+      
+      // Check if center of face is within acceptable range (center ±30%)
+      const centerTolerance = canvas.width * 0.3;
+      const positionValid = Math.abs(darkPixelX - centerX) < centerTolerance && 
+                           Math.abs(darkPixelY - centerY) < centerTolerance;
+      setIsFacePosition(positionValid && faceDetectedNow);
+    } else {
+      setIsFacePosition(false);
+    }
+    
+    // Check if looking at camera (detect eyes - simplified)
+    // Look for high contrast areas in upper half (eyes region)
+    const eyeRegionHeight = canvas.height * 0.4;
+    let eyeContrast = 0;
+    let eyePixels = 0;
+    
+    for (let y = canvas.height * 0.15; y < canvas.height * 0.35; y++) {
+      for (let x = canvas.width * 0.2; x < canvas.width * 0.8; x++) {
+        const index = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
+        const r = data[index];
+        const g = data[index + 1];
+        const b = data[index + 2];
+        const brightness = (r + g + b) / 3;
+        
+        eyeContrast += Math.abs(brightness - 128);
+        eyePixels++;
+      }
+    }
+    
+    eyeContrast = eyeContrast / eyePixels;
+    setIsLooking(eyeContrast > 30 && faceDetectedNow);
+
+    // Check if face is inside the center box (140x180px)
+    // Use a simpler approach - check if detected face is roughly in center
+    const faceRight = faceBounds.x + faceBounds.width;
+    const faceBottom = faceBounds.y + faceBounds.height;
+    const faceCenterX = faceBounds.x + faceBounds.width / 2;
+    const faceCenterY = faceBounds.y + faceBounds.height / 2;
+    
+    const canvasCenterX = canvas.width / 2;
+    const canvasCenterY = canvas.height / 2;
+    
+    // Check if face center is reasonably close to canvas center
+    const distanceX = Math.abs(faceCenterX - canvasCenterX);
+    const distanceY = Math.abs(faceCenterY - canvasCenterY);
+    
+    // Allow face to be off-center by up to 40% of canvas width/height
+    const maxDistanceX = canvas.width * 0.4;
+    const maxDistanceY = canvas.height * 0.4;
+    
+    const isInBox = distanceX < maxDistanceX && distanceY < maxDistanceY;
+    setFaceInBox(isInBox && faceDetectedNow);
+  };
+
+  // --- FACE DETECTION LOOP ---
+  useEffect(() => {
+    if (!cameraActive) {
+      clearInterval(detectionIntervalRef.current);
+      return;
+    }
+
+    // Run face detection every 300ms
+    detectionIntervalRef.current = setInterval(() => {
+      detectFaceAndValidate();
+    }, 300);
+
+    return () => {
+      clearInterval(detectionIntervalRef.current);
+    };
+  }, [cameraActive]);
 
   // --- HANDLE CAMERA MODE CHANGE ---
   useEffect(() => {
@@ -116,7 +296,10 @@ const AISkinAnalysis = () => {
       const context = canvasRef.current.getContext('2d');
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
-      context.drawImage(videoRef.current, 0, 0);
+      
+      // Mirror horizontally (flip) untuk cancel efek mirror dari kamera
+      context.scale(-1, 1);
+      context.drawImage(videoRef.current, -canvasRef.current.width, 0);
       
       canvasRef.current.toBlob((blob) => {
         const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
@@ -220,7 +403,7 @@ const AISkinAnalysis = () => {
             {/* Title */}
             <div className="space-y-4">
               <h1 className="text-5xl md:text-6xl font-bold text-[#3E2723] tracking-tight">
-                AI Skin Analysis
+                Mochint Skin Reveal
               </h1>
               <p className="text-xl text-gray-600 font-sans leading-relaxed">
                 Temukan jenis kulit Anda dan dapatkan rekomendasi treatment personal dari AI kami
@@ -261,6 +444,16 @@ const AISkinAnalysis = () => {
             >
               Mulai Analisis Sekarang
             </button>
+
+            {/* Skin Types Carousel Section */}
+            <div className="mt-16">
+              <h2 className="text-3xl font-bold text-[#3E2723] mb-8 text-center">Kenali Jenis Kulit Anda</h2>
+              <SkinTypeCarousel 
+                currentIndex={currentSkinTypeIndex}
+                onPrevious={() => setCurrentSkinTypeIndex((prev) => (prev - 1 + 4) % 4)}
+                onNext={() => setCurrentSkinTypeIndex((prev) => (prev + 1) % 4)}
+              />
+            </div>
 
             {/* Disclaimer */}
             <p className="text-xs text-gray-500 text-center px-4">
@@ -351,14 +544,16 @@ const AISkinAnalysis = () => {
                         </div>
                       ) : (
                         <div className="relative">
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="w-full h-64 object-cover rounded-xl"
-                          />
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border-2 border-blue-200">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="w-full h-64 object-cover rounded-lg border border-blue-300 shadow-md"
+                            />
+                          </div>
                           <button
                             onClick={handleRemoveImage}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
                           >
                             <X className="w-5 h-5" />
                           </button>
@@ -375,26 +570,103 @@ const AISkinAnalysis = () => {
                     </>
                   ) : (
                     <>
-                      {/* Camera Mode - Video Element Always Present */}
+                      {/* Camera Mode - Video Element with Bounding Box */}
                       <div className="relative">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="w-full h-64 object-cover rounded-xl bg-black"
-                        />
-                        <canvas ref={canvasRef} className="hidden" />
+                        <div className="relative bg-black rounded-xl overflow-hidden">
+                          {/* Video */}
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-64 object-cover rounded-xl bg-black"
+                            style={{ transform: 'scaleX(-1)' }}
+                          />
+                          <canvas ref={canvasRef} className="hidden" />
 
-                        {/* Show loading message while camera initializing */}
-                        {!cameraActive && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
-                            <div className="text-center">
-                              <Loader className="w-8 h-8 text-white animate-spin mx-auto mb-2" />
-                              <p className="text-white text-sm">Mengaktifkan kamera...</p>
-                            </div>
+                          {/* Countdown Timer */}
+                          {/* Removed - User wants face bounding box only */}
+
+                          {/* Static Box-Shaped Face Guide */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div
+                              style={{
+                                width: '140px',
+                                height: '180px',
+                                border: isLighting && faceInBox && isLooking 
+                                  ? '4px solid #10b981' 
+                                  : '4px solid #ef4444',
+                                transition: 'border-color 200ms'
+                              }}
+                            />
                           </div>
-                        )}
+
+                          {/* Status Notification */}
+                          <div className="absolute top-4 left-0 right-0 flex justify-center z-10">
+                            {!faceDetected && (
+                              <div className="text-xs text-white bg-red-500/80 px-3 py-1 rounded-full">
+                                ✗ Posisikan wajah
+                              </div>
+                            )}
+                            {faceDetected && !faceInBox && (
+                              <div className="text-xs text-white bg-red-500/80 px-3 py-1 rounded-full">
+                                ✗ Wajah di dalam kotak
+                              </div>
+                            )}
+                            {faceDetected && faceInBox && !isLighting && (
+                              <div className="text-xs text-white bg-yellow-500/80 px-3 py-1 rounded-full">
+                                ⚠ Pencahayaan kurang
+                              </div>
+                            )}
+                            {faceDetected && faceInBox && !isLooking && (
+                              <div className="text-xs text-white bg-yellow-500/80 px-3 py-1 rounded-full">
+                                ⚠ Pandang lurus ke kamera
+                              </div>
+                            )}
+                            {faceDetected && faceInBox && isLighting && isLooking && (
+                              <div className="text-xs text-white bg-green-500/80 px-3 py-1 rounded-full animate-pulse">
+                                ✓ Siap ambil foto
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Face Detection Indicator */}
+                          <div className="absolute bottom-4 left-4 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                            Posisikan wajah anda kedalam kotak!
+                          </div>
+
+                          {/* Bounding Box dengan Corners */}
+                          <div className="absolute inset-0 rounded-xl pointer-events-none">
+                            {/* Corner Top Left */}
+                            <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-white"></div>
+                            {/* Corner Top Right */}
+                            <div className="absolute top-8 right-8 w-6 h-6 border-t-2 border-r-2 border-white"></div>
+                            {/* Corner Bottom Left */}
+                            <div className="absolute bottom-8 left-8 w-6 h-6 border-b-2 border-l-2 border-white"></div>
+                            {/* Corner Bottom Right */}
+                            <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-white"></div>
+
+                            {/* Grid Mesh */}
+                            <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.3 }}>
+                              {/* Vertical Lines */}
+                              <line x1="33%" y1="0" x2="33%" y2="100%" stroke="white" strokeWidth="1" />
+                              <line x1="66%" y1="0" x2="66%" y2="100%" stroke="white" strokeWidth="1" />
+                              {/* Horizontal Lines */}
+                              <line x1="0" y1="33%" x2="100%" y2="33%" stroke="white" strokeWidth="1" />
+                              <line x1="0" y1="66%" x2="100%" y2="66%" stroke="white" strokeWidth="1" />
+                            </svg>
+                          </div>
+
+                          {/* Show loading message while camera initializing */}
+                          {!cameraActive && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+                              <div className="text-center">
+                                <Loader className="w-8 h-8 text-white animate-spin mx-auto mb-2" />
+                                <p className="text-white text-sm">Mengaktifkan kamera...</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Capture/Stop Buttons */}
                         {cameraActive && (
@@ -550,11 +822,13 @@ const AnalysisResults = ({ result, imagePreview, onReset }) => {
         {/* Image */}
         <div>
           <h3 className="text-lg font-bold text-[#5D4037] mb-4">Foto Analisis</h3>
-          <img
-            src={imagePreview}
-            alt="Analyzed"
-            className="w-full h-80 object-cover rounded-xl shadow-md"
-          />
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 border-2 border-blue-200 shadow-lg">
+            <img
+              src={imagePreview}
+              alt="Analyzed"
+              className="w-full h-80 object-cover rounded-lg border border-blue-300 shadow-md"
+            />
+          </div>
         </div>
 
         {/* Skin Type Result */}
@@ -647,6 +921,93 @@ const AnalysisResults = ({ result, imagePreview, onReset }) => {
         </p>
         <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
           Hubungi Kami
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// --- SKIN TYPE CAROUSEL COMPONENT ---
+const SkinTypeCarousel = ({ currentIndex, onPrevious, onNext }) => {
+  const skinTypes = [
+    {
+      id: 1,
+      name: 'Kering',
+      description: 'Kulit yang ditandai dengan lipatan, garis, dan kerutan di permukaan kulit. Kering kelipatannya produksi minyak di lapisan dermis kulit kurang.'
+    },
+    {
+      id: 2,
+      name: 'Kering',
+      description: 'Kulit yang ditandai dengan lipatan, garis, dan kerutan di permukaan kulit. Kering kelipatannya produksi minyak di lapisan dermis kulit kurang.'
+    },
+    {
+      id: 3,
+      name: 'Berjerawat',
+      description: 'Kulit yang ditandai dengan lipatan, garis, dan kerutan di permukaan kulit. Berjerawat kelipatannya produksi kolagen di lapisan dermis kulit kurang.'
+    },
+    {
+      id: 4,
+      name: 'Kombinasi',
+      description: 'Kulit yang ditandai dengan lipatan, garis, dan kerutan di permukaan kulit. Kombinasi kelipatannya produksi kolagen di lapisan dermis kulit kurang.'
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl p-8 shadow-lg">
+      {/* 4 Kartu Horizontal */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        {skinTypes.map((skin, index) => (
+          <div
+            key={skin.id}
+            className="flex flex-col items-center text-center"
+          >
+            {/* Placeholder Image */}
+            <div className="w-full aspect-square bg-gradient-to-br from-gray-200 to-gray-100 rounded-lg mb-3 flex items-center justify-center">
+              <img 
+                src="https://via.placeholder.com/120?text=Kulit" 
+                alt={skin.name}
+                className="w-20 h-20 object-cover rounded"
+              />
+            </div>
+            
+            {/* Nama */}
+            <h4 className="font-semibold text-[#5D4037] mb-2 text-sm">{skin.name}</h4>
+            
+            {/* Deskripsi */}
+            <p className="text-xs text-gray-600 leading-relaxed">
+              {skin.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center justify-center gap-6">
+        <button
+          onClick={onPrevious}
+          className="w-10 h-10 rounded-full bg-[#C4A57B] text-white hover:bg-[#B89968] transition-colors flex items-center justify-center shadow-md"
+        >
+          ←
+        </button>
+
+        <div className="flex gap-3">
+          {skinTypes.map((_, index) => (
+            <div
+              key={index}
+              className={`rounded-full transition-all ${
+                index === currentIndex
+                  ? 'w-4 h-4 bg-[#C4A57B]'
+                  : 'w-3 h-3 bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={onNext}
+          className="w-10 h-10 rounded-full bg-[#C4A57B] text-white hover:bg-[#B89968] transition-colors flex items-center justify-center shadow-md"
+        >
+          →
         </button>
       </div>
     </div>
