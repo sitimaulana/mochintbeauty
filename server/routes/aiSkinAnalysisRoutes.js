@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { spawn } = require('child_process');
 const path = require('path');
+const os = require('os');
 
 /**
  * POST /api/ai/analyze-skin
@@ -21,8 +22,27 @@ router.post('/analyze-skin', async (req, res) => {
     
     let responseSent = false;
     
+    // Determine Python executable path (use venv if available)
+    let pythonExe = 'python';
+    const isWindows = os.platform() === 'win32';
+    const venvPythonPath = path.join(__dirname, '../.venv/Scripts/python.exe');
+    const venvPythonPathUnix = path.join(__dirname, '../.venv/bin/python');
+    
+    // Check if virtual environment Python exists
+    const fs = require('fs');
+    if (isWindows && fs.existsSync(venvPythonPath)) {
+      pythonExe = venvPythonPath;
+    } else if (!isWindows && fs.existsSync(venvPythonPathUnix)) {
+      pythonExe = venvPythonPathUnix;
+    }
+    
+    console.log(`Using Python: ${pythonExe}`);
+    
     // Pass image via stdin to avoid ENAMETOOLONG error on Windows
-    const python = spawn('python', [pythonScriptPath]);
+    const python = spawn(pythonExe, [pythonScriptPath], {
+      cwd: path.dirname(pythonScriptPath),
+      env: { ...process.env, PYTHONUNBUFFERED: '1' }
+    });
     
     let output = '';
     let errorOutput = '';
