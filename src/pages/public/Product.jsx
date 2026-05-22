@@ -144,7 +144,7 @@ const Product = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-4 sm:pl-5 pr-10 sm:pr-12 py-3 sm:py-3.5 rounded-2xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-[#8D6E63]/20 focus:border-[#8D6E63] shadow-sm font-sans text-sm transition-all"
             />
-            <Search className="absolute right-3 sm:right-4 top-3 sm:top-4 text-[#8D6E63]" size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <Search className="absolute right-3 sm:right-4 top-3 sm:top-4 text-[#8D6E63] w-4 h-4 sm:w-[18px] sm:h-[18px]" />
           </div>
 
           {/* Mobile Filter Button */}

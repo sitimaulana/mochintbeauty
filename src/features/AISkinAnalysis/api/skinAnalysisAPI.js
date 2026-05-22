@@ -1,5 +1,16 @@
-import axios from 'axios';
 import { API_ENDPOINTS } from '../constants';
+
+// Use the configured API client from services
+let apiClient;
+
+// Dynamic import to avoid circular dependency
+const getApiClient = async () => {
+  if (!apiClient) {
+    const { default: api } = await import('../../../services/api');
+    apiClient = api;
+  }
+  return apiClient;
+};
 
 /**
  * Call API to analyze skin from image
@@ -8,7 +19,8 @@ import { API_ENDPOINTS } from '../constants';
  */
 export const analyzeSkinImage = async (imagePreview) => {
   try {
-    const response = await axios.post(API_ENDPOINTS.ANALYZE_SKIN, {
+    const api = await getApiClient();
+    const response = await api.post(API_ENDPOINTS.ANALYZE_SKIN, {
       image: imagePreview
     });
 
@@ -39,7 +51,8 @@ export const analyzeSkinImage = async (imagePreview) => {
  */
 export const getRecommendations = async (skinType) => {
   try {
-    const response = await axios.get(`${API_ENDPOINTS.ANALYZE_SKIN}/recommendations`, {
+    const api = await getApiClient();
+    const response = await api.get(`${API_ENDPOINTS.ANALYZE_SKIN}/recommendations`, {
       params: { skinType }
     });
 

@@ -326,7 +326,7 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
                   Email Address
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                   <input 
                     type="email" 
                     placeholder="Nama@email.com" 
@@ -344,7 +344,7 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
                   Password
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors" size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                   <input 
                     type={showPassword ? "text" : "password"}
                     placeholder="Masukkan password Anda" 
