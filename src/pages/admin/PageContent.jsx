@@ -52,7 +52,30 @@ const PageContent = () => {
     map_embed_url: '',
     maps_url: '',
     awards: [{ id: Date.now(), title: '', image: '' }],
-    facilities: [{ id: Date.now(), name: '', description: '', image: '' }]
+    facilities: [{ id: Date.now(), name: '', description: '', image: '' }],
+    footer_company_description: '',
+    footer_phone: '',
+    footer_email: '',
+    footer_address: '',
+    footer_social_links: [
+      { platform: 'facebook', url: '' },
+      { platform: 'instagram', url: '' },
+      { platform: 'twitter', url: '' },
+      { platform: 'linkedin', url: '' }
+    ],
+    footer_quick_links: [
+      { label: 'Beranda', url: '/' },
+      { label: 'Perawatan', url: '/treatment' },
+      { label: 'Produk Skincare', url: '/product' },
+      { label: 'Skin Reveal AI', url: '/ai-skin-analysis' }
+    ],
+    footer_member_links: [
+      { label: 'Daftar Member', url: '/member-app' },
+      { label: 'Reservasi', url: '/member/booking/step-1' },
+      { label: 'Promo & Reseller', url: '/promo' },
+      { label: 'Blog & Tips', url: '/information' }
+    ],
+    footer_copyright: '© 2024 Mochint Beauty. All rights reserved.'
   });
 
   // Helper function to get auth headers
@@ -340,6 +363,17 @@ const PageContent = () => {
         map_embed_url: additionalFields.map_embed_url,
         maps_url: additionalFields.maps_url
       };
+    } else if (formData.page_type === 'footer') {
+      return {
+        company_description: additionalFields.footer_company_description,
+        phone: additionalFields.footer_phone,
+        email: additionalFields.footer_email,
+        address: additionalFields.footer_address,
+        social_links: additionalFields.footer_social_links,
+        quick_links: additionalFields.footer_quick_links,
+        member_links: additionalFields.footer_member_links,
+        copyright: additionalFields.footer_copyright
+      };
     }
     return {};
   };
@@ -364,9 +398,11 @@ const PageContent = () => {
       showNotification('Validasi Error', 'Section Key untuk promo harus "main_promo"', 'error');
       return;
     }
-    
+
+    // Set default section_key for footer if empty
     const submitData = {
       ...formData,
+      section_key: formData.page_type === 'footer' && !formData.section_key.trim() ? 'main' : formData.section_key,
       additional_data: prepareAdditionalData()
     };
 
@@ -449,7 +485,30 @@ const PageContent = () => {
       map_embed_url: '',
       maps_url: '',
       awards: [{ id: Date.now(), title: '', image: '' }],
-      facilities: [{ id: Date.now(), name: '', description: '', image: '' }]
+      facilities: [{ id: Date.now(), name: '', description: '', image: '' }],
+      footer_company_description: '',
+      footer_phone: '',
+      footer_email: '',
+      footer_address: '',
+      footer_social_links: [
+        { platform: 'facebook', url: '' },
+        { platform: 'instagram', url: '' },
+        { platform: 'twitter', url: '' },
+        { platform: 'linkedin', url: '' }
+      ],
+      footer_quick_links: [
+        { label: 'Beranda', url: '/' },
+        { label: 'Perawatan', url: '/treatment' },
+        { label: 'Produk Skincare', url: '/product' },
+        { label: 'Skin Reveal AI', url: '/ai-skin-analysis' }
+      ],
+      footer_member_links: [
+        { label: 'Daftar Member', url: '/member-app' },
+        { label: 'Reservasi', url: '/member/booking/step-1' },
+        { label: 'Promo & Reseller', url: '/promo' },
+        { label: 'Blog & Tips', url: '/information' }
+      ],
+      footer_copyright: '© 2024 Mochint Beauty. All rights reserved.'
     });
     setPreviewImage('');
   };
@@ -503,7 +562,30 @@ const PageContent = () => {
       map_embed_url: additionalData.map_embed_url || '',
       maps_url: additionalData.maps_url || '',
       awards: additionalData.items && info.section_key === 'awards' ? ensureItemsHaveIds(additionalData.items) : [{ id: Date.now(), title: '', image: '' }],
-      facilities: additionalData.items && info.section_key === 'facilities' ? ensureItemsHaveIds(additionalData.items) : [{ id: Date.now(), name: '', description: '', image: '' }]
+      facilities: additionalData.items && info.section_key === 'facilities' ? ensureItemsHaveIds(additionalData.items) : [{ id: Date.now(), name: '', description: '', image: '' }],
+      footer_company_description: additionalData.company_description || '',
+      footer_phone: additionalData.phone || '',
+      footer_email: additionalData.email || '',
+      footer_address: additionalData.address || '',
+      footer_social_links: additionalData.social_links || [
+        { platform: 'facebook', url: '' },
+        { platform: 'instagram', url: '' },
+        { platform: 'twitter', url: '' },
+        { platform: 'linkedin', url: '' }
+      ],
+      footer_quick_links: additionalData.quick_links || [
+        { label: 'Beranda', url: '/' },
+        { label: 'Perawatan', url: '/treatment' },
+        { label: 'Produk Skincare', url: '/product' },
+        { label: 'Skin Reveal AI', url: '/ai-skin-analysis' }
+      ],
+      footer_member_links: additionalData.member_links || [
+        { label: 'Daftar Member', url: '/member-app' },
+        { label: 'Reservasi', url: '/member/booking/step-1' },
+        { label: 'Promo & Reseller', url: '/promo' },
+        { label: 'Blog & Tips', url: '/information' }
+      ],
+      footer_copyright: additionalData.copyright || '© 2024 Mochint Beauty. All rights reserved.'
     });
   };
 
@@ -522,7 +604,8 @@ const PageContent = () => {
   const pageTypes = [
     { value: 'home', label: 'Home' },
     { value: 'about', label: 'About' },
-    { value: 'promo', label: 'Promo' }
+    { value: 'promo', label: 'Promo' },
+    { value: 'footer', label: 'Footer' }
   ];
 
   // Count items per type
@@ -1125,10 +1208,12 @@ const PageContent = () => {
                     <option value="home">Home</option>
                     <option value="about">About</option>
                     <option value="promo">Promo</option>
+                    <option value="footer">Footer</option>
                   </select>
                 </div>
 
                 {/* Section Key */}
+                {formData.page_type !== 'footer' && (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Section Key {(formData.page_type === 'home' || formData.page_type === 'about' || formData.page_type === 'promo') && <span className="text-red-500">*</span>}
@@ -1169,6 +1254,7 @@ const PageContent = () => {
                     )}
                   </p>
                 </div>
+                )}
 
                 {/* Title */}
                 <div>
@@ -1784,6 +1870,182 @@ const PageContent = () => {
                     Semakin kecil angka, semakin atas posisinya
                   </p>
                 </div>
+
+                {/* Footer Fields */}
+                {formData.page_type === 'footer' && (
+                  <div className="space-y-4 p-4 sm:p-5 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border-2 border-purple-300 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">⚙️ Konfigurasi Footer</h3>
+
+                    {/* Company Description */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Deskripsi Perusahaan</label>
+                      <textarea
+                        value={additionalFields.footer_company_description}
+                        onChange={(e) => handleAdditionalFieldChange('footer_company_description', e.target.value)}
+                        rows="2"
+                        placeholder="Klinik kecantikan terpercaya dengan teknologi AI untuk analisis kulit terbaik."
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                      />
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">📞 Nomor Telepon</label>
+                        <input
+                          type="text"
+                          value={additionalFields.footer_phone}
+                          onChange={(e) => handleAdditionalFieldChange('footer_phone', e.target.value)}
+                          placeholder="+62 (XXX) XXXX-XXXX"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">✉️ Email</label>
+                        <input
+                          type="email"
+                          value={additionalFields.footer_email}
+                          onChange={(e) => handleAdditionalFieldChange('footer_email', e.target.value)}
+                          placeholder="info@mochintbeauty.com"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">📍 Alamat</label>
+                      <input
+                        type="text"
+                        value={additionalFields.footer_address}
+                        onChange={(e) => handleAdditionalFieldChange('footer_address', e.target.value)}
+                        placeholder="Jakarta, Indonesia"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                    </div>
+
+                    {/* Social Links */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">🔗 Media Sosial</label>
+                      <div className="space-y-2">
+                        {additionalFields.footer_social_links?.map((link, index) => (
+                          <div key={index} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const updatedLinks = [...additionalFields.footer_social_links];
+                                  updatedLinks[index].url = e.target.value;
+                                  handleAdditionalFieldChange('footer_social_links', updatedLinks);
+                                }}
+                                placeholder={`Link ${link.platform}`}
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-gray-600 capitalize px-2 py-2.5 bg-gray-100 rounded-lg min-w-max">
+                              {link.platform}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">🔗 Menu Cepat</label>
+                      <div className="space-y-2">
+                        {additionalFields.footer_quick_links?.map((link, index) => (
+                          <div key={index} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={link.label}
+                                onChange={(e) => {
+                                  const updatedLinks = [...additionalFields.footer_quick_links];
+                                  updatedLinks[index].label = e.target.value;
+                                  handleAdditionalFieldChange('footer_quick_links', updatedLinks);
+                                }}
+                                placeholder="Label Menu"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        {additionalFields.footer_quick_links?.map((link, index) => (
+                          <div key={`url-${index}`} className="flex gap-2 items-end ml-6">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const updatedLinks = [...additionalFields.footer_quick_links];
+                                  updatedLinks[index].url = e.target.value;
+                                  handleAdditionalFieldChange('footer_quick_links', updatedLinks);
+                                }}
+                                placeholder="URL"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Member Links */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">👥 Menu Member</label>
+                      <div className="space-y-2">
+                        {additionalFields.footer_member_links?.map((link, index) => (
+                          <div key={index} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={link.label}
+                                onChange={(e) => {
+                                  const updatedLinks = [...additionalFields.footer_member_links];
+                                  updatedLinks[index].label = e.target.value;
+                                  handleAdditionalFieldChange('footer_member_links', updatedLinks);
+                                }}
+                                placeholder="Label Menu"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        {additionalFields.footer_member_links?.map((link, index) => (
+                          <div key={`url-${index}`} className="flex gap-2 items-end ml-6">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const updatedLinks = [...additionalFields.footer_member_links];
+                                  updatedLinks[index].url = e.target.value;
+                                  handleAdditionalFieldChange('footer_member_links', updatedLinks);
+                                }}
+                                placeholder="URL"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Copyright */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">© Copyright Text</label>
+                      <input
+                        type="text"
+                        value={additionalFields.footer_copyright}
+                        onChange={(e) => handleAdditionalFieldChange('footer_copyright', e.target.value)}
+                        placeholder="© 2024 Mochint Beauty. All rights reserved."
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Is Active */}
                 <div className="flex items-center gap-3">

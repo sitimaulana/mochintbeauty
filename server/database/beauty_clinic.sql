@@ -192,7 +192,7 @@ CREATE TABLE `member_history` (
 
 CREATE TABLE `page_information` (
   `id` int NOT NULL,
-  `page_type` enum('home','about','promo') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `page_type` enum('home','about','promo','footer') COLLATE utf8mb4_unicode_ci NOT NULL,
   `section_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `subtitle` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

@@ -133,8 +133,7 @@ const About = () => {
           </section>
         )}
 
-        {/* Section 3: Penghargaan dengan Slider Interaktif */}
-        <section className="space-y-12">- Responsive */}
+        {/* Section 3: Penghargaan dengan Slider Interaktif - Responsive */}
         <section className="space-y-8 sm:space-y-10 md:space-y-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#3E2723] tracking-tight">
             {pageContent.awards?.title || 'Pencapaian & Penghargaan'}
@@ -189,11 +188,13 @@ const About = () => {
               <div className="custom-pagination flex items-center gap-2 sm:gap-3"></div>
 
               <button className="next-award p-2 hover:text-[#8D6E63] transition-colors cursor-pointer">
-                <ChevronRight size={24} className="w-5 sm:w-6 md:w-7"
+                <ChevronRight size={24} className="w-5 sm:w-6 md:w-7" />
+              </button>
             </div>
           </div>
         </section>
-- Responsive */}
+
+        {/* Section 4: Fasilitas - Responsive */}
         {pageContent.facilities && facilities.length > 0 && (
           <section className="space-y-8 sm:space-y-10 md:space-y-12 mt-16 sm:mt-20 md:mt-24 lg:mt-32">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-[#3E2723] tracking-tight">
@@ -213,8 +214,7 @@ const About = () => {
                   )}
                   <h3 className="text-sm sm:text-base md:text-lg font-bold text-[#3E2723] mb-2">{facility.name}</h3>
                   {facility.description && (
-                    <p className="text-brown-600 text-xs sm:
-                    <p className="text-brown-600 text-sm leading-relaxed">{facility.description}</p>
+                    <p className="text-brown-600 text-xs sm:text-sm leading-relaxed">{facility.description}</p>
                   )}
                 </div>
               ))}
