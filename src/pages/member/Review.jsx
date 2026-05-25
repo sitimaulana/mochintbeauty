@@ -7,6 +7,7 @@ const Review = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userReviews, setUserReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   const user = JSON.parse(localStorage.getItem('active_user'));
 
   useEffect(() => {
@@ -14,6 +15,14 @@ const Review = () => {
       fetchUserReviews();
     }
   }, [user]);
+
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    // Auto close setelah 3 detik
+    setTimeout(() => {
+      setNotification({ show: false, type: '', message: '' });
+    }, 3000);
+  };
 
   const fetchUserReviews = async () => {
     setLoadingReviews(true);
@@ -23,24 +32,28 @@ const Review = () => {
         setUserReviews(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
-    } finally {
-      setLoadingReviews(false);
+      console.error('Error {
+      showNotification('error', 'Mohon tuliskan komentar Anda');
+      return;
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.comment) return alert("Mohon tuliskan komentar Anda");
     
     if (!user || !user.id) {
-      alert("Error: Data user tidak ditemukan. Silakan login kembali.");
+      showNotification('error', 'Data user tidak ditemukan. Silakan login kembali.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await postReview({
+        userId: user.id,
+        rating: formData.rating,
+        comment: formData.comment
+      });
+      showNotification('success', 'Review Anda berhasil dikirim dan akan tampil di Homepage!');
+      setFormData({ rating: 5, comment: '' });
+      fetchUserReviews(); // Refresh list
+    } catch (error) {
+      showNotification('error', 'Gagal mengirim review.'
         userId: user.id,
         rating: formData.rating,
         comment: formData.comment
@@ -170,6 +183,50 @@ const Review = () => {
           </div>
         )}
       </div>
+
+      {/* Notification Toast */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className={`rounded-lg shadow-lg p-4 max-w-md ${
+            notification.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {notification.type === 'success' ? (
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className={`text-sm font-medium ${
+                  notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {notification.type === 'success' ? 'Berhasil!' : 'Gagal!'}
+                </h3>
+                <p className={`mt-1 text-sm ${
+                  notification.type === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotification({ show: false, type: '', message: '' })}
+                className={`ml-4 flex-shrink-0 rounded-md inline-flex ${
+                  notification.type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
+                }`}>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

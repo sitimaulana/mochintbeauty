@@ -11,6 +11,7 @@ const ReviewManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [editReplyText, setEditReplyText] = useState('');
+  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   
   // Get admin user dari localStorage (coba multiple keys)
   const getAdminUser = () => {
@@ -28,6 +29,14 @@ const ReviewManagement = () => {
   
   const adminUser = getAdminUser();
 
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    // Auto close setelah 3 detik
+    setTimeout(() => {
+      setNotification({ show: false, type: '', message: '' });
+    }, 3000);
+  };
+
   useEffect(() => {
     fetchReviews();
   }, []);
@@ -40,7 +49,7 @@ const ReviewManagement = () => {
         setReviews(response.data);
       }
     } catch (error) {
-      alert('Gagal mengambil data review');
+      showNotification('error', 'Gagal mengambil data review');
     } finally {
       setLoading(false);
     }
@@ -59,12 +68,12 @@ const ReviewManagement = () => {
 
   const handleAddReply = async (reviewId) => {
     if (!replyText.trim()) {
-      alert('Balasan tidak boleh kosong');
+      showNotification('error', 'Balasan tidak boleh kosong');
       return;
     }
 
     if (!adminUser || !adminUser.id) {
-      alert('Error: Data admin tidak ditemukan. Silakan login kembali.');
+      showNotification('error', 'Data admin tidak ditemukan. Silakan login kembali.');
       return;
     }
 
@@ -76,13 +85,13 @@ const ReviewManagement = () => {
       });
 
       if (response.success) {
-        alert('Balasan berhasil ditambahkan');
+        showNotification('success', 'Balasan berhasil ditambahkan');
         setReplyText('');
         setSelectedReview(null);
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal menambahkan balasan');
+      showNotification('error', 'Gagal menambahkan balasan');
     } finally {
       setSubmitting(false);
     }
@@ -92,11 +101,11 @@ const ReviewManagement = () => {
     try {
       const response = await toggleFeatured(reviewId, !currentStatus);
       if (response.success) {
-        alert(!currentStatus ? 'Review ditampilkan di homepage' : 'Review disembunyikan');
+        showNotification('success', !currentStatus ? 'Review ditampilkan di homepage' : 'Review disembunyikan dari homepage');
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal mengubah status featured');
+      showNotification('error', 'Gagal mengubah status featured');
     }
   };
 
@@ -104,11 +113,11 @@ const ReviewManagement = () => {
     try {
       const response = await toggleApproved(reviewId, !currentStatus);
       if (response.success) {
-        alert(!currentStatus ? 'Review disetujui' : 'Review ditolak');
+        showNotification('success', !currentStatus ? 'Review disetujui' : 'Review ditolak');
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal mengubah status approved');
+      showNotification('error', 'Gagal mengubah status approved');
     }
   };
 
@@ -118,11 +127,11 @@ const ReviewManagement = () => {
     try {
       const response = await deleteReview(reviewId);
       if (response.success) {
-        alert('Review berhasil dihapus');
+        showNotification('success', 'Review berhasil dihapus');
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal menghapus review');
+      showNotification('error', 'Gagal menghapus review');
     }
   };
 
@@ -133,7 +142,7 @@ const ReviewManagement = () => {
 
   const handleUpdateAdminReply = async (reviewId) => {
     if (!editReplyText.trim()) {
-      alert('Balasan tidak boleh kosong');
+      showNotification('error', 'Balasan tidak boleh kosong');
       return;
     }
 
@@ -144,13 +153,13 @@ const ReviewManagement = () => {
       });
 
       if (response.success) {
-        alert('Balasan berhasil diperbarui');
+        showNotification('success', 'Balasan berhasil diperbarui');
         setEditingReplyId(null);
         setEditReplyText('');
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal memperbarui balasan');
+      showNotification('error', 'Gagal memperbarui balasan');
     } finally {
       setSubmitting(false);
     }
@@ -162,11 +171,11 @@ const ReviewManagement = () => {
     try {
       const response = await deleteAdminReply(reviewId);
       if (response.success) {
-        alert('Balasan berhasil dihapus');
+        showNotification('success', 'Balasan berhasil dihapus');
         fetchReviews();
       }
     } catch (error) {
-      alert('Gagal menghapus balasan');
+      showNotification('error', 'Gagal menghapus balasan');
     }
   };
 
@@ -398,6 +407,50 @@ const ReviewManagement = () => {
           ))
         )}
       </div>
+
+      {/* Notification Toast */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className={`rounded-lg shadow-lg p-4 max-w-md ${
+            notification.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {notification.type === 'success' ? (
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className={`text-sm font-medium ${
+                  notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {notification.type === 'success' ? 'Berhasil!' : 'Gagal!'}
+                </h3>
+                <p className={`mt-1 text-sm ${
+                  notification.type === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotification({ show: false, type: '', message: '' })}
+                className={`ml-4 flex-shrink-0 rounded-md inline-flex ${
+                  notification.type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
+                }`}>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
