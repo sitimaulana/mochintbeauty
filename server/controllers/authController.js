@@ -7,6 +7,10 @@ const emailService = require('../services/emailService');
 // In-memory storage untuk OTP (dalam production, gunakan Redis atau database)
 const otpStorage = new Map();
 
+// Rate limiting untuk OTP (prevent spam)
+const otpRateLimit = new Map();
+const OTP_RATE_LIMIT_SECONDS = 30; // Minimum 30 seconds between OTP requests
+
 const normalizeRow = (res) => {
   if (!res) return null;
   if (Array.isArray(res)) return res[0] || null;
@@ -286,12 +290,31 @@ const sendOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email diperlukan' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check rate limit - prevent sending OTP too frequently
+    const lastOtpTime = otpRateLimit.get(normalizedEmail);
+    const now = Date.now();
+    const timeSinceLastOtp = lastOtpTime ? (now - lastOtpTime) / 1000 : Infinity;
+
+    if (timeSinceLastOtp < OTP_RATE_LIMIT_SECONDS) {
+      const remainingSeconds = Math.ceil(OTP_RATE_LIMIT_SECONDS - timeSinceLastOtp);
+      console.log(`⚠️ Rate limit exceeded for ${normalizedEmail}. Wait ${remainingSeconds}s`);
+      
+      return res.status(429).json({ 
+        success: false, 
+        message: `Tunggu ${remainingSeconds} detik sebelum mengirim OTP baru` 
+      });
+    }
+
+    // Update rate limit timestamp
+    otpRateLimit.set(normalizedEmail, now);
+    
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Store OTP with expiry (10 minutes for sufficient verification time)
     const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
-    const normalizedEmail = email.toLowerCase().trim();
     
     otpStorage.set(normalizedEmail, {
       otp,
@@ -439,8 +462,9 @@ const setPassword = async (req, res) => {
     // Update member password
     await memberModel.updatePassword(member.id, hashedPassword);
 
-    // Clean up OTP storage
+    // Clean up OTP storage and rate limit
     otpStorage.delete(normalizedEmail);
+    otpRateLimit.delete(normalizedEmail);
 
     console.log(`✅ Password set successfully for user: ${normalizedEmail}`);
 
@@ -454,12 +478,22 @@ const setPassword = async (req, res) => {
   }
 };
 
-// Helper function to clean up expired OTPs
+// Helper function to clean up expired OTPs and rate limit entries
 const cleanupExpiredOTPs = () => {
   const now = Date.now();
+  
+  // Clean up expired OTPs
   for (const [email, data] of otpStorage.entries()) {
     if (now > data.expiryTime) {
       otpStorage.delete(email);
+    }
+  }
+  
+  // Clean up rate limit entries older than 5 minutes
+  const RATE_LIMIT_CLEANUP_SECONDS = 5 * 60 * 1000;
+  for (const [email, timestamp] of otpRateLimit.entries()) {
+    if (now - timestamp > RATE_LIMIT_CLEANUP_SECONDS) {
+      otpRateLimit.delete(email);
     }
   }
 };

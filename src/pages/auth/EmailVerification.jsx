@@ -79,7 +79,7 @@ const EmailVerification = () => {
           type: 'success',
           message: `Kode OTP telah dikirim ke ${userData.email}`
         });
-        setCountdown(120); // 120 seconds countdown (2 minutes)
+        setCountdown(60); // 60 seconds countdown (1 minute)
         
         // Show OTP in console and store for development
         if (response.data.otp || response.data.devOTP) {
