@@ -369,6 +369,10 @@ const BedManagement = () => {
             <span className="text-xs text-gray-600">Penuh (0 Bed)</span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+            <span className="text-xs text-gray-600">Sudah Lewat</span>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-gray-400"></div>
             <span className="text-xs text-gray-600">Dinonaktifkan</span>
           </div>
@@ -388,33 +392,69 @@ const BedManagement = () => {
             const available = slot.available;
             const isDisabled = isTimeslotDisabled(time);
             
+            // Cek apakah timeslot sudah terlewat untuk hari ini
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Parse selectedDate dengan benar (format: YYYY-MM-DD)
+            // Hindari timezone issue dengan mengambil year, month, day secara manual
+            const [year, month, day] = selectedDate.split('-').map(Number);
+            const selectedDateObj = new Date(year, month - 1, day);
+            
+            const isToday = selectedDateObj.getTime() === today.getTime();
+            
+            let isTimePassed = false;
+            if (isToday) {
+              const currentTime = new Date();
+              const currentHours = currentTime.getHours();
+              const currentMinutes = currentTime.getMinutes();
+              const [slotHours, slotMinutes] = time.split(':').map(Number);
+              if (slotHours < currentHours || (slotHours === currentHours && slotMinutes < currentMinutes)) {
+                isTimePassed = true;
+              }
+            }
+            
             return (
               <div 
                 key={time}
-                className={`relative p-4 rounded-xl border-2 transition-all ${isDisabled ? 'bg-gray-100 border-gray-300 opacity-60' : getStatusBg(available)} group hover:shadow-md`}
+                className={`relative p-4 rounded-xl border-2 transition-all ${
+                  isTimePassed 
+                    ? 'bg-red-50 border-red-200 opacity-60' 
+                    : isDisabled 
+                      ? 'bg-gray-100 border-gray-300 opacity-60' 
+                      : getStatusBg(available)
+                } group hover:shadow-md`}
               >
                 {/* Status Indicator Dot */}
-                <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${isDisabled ? 'bg-gray-400' : getStatusColor(available)}`}></div>
+                <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${
+                  isTimePassed ? 'bg-red-500' : isDisabled ? 'bg-gray-400' : getStatusColor(available)
+                }`}></div>
                 
-                {/* Toggle Disable Button */}
-                <button
-                  onClick={() => toggleTimeslot(time)}
-                  className={`absolute top-2 left-2 p-1.5 rounded-md transition-all hover:scale-110 ${    isDisabled 
-                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                      : 'bg-red-500 text-white hover:bg-red-600'
-                  }`}
-                  title={isDisabled ? 'Aktifkan slot ini' : 'Nonaktifkan slot ini'}
-                >
-                  {isDisabled ? (
-                    <X size={14} strokeWidth={3} />
-                  ) : (
-                    <X size={14} strokeWidth={3} />
-                  )}
-                </button>
+                {/* Toggle Disable Button - Hide for passed times */}
+                {!isTimePassed && (
+                  <button
+                    onClick={() => toggleTimeslot(time)}
+                    className={`absolute top-2 left-2 p-1.5 rounded-md transition-all hover:scale-110 ${    isDisabled 
+                        ? 'bg-green-500 text-white hover:bg-green-600' 
+                        : 'bg-red-500 text-white hover:bg-red-600'
+                    }`}
+                    title={isDisabled ? 'Aktifkan slot ini' : 'Nonaktifkan slot ini'}
+                  >
+                    {isDisabled ? (
+                      <X size={14} strokeWidth={3} />
+                    ) : (
+                      <X size={14} strokeWidth={3} />
+                    )}
+                  </button>
+                )}
                 
                 <div className="text-center mt-2">
                   <div className="text-lg font-bold text-gray-800">{time}</div>
-                  {isDisabled ? (
+                  {isTimePassed ? (
+                    <div className="text-[9px] font-black uppercase tracking-widest mt-1 text-red-600">
+                      SUDAH LEWAT
+                    </div>
+                  ) : isDisabled ? (
                     <div className="text-[9px] font-black uppercase tracking-widest mt-1 text-gray-500">
                       DISABLED
                     </div>
@@ -433,14 +473,14 @@ const BedManagement = () => {
                       <Bed 
                         key={i}
                         size={12}
-                        className={isDisabled ? 'text-gray-300' : (i < slot.occupied ? 'text-red-500' : 'text-green-400')}
+                        className={isTimePassed ? 'text-red-300' : isDisabled ? 'text-gray-300' : (i < slot.occupied ? 'text-red-500' : 'text-green-400')}
                       />
                     ))}
                   </div>
                 </div>
 
                 {/* Tooltip on hover */}
-                {!isDisabled && slot.appointments.length > 0 && (
+                {!isDisabled && !isTimePassed && slot.appointments.length > 0 && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                     <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl min-w-[200px]">
                       <div className="font-bold mb-2">Appointment Aktif:</div>
@@ -456,11 +496,21 @@ const BedManagement = () => {
                 )}
 
                 {/* Disabled Tooltip */}
-                {isDisabled && (
+                {isDisabled && !isTimePassed && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                     <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl min-w-[150px] text-center">
                       <div className="font-bold">Slot Dinonaktifkan</div>
                       <div className="text-[10px] text-gray-400 mt-1">User tidak dapat memilih slot ini</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Time Passed Tooltip */}
+                {isTimePassed && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl min-w-[150px] text-center">
+                      <div className="font-bold">Waktu Sudah Lewat</div>
+                      <div className="text-[10px] text-gray-400 mt-1">Slot ini tidak lagi tersedia</div>
                     </div>
                   </div>
                 )}

@@ -280,6 +280,22 @@ const BookingStep3 = () => {
   const getAllTimeSlotsWithAvailability = () => {
     if (!selectedDate) return [];
     
+    // Cek apakah selectedDate adalah hari ini
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Parse selectedDate dengan benar (format: YYYY-MM-DD)
+    // Hindari timezone issue dengan mengambil year, month, day secara manual
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const selectedDateObj = new Date(year, month - 1, day);
+    
+    const isToday = selectedDateObj.getTime() === today.getTime();
+    
+    // Ambil jam sekarang jika hari ini
+    const currentTime = new Date();
+    const currentHours = currentTime.getHours();
+    const currentMinutes = currentTime.getMinutes();
+    
     return generateAllTimeSlots()
       .map(slot => {
         const endTime = calculateEndTime(slot);
@@ -292,13 +308,23 @@ const BookingStep3 = () => {
         const userHasBooking = hasUserBookingAtTime(slot);
         const isDisabledByAdmin = isTimeslotDisabledByAdmin(slot);
         
+        // Cek apakah waktu slot sudah terlewat (untuk hari ini)
+        let isTimePassed = false;
+        if (isToday) {
+          const [slotHours, slotMinutes] = slot.split(':').map(Number);
+          if (slotHours < currentHours || (slotHours === currentHours && slotMinutes < currentMinutes)) {
+            isTimePassed = true;
+          }
+        }
+        
         return {
           time: slot,
           availableBeds: availableBeds,
-          isAvailable: hasAvailableBeds && !exceedsClosingTime && !userHasBooking && !isDisabledByAdmin,
+          isAvailable: hasAvailableBeds && !exceedsClosingTime && !userHasBooking && !isDisabledByAdmin && !isTimePassed,
           exceedsClosingTime: exceedsClosingTime,
           userHasBooking: userHasBooking,
-          isDisabledByAdmin: isDisabledByAdmin
+          isDisabledByAdmin: isDisabledByAdmin,
+          isTimePassed: isTimePassed
         };
       })
       .filter(slot => !slot.exceedsClosingTime); // Filter out slots yang melewati jam tutup
@@ -603,11 +629,13 @@ const BookingStep3 = () => {
                     )}
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                       {getAllTimeSlotsWithAvailability().map((slot) => {
-                        const { time, availableBeds, isAvailable, userHasBooking, isDisabledByAdmin } = slot;
+                        const { time, availableBeds, isAvailable, userHasBooking, isDisabledByAdmin, isTimePassed } = slot;
                         const isSelected = selectedTime === time;
                         
                         let statusText = 'TERSEDIA';
-                        if (isDisabledByAdmin) {
+                        if (isTimePassed) {
+                          statusText = 'SUDAH LEWAT';
+                        } else if (isDisabledByAdmin) {
                           statusText = 'DITUTUP';
                         } else if (userHasBooking) {
                           statusText = 'SUDAH BOOKING';
@@ -624,11 +652,13 @@ const BookingStep3 = () => {
                               isSelected 
                                 ? 'bg-[#3E2723] border-[#3E2723] text-white shadow-lg scale-105 z-10' 
                                 : !isAvailable 
-                                  ? isDisabledByAdmin
-                                    ? 'bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed'
-                                    : userHasBooking
-                                      ? 'bg-orange-50 border-orange-200 opacity-70 cursor-not-allowed'
-                                      : 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                                  ? isTimePassed
+                                    ? 'bg-red-50 border-red-200 opacity-60 cursor-not-allowed'
+                                    : isDisabledByAdmin
+                                      ? 'bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed'
+                                      : userHasBooking
+                                        ? 'bg-orange-50 border-orange-200 opacity-70 cursor-not-allowed'
+                                        : 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
                                   : 'bg-white border-gray-100 text-[#3E2723] hover:border-[#8D6E63]/50 hover:shadow-md'
                             }`}
                           >
@@ -637,6 +667,7 @@ const BookingStep3 = () => {
                             </span>
                             <span className={`text-[8px] font-black uppercase tracking-widest ${
                               isSelected ? 'text-white/70' : 
+                              isTimePassed ? 'text-red-600' :
                               isDisabledByAdmin ? 'text-gray-500' :
                               userHasBooking ? 'text-orange-600' :
                               !isAvailable ? 'text-gray-400' : 'text-gray-500'
@@ -653,6 +684,10 @@ const BookingStep3 = () => {
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="flex items-center gap-1">
                             <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span className="text-xs font-medium text-gray-600">Sudah Lewat</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
                             <span className="text-xs font-medium text-gray-600">Penuh</span>
                           </div>
                           <div className="flex items-center gap-1">

@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCirc
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Preloader from '../../components/common/Preloader';
+import ProductDetail from './ProductDetail';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const Home = () => {
     promo_banner: null,
     footer_contact: null
   });
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // --- API URL ---
   const API_URL_PRODUCTS = '/api/products';
@@ -129,8 +132,16 @@ const Home = () => {
     navigate('/member-app', { state: { openLogin: true } });
   };
 
+  const handleShowDetail = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
   const handleAboutClick = () => navigate('/about');
-  const handleProductMoreClick = () => navigate('/product');
+  const handleProductMoreClick = () => {
+    navigate('/product');
+    window.scrollTo(0, 0);
+  };
   const handlePromoClick = () => navigate('/promo');
 
   const scroll = (direction) => {
@@ -219,7 +230,7 @@ const Home = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             {products.map((product) => (
               <div key={product._id || product.id} className="group cursor-pointer flex flex-col items-center">
-                <div className="w-full aspect-[4/5] bg-white mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm relative" onClick={() => navigate(`/product`)}>
+                <div className="w-full aspect-[4/5] bg-white mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm relative" onClick={() => handleShowDetail(product)}>
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out" />
                   <div className="absolute bottom-2 sm:bottom-4 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition duration-300">
                     <span className="bg-white/90 text-[#5D4037] px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs font-bold font-sans">
@@ -441,6 +452,12 @@ const Home = () => {
           </div>
         </div>
       </footer>
+
+      <ProductDetail 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        product={selectedProduct} 
+      />
     </div>
   );
 };

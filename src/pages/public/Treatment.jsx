@@ -222,8 +222,8 @@ const Treatment = () => {
               </div>
               
               {searchQuery.trim() !== '' && (
-                <div className="mt-3 px-3 py-2 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700 font-medium">
+                <div className="mt-3 px-3 py-2 bg-brown-50 rounded-lg">
+                  <p className="text-xs text-black-700 font-medium">
                     Mencari: <span className="font-bold">"{searchQuery}"</span>
                   </p>
                 </div>

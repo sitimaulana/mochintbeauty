@@ -25,7 +25,9 @@ const Product = () => {
   // Ambil unique categories dari data
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(products.map(p => p.category))];
-    return ['All Products', ...uniqueCategories.sort()];
+    // Filter out 'Best Seller' dari unique categories karena akan ditambahkan secara manual
+    const filteredCategories = uniqueCategories.filter(cat => cat !== 'Best Seller').sort();
+    return ['All Products','Best Seller', ...filteredCategories];
   }, [products]);
 
   useEffect(() => {
@@ -56,6 +58,10 @@ const Product = () => {
       
       if (activeTab === 'All Products') {
         return matchesSearch;
+      }
+
+      if (activeTab === 'Best Seller') {
+        return product.category === 'Best Seller' && matchesSearch;
       }
       
       return product.category === activeTab && matchesSearch;
@@ -165,9 +171,14 @@ const Product = () => {
         {/* Desktop Tab Navigation */}
         <div className="hidden lg:flex border-b border-gray-200 mb-12 overflow-x-auto no-scrollbar bg-white/50 rounded-t-2xl px-2">
           {categories.map((cat) => {
-            const count = cat === 'All Products' 
-              ? products.length 
-              : products.filter(p => p.category === cat).length;
+            let count;
+            if (cat === 'All Products') {
+              count = products.length;
+            } else if (cat === 'Best Seller') {
+              count = products.filter(p => p.category === 'Best Seller').length;
+            } else {
+              count = products.filter(p => p.category === cat).length;
+            }
 
             return (
               <button
@@ -240,9 +251,14 @@ const Product = () => {
                   </label>
                   <div className="space-y-2">
                     {categories.map((cat) => {
-                      const count = cat === 'All Products' 
-                        ? products.length 
-                        : products.filter(p => p.category === cat).length;
+                      let count;
+                      if (cat === 'All Products') {
+                        count = products.length;
+                      } else if (cat === 'Best Seller') {
+                        count = products.filter(p => p.category === 'Best Seller').length;
+                      } else {
+                        count = products.filter(p => p.category === cat).length;
+                      }
 
                       return (
                         <label 
