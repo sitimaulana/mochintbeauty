@@ -20,8 +20,11 @@ const getApiClient = async () => {
 export const analyzeSkinImage = async (imagePreview) => {
   try {
     const api = await getApiClient();
+    // AI analysis needs more time for model loading + inference
     const response = await api.post(API_ENDPOINTS.ANALYZE_SKIN, {
       image: imagePreview
+    }, {
+      timeout: 60000  // 60 seconds for PyTorch model inference
     });
 
     if (response.data && response.data.error) {
