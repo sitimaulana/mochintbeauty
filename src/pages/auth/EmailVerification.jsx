@@ -13,10 +13,11 @@ const EmailVerification = () => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   const [devOtpCode, setDevOtpCode] = useState(''); // Store OTP for development
 
-  // Get user data from location state (passed from GoogleCallback or ForgotPassword)
+  // Get user data from location state (passed from GoogleCallback, ForgotPassword, or Manual Registration)
   const userData = location.state?.user;
   const token = location.state?.token;
   const isForgotPassword = location.state?.isForgotPassword || false; // Check if this is forgot password flow
+  const isManualRegistration = location.state?.isManualRegistration || false; // Check if this is manual registration
 
   useEffect(() => {
     // If no user data, redirect back to login
@@ -27,7 +28,7 @@ const EmailVerification = () => {
     }
 
     console.log('âœ… User data received:', userData);
-    console.log('ðŸ” Flow type:', isForgotPassword ? 'Forgot Password' : 'Google OAuth');
+    console.log('🔄 Flow type:', isManualRegistration ? 'Manual Registration' : isForgotPassword ? 'Forgot Password' : 'Google OAuth');
     // Auto-send OTP on mount
     handleSendOtp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,16 +167,45 @@ const EmailVerification = () => {
           message: 'Email berhasil diverifikasi!'
         });
 
-        // Redirect to set password page after 1 second
+        // Different handling based on flow type and response data
         setTimeout(() => {
-          navigate('/auth/set-password', {
-            state: { 
-              user: userData, 
-              token: token,
-              isForgotPassword: isForgotPassword // Pass the flag to SetPassword
-            },
-            replace: true
-          });
+          if (isManualRegistration && response.data.autoLogin && response.data.token) {
+            // Manual registration with auto-login: user already has password and email verified
+            // Directly login and redirect to dashboard
+            console.log('📧 Manual registration verified - auto-login and redirect to dashboard');
+            
+            // Save token and user data to localStorage
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            localStorage.setItem('active_user', JSON.stringify(response.data.user));
+            localStorage.setItem('user_type', 'member');
+            localStorage.setItem('login_time', new Date().toISOString());
+            
+            // Redirect to dashboard
+            navigate('/member', { replace: true });
+          } else if (isManualRegistration) {
+            // Manual registration without auto-login: redirect to login
+            console.log('📧 Manual registration verified - redirecting to login');
+            navigate('/auth/login', {
+              state: { 
+                emailVerified: true,
+                email: userData.email,
+                message: 'Email berhasil diverifikasi! Silakan login dengan akun Anda.'
+              },
+              replace: true
+            });
+          } else {
+            // Google OAuth or Forgot Password: redirect to set password
+            console.log('🔐 Redirecting to set password page');
+            navigate('/auth/set-password', {
+              state: { 
+                user: userData, 
+                token: token,
+                isForgotPassword: isForgotPassword
+              },
+              replace: true
+            });
+          }
         }, 1000);
       }
     } catch (error) {

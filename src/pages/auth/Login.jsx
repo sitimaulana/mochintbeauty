@@ -17,6 +17,21 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
     const activeUser = localStorage.getItem('active_user');
     const adminToken = localStorage.getItem('token');
     
+    // Check for email verification success (from manual registration)
+    if (location.state?.emailVerified) {
+      setNotification({
+        show: true,
+        type: 'success',
+        message: 'Email berhasil diverifikasi! Silakan login dengan akun Anda.'
+      });
+      // Pre-fill email if available
+      if (location.state?.email) {
+        setEmail(location.state.email);
+      }
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+    
     // Check for password reset success
     if (location.state?.passwordResetSuccess) {
       setNotification({
@@ -118,8 +133,33 @@ const Login = ({ onSwitch, onForgot, onLoginSuccess, onBack }) => {
       if (err.response) {
         // Server responded with error
         const statusCode = err.response.status;
+        const errorData = err.response.data;
         
-        if (statusCode === 401) {
+        if (statusCode === 403 && errorData?.emailNotVerified) {
+          // Email not verified - redirect to email verification
+          setNotification({
+            show: true,
+            type: 'error',
+            message: "Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu."
+          });
+          
+          setTimeout(() => {
+            navigate('/auth/verify-email', {
+              state: { 
+                user: {
+                  id: errorData.memberId,
+                  email: errorData.email,
+                  name: errorData.email?.split('@')[0]
+                },
+                isForgotPassword: false,
+                isManualRegistration: true
+              },
+              replace: true
+            });
+          }, 1500);
+          setIsLoading(false);
+          return;
+        } else if (statusCode === 401) {
           errorMessage = "Email atau password yang Anda masukkan salah. Periksa kembali dan coba lagi.";
         } else if (statusCode === 404) {
           errorMessage = "Akun tidak ditemukan. Silakan daftar terlebih dahulu.";

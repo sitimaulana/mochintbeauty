@@ -91,13 +91,13 @@ const Regist = ({ onSwitch, onRegisterSuccess, onBack }) => {
     if (!formData.address || formData.address.trim() === '') {
       errors.address = 'Alamat lengkap wajib diisi';
       errorMessages.push('Alamat lengkap');
-    } else if (formData.address.trim().length < 10) {
-      errors.address = 'Alamat minimal 10 karakter';
-      errorMessages.push('Alamat (minimal 10 karakter)');
+    } else if (formData.address.trim().length < 0) {
+      errors.address = 'Inputkan alamat anda';
+      errorMessages.push('Inputkan alamat anda');
     }
 
-    console.log('ðŸ” Validation errors:', errors);
-    console.log('ðŸ” Error messages:', errorMessages);
+    console.log('Validation errors:', errors);
+    console.log('Error messages:', errorMessages);
 
     // Jika ada error, tampilkan notifikasi
     if (Object.keys(errors).length > 0) {
@@ -130,19 +130,41 @@ const Regist = ({ onSwitch, onRegisterSuccess, onBack }) => {
       const res = await authAPI.register(formData);
       
       if (res.success) {
-        setNotification({
-          show: true,
-          type: 'success',
-          message: `Selamat! Akun Anda berhasil dibuat`
-        });
-        
-        setTimeout(() => {
-          if (onRegisterSuccess) {
-            onRegisterSuccess(res.user);
-          } else {
-            onSwitch(); 
-          }
-        }, 2000);
+        // Check if email verification is required
+        if (res.requiresEmailVerification) {
+          setNotification({
+            show: true,
+            type: 'success',
+            message: `Akun berhasil dibuat! Silakan verifikasi email Anda.`
+          });
+          
+          // Redirect to email verification page
+          setTimeout(() => {
+            navigate('/auth/verify-email', {
+              state: { 
+                user: res.user, 
+                isForgotPassword: false,
+                isManualRegistration: true
+              },
+              replace: true
+            });
+          }, 1500);
+        } else {
+          // Direct login (from Google OAuth)
+          setNotification({
+            show: true,
+            type: 'success',
+            message: `Selamat! Akun Anda berhasil dibuat`
+          });
+          
+          setTimeout(() => {
+            if (onRegisterSuccess) {
+              onRegisterSuccess(res.user);
+            } else {
+              onSwitch(); 
+            }
+          }, 2000);
+        }
       }
     } catch (error) {
       console.error(' Registration error:', error);
