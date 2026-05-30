@@ -13,7 +13,7 @@ export const COLORS = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  ANALYZE_SKIN: '/api/ai/analyze-skin',
+  ANALYZE_SKIN: '/ai/analyze-skin',
 };
 
 // Face Detection Thresholds

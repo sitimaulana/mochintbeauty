@@ -1,0 +1,351 @@
+#!/usr/bin/env python
+"""
+Mochint AI Skin Analysis Model - Inference Script with Database Integration
+Dijalankan oleh Node.js backend untuk predict masalah kulit
+Query treatment recommendations dari database berdasarkan hasil analisis
+"""
+import sys
+import json
+import base64
+import torch
+import torch.nn as nn
+from torchvision import models, transforms
+from PIL import Image
+from io import BytesIO
+import os
+import mysql.connector
+from mysql.connector import Error
+import logging
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ===== CONFIGURATION =====
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+CLASS_NAMES = ['acne', 'blackheades', 'dark spots', 'pores', 'redness', 'wrinkles']
+
+# Skin type mapping (sesuai dengan frontend constants)
+SKIN_TYPES = {
+    0: 'Normal',
+    1: 'Kering',
+    2: 'Berminyak',
+    3: 'Kombinasi',
+    4: 'Sensitif'
+}
+
+# Skin condition translations (English to Indonesian)
+SKIN_CONDITION_TRANSLATIONS = {
+    'acne': 'Jerawat',
+    'blackheades': 'Komedo',
+    'dark spots': 'Bintik Hitam',
+    'pores': 'Pori-pori',
+    'redness': 'Kemerahan',
+    'wrinkles': 'Kerutan'
+}
+
+# Condition to Treatment Keyword mapping
+CONDITION_KEYWORDS = {
+    'acne': ['acne', 'jerawat', 'berjerawat'],
+    'blackheades': ['komedo', 'pori', 'oil control', 'detox'],
+    'dark spots': ['whitening', 'spot', 'flek', 'pigmentation'],
+    'pores': ['pori', 'oil control', 'detox', 'komedo'],
+    'redness': ['sensitif', 'calming', 'irritation', 'sooth'],
+    'wrinkles': ['anti-aging', 'wrinkle', 'rf', 'lifting', 'tight']
+}
+
+# Condition to Skin Type mapping (untuk kategori treatment)
+CONDITION_TO_SKIN_TYPE = {
+    'acne': ['Berminyak', 'Kombinasi'],
+    'blackheades': ['Berminyak'],
+    'dark spots': ['Kering', 'Kombinasi'],
+    'pores': ['Berminyak'],
+    'redness': ['Sensitif'],
+    'wrinkles': ['Kering']
+}
+
+# Model configuration
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models/mochint_model.pth')
+
+# Database configuration
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'beauty_clinic',
+    'port': 3306
+}
+
+# ===== MODEL LOADING =====
+def load_model():
+    """Load trained PyTorch model"""
+    try:
+        model = models.efficientnet_b0(weights=None)
+        num_ftrs = model.classifier[1].in_features
+        model.classifier[1] = nn.Linear(num_ftrs, len(CLASS_NAMES))
+        
+        if not os.path.exists(MODEL_PATH):
+            return None, f"Model file not found at: {MODEL_PATH}"
+        
+        model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+        model = model.to(DEVICE)
+        model.eval()
+        
+        return model, None
+    except Exception as e:
+        return None, f"Error loading model: {str(e)}"
+
+# ===== IMAGE PREPROCESSING =====
+def preprocess_image(image_data):
+    """Convert base64 image to tensor"""
+    try:
+        # Decode base64
+        if isinstance(image_data, str):
+            image_data = image_data.split(',')[-1]  # Remove data:image/jpeg;base64, prefix if exists
+        
+        img_bytes = base64.b64decode(image_data)
+        img = Image.open(BytesIO(img_bytes)).convert('RGB')
+        
+        # Apply transformations
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        
+        return transform(img).unsqueeze(0).to(DEVICE), None
+    except Exception as e:
+        return None, f"Error preprocessing image: {str(e)}"
+
+# ===== INFERENCE =====
+def predict_skin_condition(model, image_tensor):
+    """Run inference and return predictions"""
+    try:
+        with torch.no_grad():
+            outputs = model(image_tensor)
+            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+            confidence, predicted_idx = torch.max(probabilities, 0)
+        
+        predicted_class = CLASS_NAMES[predicted_idx.item()]
+        confidence_score = confidence.item()
+        all_probs = probabilities.cpu().numpy()
+        
+        return {
+            'detectedCondition': predicted_class,
+            'conditionConfidence': round(confidence_score * 100, 2),
+            'allProbabilities': {
+                CLASS_NAMES[i]: round(float(all_probs[i]) * 100, 2) 
+                for i in range(len(CLASS_NAMES))
+            }
+        }, None
+    except Exception as e:
+        return None, f"Error during inference: {str(e)}"
+
+# ===== DATABASE CONNECTION =====
+def get_db_connection():
+    """Create database connection"""
+    try:
+        connection = mysql.connector.connect(**DB_CONFIG)
+        return connection
+    except Error as err:
+        logger.warning(f"Database connection error: {err}")
+        return None
+
+# ===== GET RECOMMENDATIONS FROM DATABASE =====
+def get_recommendations_from_db(detected_condition, skin_type):
+    """
+    Query database untuk mendapatkan treatment recommendations
+    berdasarkan detected condition dan skin type
+    """
+    try:
+        connection = get_db_connection()
+        if not connection:
+            logger.warning("No database connection, returning fallback recommendations")
+            return []
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Search treatments dengan category yang match condition atau skin type
+        # Treatment category bisa berisi: "Acne Care", "Berminyak", "Sensitif", dll
+        query = """
+            SELECT id, name, price, description, duration
+            FROM treatments 
+            WHERE (LOWER(category) LIKE %s OR LOWER(category) LIKE %s)
+            ORDER BY price ASC
+            LIMIT 3
+        """
+        
+        cursor.execute(
+            query,
+            (
+                f'%"{detected_condition}%',
+                f'%"{skin_type}%'
+            )
+        )
+        
+        treatments = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        # Format recommendations
+        recommendations = []
+        for i, treatment in enumerate(treatments, 1):
+            recommendations.append({
+                'id': treatment['id'],
+                'treatment': treatment['name'],
+                'reason': f"Treatment khusus untuk mengatasi {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}",
+                'price': int(treatment['price']),
+                'duration': treatment.get('duration', '60 min')
+            })
+        
+        return recommendations
+        
+    except Exception as e:
+        logger.error(f"Error getting recommendations from database: {str(e)}")
+        return []
+
+# ===== FALLBACK MOCK RECOMMENDATIONS =====
+def get_fallback_recommendations(detected_condition):
+    """Return fallback recommendations jika database tidak bisa diakses"""
+    recommendations = [
+        {
+            "id": 1,
+            "treatment": "Facial Treatment",
+            "reason": f"Membersihkan dan merawat kulit untuk mengatasi {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}",
+            "price": 150000,
+            "duration": "60 min"
+        },
+        {
+            "id": 2,
+            "treatment": "Serum Treatment",
+            "reason": "Memberikan nutrisi intensif sesuai kebutuhan kulit",
+            "price": 200000,
+            "duration": "45 min"
+        },
+        {
+            "id": 3,
+            "treatment": "Masker Sheet Premium",
+            "reason": "Hidrasi dan pencerah kulit untuk hasil maksimal",
+            "price": 75000,
+            "duration": "30 min"
+        }
+    ]
+    return recommendations
+
+# ===== MOCK SKIN TYPE DETECTION =====
+def detect_skin_type(detected_condition):
+    """
+    Mock skin type detection based on condition
+    Dalam real implementation, ini bisa dari model terpisah atau dari frontend
+    """
+    # Mapping condition → skin type untuk demo
+    condition_to_skin_type = {
+        'acne': 2,  # Berminyak
+        'blackheades': 2,  # Berminyak
+        'dark spots': 1,  # Kering
+        'pores': 2,  # Berminyak
+        'redness': 4,  # Sensitif
+        'wrinkles': 1  # Kering
+    }
+    
+    skin_type_id = condition_to_skin_type.get(detected_condition, 0)  # Default: Normal
+    return SKIN_TYPES.get(skin_type_id, 'Normal')
+
+# ===== MOCK SKIN CONDITION DETAILS =====
+def get_skin_condition_details(detected_condition):
+    """Return detailed info about detected condition"""
+    condition_details = {
+        'issue': detected_condition,
+        'severity': 'sedang',  # ringan, sedang, berat
+        'recommendation': f"Gunakan produk khusus untuk {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}"
+    }
+    return condition_details
+
+# ===== MAIN EXECUTION =====
+def main():
+    try:
+        # Load model
+        model, error = load_model()
+        if error:
+            response = {
+                'success': False,
+                'error': error,
+                'detectedCondition': 'Unknown',
+                'conditionConfidence': 0
+            }
+            print(json.dumps(response))
+            return
+        
+        # Read image from stdin
+        image_data = sys.stdin.read().strip()
+        
+        if not image_data:
+            response = {
+                'success': False,
+                'error': 'No image data provided',
+                'detectedCondition': 'Unknown',
+                'conditionConfidence': 0
+            }
+            print(json.dumps(response))
+            return
+        
+        # Preprocess image
+        image_tensor, error = preprocess_image(image_data)
+        if error:
+            response = {
+                'success': False,
+                'error': error,
+                'detectedCondition': 'Unknown',
+                'conditionConfidence': 0
+            }
+            print(json.dumps(response))
+            return
+        
+        # Run inference
+        predictions, error = predict_skin_condition(model, image_tensor)
+        if error:
+            response = {
+                'success': False,
+                'error': error,
+                'detectedCondition': 'Unknown',
+                'conditionConfidence': 0
+            }
+            print(json.dumps(response))
+            return
+        
+        # Build response
+        detected_condition = predictions['detectedCondition']
+        skin_type = detect_skin_type(detected_condition)
+        
+        # Get recommendations dari database
+        recommendations = get_recommendations_from_db(detected_condition, skin_type)
+        
+        # Fallback jika database tidak bisa diakses atau tidak ada recommendations
+        if not recommendations:
+            recommendations = get_fallback_recommendations(detected_condition)
+            logger.info(f"Using fallback recommendations for {detected_condition}")
+        
+        response = {
+            'success': True,
+            'skinType': skin_type,
+            'confidence': 85,
+            'detectedCondition': detected_condition,
+            'conditionConfidence': predictions['conditionConfidence'],
+            'skinCondition': [get_skin_condition_details(detected_condition)],
+            'recommendations': recommendations,
+            'allProbabilities': predictions['allProbabilities']
+        }
+        
+        print(json.dumps(response))
+        
+    except Exception as e:
+        response = {
+            'success': False,
+            'error': f"Unexpected error: {str(e)}",
+            'detectedCondition': 'Unknown',
+            'conditionConfidence': 0
+        }
+        print(json.dumps(response))
+
+if __name__ == '__main__':
+    main()

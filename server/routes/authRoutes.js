@@ -19,19 +19,6 @@ router.get('/google', (req, res, next) => {
     })(req, res, next);
   } catch (error) {
     console.error('Google OAuth not configured:', error.message);
-    res.status(302).location('http://localhost:5173/login?error=google_not_configured').end();
-  }
-});
-
-// Google OAuth routes - lazy load passport only when needed
-router.get('/google', (req, res, next) => {
-  try {
-    const passport = require('../config/passport');
-    passport.authenticate('google', { 
-      scope: ['profile', 'email'] 
-    })(req, res, next);
-  } catch (error) {
-    console.error('Google OAuth not configured:', error.message);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.status(302).location(frontendUrl + '/login?error=google_not_configured').end();
   }

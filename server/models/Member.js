@@ -47,7 +47,7 @@ class Member {
   static async findByEmail(email) {
     try {
       const [rows] = await promisePool.query(
-        'SELECT id, name, email, password, phone, address, join_date, google_id, profile_picture FROM members WHERE email = ? LIMIT 1',
+        'SELECT id, name, email, password, phone, address, join_date, google_id, profile_picture, email_verified FROM members WHERE email = ? LIMIT 1',
         [email]
       );
       return rows[0] || null;
@@ -77,10 +77,12 @@ class Member {
         hashedPassword = await bcrypt.hash(password, 10);
       }
       const joinDate = new Date().toISOString().split('T')[0];
+      // New members from manual registration start with email_verified = false
+      const emailVerified = google_id ? true : false;
 
       const [result] = await promisePool.query(
-        'INSERT INTO members (name, email, phone, address, password, join_date, google_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, email, phone || '', address || '', hashedPassword, joinDate, google_id, profile_picture]
+        'INSERT INTO members (name, email, phone, address, password, join_date, google_id, profile_picture, email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, email, phone || '', address || '', hashedPassword, joinDate, google_id, profile_picture, emailVerified]
       );
 
       return {
@@ -91,7 +93,8 @@ class Member {
         address: address || '',
         join_date: joinDate,
         google_id,
-        profile_picture
+        profile_picture,
+        email_verified: emailVerified
       };
     } catch (error) {
       console.error('Error in Member.create:', error);
@@ -162,6 +165,23 @@ class Member {
       return result.affectedRows > 0;
     } catch (error) {
       console.error('❌ Error in Member.updatePassword:', error);
+      throw error;
+    }
+  }
+
+  // Update email verified status (after OTP verification)
+  static async updateEmailVerified(id, verified = true) {
+    try {
+      const [result] = await promisePool.query(
+        'UPDATE members SET email_verified = ? WHERE id = ?',
+        [verified, id]
+      );
+      
+      console.log(`✅ Email verified status updated for member ID: ${id}, verified: ${verified}`);
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('❌ Error in Member.updateEmailVerified:', error);
       throw error;
     }
   }
