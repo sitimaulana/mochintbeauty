@@ -5,7 +5,10 @@ import {
   Check,
   Eye,
   EyeOff,
-  X
+  X,
+  Trash2,
+  MapPin,
+  CheckCircle
 } from 'lucide-react';
 
 // API Configuration
@@ -608,6 +611,12 @@ const PageContent = () => {
     { value: 'footer', label: 'Footer' }
   ];
 
+  // Determine if main image is required based on section_key
+  const requiresMainImage = () => {
+    const sectionKeysWithImages = ['hero', 'about', 'services', 'promo_banner'];
+    return sectionKeysWithImages.includes(formData.section_key);
+  };
+
   // Count items per type
   const getCountByType = (type) => {
     return pageInfos.filter(info => info.page_type === type).length;
@@ -1024,9 +1033,7 @@ const PageContent = () => {
                         onClick={() => handleDelete(info.id)}
                         className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 text-sm transition-colors"
                       >
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </>
                   ) : (
@@ -1134,9 +1141,7 @@ const PageContent = () => {
                           onClick={() => handleDelete(info.id)}
                           className="px-3 sm:px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
                         >
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                           Hapus
                         </button>
                       </>
@@ -1175,7 +1180,7 @@ const PageContent = () => {
                 {/* Show helper text when editing about section */}
                 {editingInfo && formData.page_type === 'home' && formData.section_key === 'about' && (
                   <p className="text-xs text-blue-600 mt-1 font-medium">
-                    ðŸ“ Anda sedang mengedit section <strong>About</strong> yang muncul di halaman Home
+                    Anda sedang mengedit section <strong>About</strong> yang muncul di halaman Home
                   </p>
                 )}
               </div>
@@ -1183,9 +1188,7 @@ const PageContent = () => {
                 onClick={closeForm}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
@@ -1301,7 +1304,8 @@ const PageContent = () => {
                   />
                 </div>
 
-                {/* Image Upload/URL */}
+                {/* Image Upload/URL - HANYA TAMPILKAN JIKA DIPERLUKAN */}
+                {requiresMainImage() && (
                 <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-lg border-2 border-brown-200">
                   <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
                     <svg className="w-5 h-5 text-brown-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1364,9 +1368,7 @@ const PageContent = () => {
                           className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg transition-all transform hover:scale-110"
                           title="Hapus gambar"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -1380,6 +1382,16 @@ const PageContent = () => {
                     </div>
                   )}
                 </div>
+                )}
+
+                {/* Info Message ketika tidak memerlukan gambar */}
+                {!requiresMainImage() && formData.section_key && (
+                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      ℹ️ <strong>Bagian ini tidak memerlukan gambar.</strong> Input gambar disembunyikan karena konten "<strong>{formData.section_key}</strong>" tidak membutuhkan visual image.
+                    </p>
+                  </div>
+                )}
 
                 {/* Additional Fields for Promo */}
                 {formData.page_type === 'promo' && (
@@ -1450,9 +1462,7 @@ const PageContent = () => {
                               onClick={() => removeBenefit(index)}
                               className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors"
                             >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                           )}
                         </div>
@@ -1510,9 +1520,7 @@ const PageContent = () => {
                               onClick={() => removeMisi(index)}
                               className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors"
                             >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                           )}
                         </div>
@@ -1783,7 +1791,7 @@ const PageContent = () => {
                       {/* WhatsApp URL */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          ðŸ”— Link WhatsApp
+                          Link WhatsApp
                         </label>
                         <input
                           type="text"
@@ -1799,17 +1807,14 @@ const PageContent = () => {
                     <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="bg-red-100 p-1.5 rounded">
-                          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
+                          <MapPin className="w-4 h-4 text-red-600" />
                         </div>
                         <h4 className="font-semibold text-gray-900">Step 2: Google Maps Lokasi</h4>
                       </div>
 
                       <div className="mb-3">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          ðŸ—ºï¸ Link Embed Google Maps
+                          Link Embed Google Maps
                         </label>
                         <textarea
                           value={additionalFields.map_embed_url}
@@ -1818,30 +1823,28 @@ const PageContent = () => {
                           placeholder="https://www.google.com/maps/embed?pb=!1m18!1m12..."
                           className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono text-xs resize-none"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Link untuk menampilkan peta di website</p>
+                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps → Share → Embed a map → Salin iframe src lengkap</p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          ðŸ“ Link Google Maps (Klik Lokasi)
+                          Link Google Maps (Klik Lokasi)
                         </label>
                         <input
                           type="text"
                           value={additionalFields.maps_url}
                           onChange={(e) => handleAdditionalFieldChange('maps_url', e.target.value)}
-                          placeholder="https://maps.app.goo.gl/xxxxxx"
+                          placeholder="https://maps.app.goo.gl/xxxxx atau https://www.google.com/maps/place/..."
                           className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Link untuk membuka Google Maps saat icon lokasi diklik</p>
+                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps → Klik lokasi → Share → Copy link</p>
                       </div>
 
                       {/* Info Box */}
                       <div className="mt-4 flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="text-xs font-semibold text-green-900 mb-1">âœ¨ Informasi Tambahan:</p>
+                          <p className="text-xs font-semibold text-green-900 mb-1"> Informasi Tambahan:</p>
                           <ul className="text-xs text-green-800 space-y-1 ml-3 list-disc">
                             <li>Data ini akan ditampilkan di bagian <strong>Footer</strong> website</li>
                             <li>Pastikan nomor WhatsApp aktif dan bisa menerima pesan</li>
