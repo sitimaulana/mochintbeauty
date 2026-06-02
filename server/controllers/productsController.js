@@ -75,8 +75,12 @@ exports.createProduct = async (req, res) => {
             promoEndDate: promoEndDate || null
         };
 
+        console.log('📝 Creating product with data:', JSON.stringify(productData, null, 2));
+
         const newProduct = await Products.create(productData);
         
+        console.log('✅ Product created successfully:', newProduct.id);
+
         // Parse marketplace_links
         newProduct.marketplaceLinks = newProduct.marketplace_links 
             ? JSON.parse(newProduct.marketplace_links) 
@@ -84,10 +88,12 @@ exports.createProduct = async (req, res) => {
 
         res.status(201).json(newProduct);
     } catch (error) {
-        console.error('Error creating product:', error);
+        console.error('❌ Error creating product:', error.message);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({
             error: 'Gagal membuat produk',
-            message: error.message
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };

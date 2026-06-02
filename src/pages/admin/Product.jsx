@@ -276,12 +276,12 @@ const Product = () => {
 
   const handleSave = async () => {
     try {
-      if (!formData.name || !formData.categories || formData.categories.length === 0 || !formData.price) {
+      if (!formData.name || !formData.price) {
         setNotification({
           show: true,
           type: 'error',
           title: 'Validasi Gagal',
-          message: 'Harap isi semua bidang wajib (Nama, minimal satu kategori, Harga)'
+          message: 'Harap isi semua bidang wajib (Nama, Harga)'
         });
         return;
       }
@@ -725,7 +725,7 @@ const Product = () => {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">
-                    Kategori <span className="text-red-500">*</span>
+                    Kategori <span className="text-gray-500 text-xs">(opsional)</span>
                   </label>
                   
                   {/* Checkbox Grid */}

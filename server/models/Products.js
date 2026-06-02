@@ -55,12 +55,16 @@ class Products {
             promoEndDate
         } = productData;
 
+        // Use first category as main category, or empty string as fallback
+        const mainCategory = categories && categories.length > 0 ? categories[0] : '';
+
         const [result] = await promisePool.query(
             `INSERT INTO products 
-            (name, price, weight, description, image, marketplace_links, discount_percentage, promo_start_date, promo_end_date, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            (name, category, price, weight, description, image, marketplace_links, discount_percentage, promo_start_date, promo_end_date, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
             [
                 name, 
+                mainCategory,
                 price, 
                 weight || 0, 
                 description || '', 
@@ -168,18 +172,27 @@ class Products {
 
     // Add category (create if not exists)
     static async addCategory(categoryName) {
-        const [result] = await promisePool.query(
-            'INSERT IGNORE INTO categories (name) VALUES (?)',
-            [categoryName]
-        );
-        
-        // Get the category ID
-        const [rows] = await promisePool.query(
-            'SELECT id FROM categories WHERE name = ?',
-            [categoryName]
-        );
-        
-        return rows[0];
+        try {
+            const [result] = await promisePool.query(
+                'INSERT IGNORE INTO categories (name) VALUES (?)',
+                [categoryName]
+            );
+            
+            // Get the category ID - always do this to handle both new inserts and existing categories
+            const [rows] = await promisePool.query(
+                'SELECT id FROM categories WHERE name = ?',
+                [categoryName]
+            );
+            
+            if (!rows || rows.length === 0) {
+                throw new Error(`Category "${categoryName}" not found after insert/select`);
+            }
+            
+            return rows[0];
+        } catch (error) {
+            console.error(`Error adding category "${categoryName}":`, error.message);
+            throw error;
+        }
     }
 
     // Delete category
@@ -193,15 +206,24 @@ class Products {
 
     // Add categories to product
     static async addCategoriesToProduct(productId, categoryNames) {
-        for (const categoryName of categoryNames) {
-            // First, ensure category exists
-            const category = await this.addCategory(categoryName);
-            
-            // Then add the product-category relationship
-            await promisePool.query(
-                'INSERT IGNORE INTO product_categories (product_id, category_id) VALUES (?, ?)',
-                [productId, category.id]
-            );
+        try {
+            for (const categoryName of categoryNames) {
+                // First, ensure category exists
+                const category = await this.addCategory(categoryName);
+                
+                if (!category || !category.id) {
+                    throw new Error(`Failed to get category ID for "${categoryName}"`);
+                }
+                
+                // Then add the product-category relationship
+                await promisePool.query(
+                    'INSERT IGNORE INTO product_categories (product_id, category_id) VALUES (?, ?)',
+                    [productId, category.id]
+                );
+            }
+        } catch (error) {
+            console.error('Error adding categories to product:', error.message);
+            throw error;
         }
     }
 
