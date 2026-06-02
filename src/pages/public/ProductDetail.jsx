@@ -54,9 +54,19 @@ const ProductDetail = ({ isOpen, onClose, product }) => {
               <ArrowLeft size={20} />
             </button>
             <div className="flex-1 text-center">
-              <span className="text-white text-xs font-bold tracking-wider uppercase px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                {product.category}
-              </span>
+              <div className="flex gap-2 justify-center flex-wrap">
+                {product.categories && product.categories.length > 0 ? (
+                  product.categories.slice(0, 2).map((cat, idx) => (
+                    <span key={idx} className="text-white text-[10px] font-bold tracking-wider uppercase px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                      {cat}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                    {product.category || 'Produk'}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="w-10"></div>
           </div>
@@ -111,8 +121,18 @@ const ProductDetail = ({ isOpen, onClose, product }) => {
               
               {/* Title Section */}
               <div className="space-y-3">
-                <div className="hidden md:inline-flex items-center gap-2 px-4 py-1.5 bg-[#8D6E63] text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md font-sans">
-                  <Tag size={12} /> {product.category}
+                <div className="hidden md:flex gap-2 flex-wrap">
+                  {product.categories && product.categories.length > 0 ? (
+                    product.categories.map((cat, idx) => (
+                      <div key={idx} className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#8D6E63] text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md font-sans">
+                        <Tag size={12} /> {cat}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#8D6E63] text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md font-sans">
+                      <Tag size={12} /> {product.category || 'Produk'}
+                    </div>
+                  )}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-display font-bold text-[#3E2723] leading-tight tracking-tight">
                   {product.name}

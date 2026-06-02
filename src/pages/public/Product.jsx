@@ -24,8 +24,10 @@ const Product = () => {
 
   // Ambil unique categories dari data
   const categories = useMemo(() => {
-    const uniqueCategories = [...new Set(products.map(p => p.category))];
-    // Filter out 'Best Seller' dari unique categories karena akan ditambahkan secara manual
+    // Flatten all categories from all products
+    const allCategories = products.flatMap(p => p.categories || []);
+    const uniqueCategories = [...new Set(allCategories)];
+    // Filter out 'Best Seller' dan sort
     const filteredCategories = uniqueCategories.filter(cat => cat !== 'Best Seller').sort();
     return ['All Products','Best Seller', ...filteredCategories];
   }, [products]);
@@ -61,10 +63,12 @@ const Product = () => {
       }
 
       if (activeTab === 'Best Seller') {
-        return product.category === 'Best Seller' && matchesSearch;
+        const productCategories = product.categories || [];
+        return productCategories.includes('Best Seller') && matchesSearch;
       }
       
-      return product.category === activeTab && matchesSearch;
+      const productCategories = product.categories || [];
+      return productCategories.includes(activeTab) && matchesSearch;
     });
   }, [products, activeTab, searchQuery]);
 
@@ -175,9 +179,15 @@ const Product = () => {
             if (cat === 'All Products') {
               count = products.length;
             } else if (cat === 'Best Seller') {
-              count = products.filter(p => p.category === 'Best Seller').length;
+              count = products.filter(p => {
+                const productCategories = p.categories || [];
+                return productCategories.includes('Best Seller');
+              }).length;
             } else {
-              count = products.filter(p => p.category === cat).length;
+              count = products.filter(p => {
+                const productCategories = p.categories || [];
+                return productCategories.includes(cat);
+              }).length;
             }
 
             return (
@@ -255,9 +265,15 @@ const Product = () => {
                       if (cat === 'All Products') {
                         count = products.length;
                       } else if (cat === 'Best Seller') {
-                        count = products.filter(p => p.category === 'Best Seller').length;
+                        count = products.filter(p => {
+                          const productCategories = p.categories || [];
+                          return productCategories.includes('Best Seller');
+                        }).length;
                       } else {
-                        count = products.filter(p => p.category === cat).length;
+                        count = products.filter(p => {
+                          const productCategories = p.categories || [];
+                          return productCategories.includes(cat);
+                        }).length;
                       }
 
                       return (

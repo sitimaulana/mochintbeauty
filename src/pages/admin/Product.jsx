@@ -7,7 +7,7 @@ const Product = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Semua Produk',
+    categories: [],
     price: '',
     weight: '', 
     description: '',
@@ -56,12 +56,10 @@ const Product = () => {
   // Fetch categories dari database
   const fetchCategories = async () => {
     try {
-      const Token = localStorage.getItem('token');
-      const response = await axios.get(`${OPTIONS_API_URL}/categories`, {
-        headers: { Authorization: `Bearer ${Token}` }
-      });
-      const categories = response.data.data || [];
-      setAvailableCategories(categories);
+      const response = await axios.get(`${API_URL}/api/categories`);
+      const categoriesData = response.data.data || [];
+      const categoryNames = categoriesData.map(cat => typeof cat === 'object' ? cat.name : cat);
+      setAvailableCategories(categoryNames);
     } catch (error) {
       console.error('Error fetching categories:', error);
       // Keep default categories on error
@@ -141,22 +139,22 @@ const Product = () => {
     
     try {
       const Token = localStorage.getItem('token');
-      await axios.post(`${OPTIONS_API_URL}/categories`, 
-        { value: newCategoryValue },
+      await axios.post(`${API_URL}/categories`, 
+        { name: newCategoryValue },
         { headers: { Authorization: `Bearer ${Token}` } }
       );
 
       await fetchCategories();
       setFormData({
         ...formData,
-        category: newCategoryValue
+        categories: [...formData.categories, newCategoryValue]
       });
       setNewCategory('');
       setNotification({
         show: true,
         type: 'success',
         title: 'Kategori Ditambahkan',
-        message: `Kategori "${newCategoryValue}" berhasil ditambahkan`
+        message: `Kategori "${newCategoryValue}" berhasil ditambahkan dan dipilih`
       });
     } catch (error) {
       setNotification({
@@ -171,18 +169,27 @@ const Product = () => {
   // Handle Hapus Kategori
   const handleRemoveCategory = async (category) => {
     try {
+      // Find category id from the available categories
+      const categoryData = (await axios.get(`${API_URL}/api/categories`)).data.data;
+      const categoryToDelete = categoryData.find(cat => 
+        typeof cat === 'object' ? cat.name === category : cat === category
+      );
+      
+      if (!categoryToDelete || !categoryToDelete.id) {
+        throw new Error('Kategori tidak ditemukan');
+      }
+
       const Token = localStorage.getItem('token');
-      await axios.delete(`${OPTIONS_API_URL}/categories`, {
-        data: { value: category },
+      await axios.delete(`${API_URL}/categories/${categoryToDelete.id}`, {
         headers: { Authorization: `Bearer ${Token}` }
       });
 
       await fetchCategories();
       
-      if (formData.category === category) {
+      if (formData.categories.includes(category)) {
         setFormData({
           ...formData,
-          category: ''
+          categories: formData.categories.filter(c => c !== category)
         });
       }
       
@@ -207,7 +214,7 @@ const Product = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
-      category: '',
+      categories: [],
       price: '',
       weight: '',
       description: '',
@@ -245,7 +252,7 @@ const Product = () => {
     
     setFormData({
       name: product.name || '',
-      category: product.category || 'Semua Produk',
+      categories: Array.isArray(product.categories) ? product.categories : (product.category ? [product.category] : []),
       price: priceValue.toString(), // Convert integer ke string
       weight: (product.weight || 0).toString(),
       description: product.description || '',
@@ -269,12 +276,12 @@ const Product = () => {
 
   const handleSave = async () => {
     try {
-      if (!formData.name || !formData.category || !formData.price) {
+      if (!formData.name || !formData.categories || formData.categories.length === 0 || !formData.price) {
         setNotification({
           show: true,
           type: 'error',
           title: 'Validasi Gagal',
-          message: 'Harap isi semua bidang wajib (Nama, Kategori, Harga)'
+          message: 'Harap isi semua bidang wajib (Nama, minimal satu kategori, Harga)'
         });
         return;
       }
@@ -283,7 +290,7 @@ const Product = () => {
       
       const productData = {
         name: formData.name.trim(),
-        category: formData.category,
+        categories: formData.categories,
         price: priceValue,
         weight: parseInt(formData.weight) || 0,
         description: formData.description?.trim() || '',
@@ -347,7 +354,7 @@ const Product = () => {
     setIsAdding(false);
     setFormData({
       name: '',
-      category: '',
+      categories: [],
       price: '',
       weight: '',
       description: '',
@@ -727,21 +734,25 @@ const Product = () => {
                       <label
                         key={cat}
                         className={`group flex items-center gap-2 p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all relative ${
-                          formData.category === cat
+                          formData.categories.includes(cat)
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         <input
-                          type="radio"
-                          name="category"
-                          value={cat}
-                          checked={formData.category === cat}
-                          onChange={() => setFormData({...formData, category: cat})}
+                          type="checkbox"
+                          checked={formData.categories.includes(cat)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({...formData, categories: [...formData.categories, cat]});
+                            } else {
+                              setFormData({...formData, categories: formData.categories.filter(c => c !== cat)});
+                            }
+                          }}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className={`text-xs sm:text-sm font-medium flex-1 ${
-                          formData.category === cat ? 'text-blue-700' : 'text-gray-700'
+                          formData.categories.includes(cat) ? 'text-blue-700' : 'text-gray-700'
                         }`}>
                           {cat}
                         </span>
@@ -788,28 +799,32 @@ const Product = () => {
                       </button>
                     </div>
                     <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
-                      Kategori baru akan muncul sebagai pilihan checkbox di atas dan otomatis dipilih
+                      Kategori baru akan muncul sebagai pilihan checkbox di atas dan bisa dipilih lebih dari satu
                     </p>
                   </div>
 
                   {/* Kategori Terpilih */}
-                  {formData.category && (
+                  {formData.categories.length > 0 && (
                     <div className="p-3 bg-brown-50 rounded-lg border border-brown-200">
                       <p className="text-xs sm:text-sm font-medium text-brown-800 mb-2">
-                        Kategori terpilih:
+                        Kategori terpilih ({formData.categories.length}):
                       </p>
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-brown-100 text-brown-700 rounded-full text-xs">
-                        {formData.category}
-                        <button
-                          type="button"
-                          onClick={() => setFormData({...formData, category: ''})}
-                          className="text-brown-500 hover:text-brown-700"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.categories.map((cat, index) => (
+                          <span key={index} className="inline-flex items-center gap-1 px-3 py-1.5 bg-brown-100 text-brown-700 rounded-full text-xs">
+                            {cat}
+                            <button
+                              type="button"
+                              onClick={() => setFormData({...formData, categories: formData.categories.filter(c => c !== cat)})}
+                              className="text-brown-500 hover:text-brown-700"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

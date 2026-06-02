@@ -5,7 +5,7 @@ exports.getAllProducts = async (req, res) => {
     try {
         const products = await Products.list();
         
-        // Parse marketplace_links JSON string ke object
+        // Parse marketplace_links JSON string to object
         const productsWithParsedLinks = products.map(product => ({
             ...product,
             marketplaceLinks: product.marketplace_links 
@@ -53,18 +53,18 @@ exports.getProductById = async (req, res) => {
 // Create new product
 exports.createProduct = async (req, res) => {
     try {
-        const { name, category, price, weight, description, image, marketplaceLinks, discountPercentage, promoStartDate, promoEndDate } = req.body;
+        const { name, categories = [], price, weight, description, image, marketplaceLinks, discountPercentage, promoStartDate, promoEndDate } = req.body;
 
         // Validasi
-        if (!name || !category || !price) {
+        if (!name || !categories || categories.length === 0 || !price) {
             return res.status(400).json({
-                error: 'Nama, kategori, dan harga wajib diisi'
+                error: 'Nama, minimal satu kategori, dan harga wajib diisi'
             });
         }
 
         const productData = {
             name: name.trim(),
-            category,
+            categories: Array.isArray(categories) ? categories : [categories],
             price: parseInt(price),
             weight: parseInt(weight) || 0,
             description: description?.trim() || '',
@@ -96,7 +96,7 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, category, price, weight, description, image, marketplaceLinks, discountPercentage, promoStartDate, promoEndDate } = req.body;
+        const { name, categories = [], price, weight, description, image, marketplaceLinks, discountPercentage, promoStartDate, promoEndDate } = req.body;
 
         // Cek apakah produk ada
         const existingProduct = await Products.getById(id);
@@ -107,15 +107,15 @@ exports.updateProduct = async (req, res) => {
         }
 
         // Validasi
-        if (!name || !category || !price) {
+        if (!name || !categories || categories.length === 0 || !price) {
             return res.status(400).json({
-                error: 'Nama, kategori, dan harga wajib diisi'
+                error: 'Nama, minimal satu kategori, dan harga wajib diisi'
             });
         }
 
         const productData = {
             name: name.trim(),
-            category,
+            categories: Array.isArray(categories) ? categories : [categories],
             price: parseInt(price),
             weight: parseInt(weight) || 0,
             description: description?.trim() || '',
@@ -200,6 +200,79 @@ exports.getProductsByCategory = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Gagal mengambil produk berdasarkan kategori',
+            message: error.message
+        });
+    }
+};
+
+// Get all categories
+exports.getAllCategories = async (req, res) => {
+    try {
+        const categories = await Products.getAllCategories();
+        res.json({
+            success: true,
+            data: categories
+        });
+    } catch (error) {
+        console.error('Error getting categories:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Gagal mengambil kategori',
+            message: error.message
+        });
+    }
+};
+
+// Add new category
+exports.addCategory = async (req, res) => {
+    try {
+        const { name } = req.body;
+
+        if (!name || !name.trim()) {
+            return res.status(400).json({
+                error: 'Nama kategori wajib diisi'
+            });
+        }
+
+        const category = await Products.addCategory(name.trim());
+        
+        res.status(201).json({
+            success: true,
+            data: category
+        });
+    } catch (error) {
+        console.error('Error adding category:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Gagal menambah kategori',
+            message: error.message
+        });
+    }
+};
+
+// Delete category
+exports.deleteCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deleted = await Products.deleteCategory(id);
+        
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                error: 'Kategori tidak ditemukan'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Kategori berhasil dihapus'
+        });
+    } catch (error) {
+        console.error('Error deleting category:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Gagal menghapus kategori',
             message: error.message
         });
     }
