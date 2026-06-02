@@ -613,7 +613,21 @@ const PageContent = () => {
 
   // Determine if main image is required based on section_key
   const requiresMainImage = () => {
-    const sectionKeysWithImages = ['hero', 'about', 'services', 'promo_banner'];
+    // Section keys yang memerlukan gambar utama
+    const sectionKeysWithImages = [
+      // Home sections
+      'hero',           // Banner utama halaman Home
+      'about',          // About section di Home
+      'services',       // Services section
+      'promo_banner',   // Promo banner di Home
+      
+      // About sections
+      'story',          // Banner/cerita utama halaman About
+      
+      // Promo section
+      'main_promo',     // Promo utama
+      'promo'           // Promo variant
+    ];
     return sectionKeysWithImages.includes(formData.section_key);
   };
 
