@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   AlertCircle,
@@ -15,7 +15,7 @@ import {
 const API_URL = '/api'; // Force /api for local development (Vite proxy will handle it)
 
 // Debug log
-console.log('🔧 PageContent API Configuration:', { API_URL });
+console.log('?? PageContent API Configuration:', { API_URL });
 
 // Error image SVG constant
 const ERROR_IMAGE_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23888" font-size="12"%3EError%3C/text%3E%3C/svg%3E';
@@ -78,7 +78,7 @@ const PageContent = () => {
       { label: 'Promo & Reseller', url: '/promo' },
       { label: 'Blog & Tips', url: '/information' }
     ],
-    footer_copyright: '© 2024 Mochint Beauty. All rights reserved.'
+    footer_copyright: '� 2024 Mochint Beauty. All rights reserved.'
   });
 
   // Helper function to get auth headers
@@ -102,15 +102,15 @@ const PageContent = () => {
     try {
       setLoading(true);
       const url = `${API_URL}/page-info?include_inactive=true`;
-      console.log('📡 Fetching from:', url);
+      console.log('?? Fetching from:', url);
       
       const response = await axios.get(url, getAuthHeaders());
-      console.log('✅ Response:', response.data);
+      console.log('? Response:', response.data);
       
       setPageInfos(response.data.data || []);
       setError('');
     } catch (err) {
-      console.error('❌ Error fetching page infos:', {
+      console.error('? Error fetching page infos:', {
         url: `${API_URL}/page-info`,
         status: err.response?.status,
         message: err.message,
@@ -511,7 +511,7 @@ const PageContent = () => {
         { label: 'Promo & Reseller', url: '/promo' },
         { label: 'Blog & Tips', url: '/information' }
       ],
-      footer_copyright: '© 2024 Mochint Beauty. All rights reserved.'
+      footer_copyright: '� 2024 Mochint Beauty. All rights reserved.'
     });
     setPreviewImage('');
   };
@@ -588,7 +588,7 @@ const PageContent = () => {
         { label: 'Promo & Reseller', url: '/promo' },
         { label: 'Blog & Tips', url: '/information' }
       ],
-      footer_copyright: additionalData.copyright || '© 2024 Mochint Beauty. All rights reserved.'
+      footer_copyright: additionalData.copyright || '� 2024 Mochint Beauty. All rights reserved.'
     });
   };
 
@@ -1053,7 +1053,7 @@ const PageContent = () => {
                   ) : (
                     <button
                       onClick={() => handleRestore(info.id)}
-                      className="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm font-medium transition-colors"
+                      className="flex-1 px-3 py-2 bg-brown-100 text-brown-700 rounded-lg hover:bg-brown-200 text-sm font-medium transition-colors"
                     >
                       Pulihkan
                     </button>
@@ -1162,7 +1162,7 @@ const PageContent = () => {
                     ) : (
                       <button
                         onClick={() => handleRestore(info.id)}
-                        className="px-3 sm:px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-xs sm:text-sm font-medium transition-colors"
+                        className="px-3 sm:px-4 py-2 bg-brown-100 text-brown-700 rounded-lg hover:bg-brown-200 text-xs sm:text-sm font-medium transition-colors"
                       >
                         Pulihkan
                       </button>
@@ -1193,7 +1193,7 @@ const PageContent = () => {
                 </h2>
                 {/* Show helper text when editing about section */}
                 {editingInfo && formData.page_type === 'home' && formData.section_key === 'about' && (
-                  <p className="text-xs text-blue-600 mt-1 font-medium">
+                  <p className="text-xs text-brown-600 mt-1 font-medium">
                     Anda sedang mengedit section <strong>About</strong> yang muncul di halaman Home
                   </p>
                 )}
@@ -1219,7 +1219,7 @@ const PageContent = () => {
                     value={formData.page_type}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                   >
                     <option value="">Pilih Tipe Halaman</option>
                     <option value="home">Home</option>
@@ -1251,7 +1251,7 @@ const PageContent = () => {
                         ? "main_promo"
                         : ""
                     }
-                    className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formData.page_type === 'promo' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent ${formData.page_type === 'promo' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {formData.page_type === 'home' ? (
@@ -1263,7 +1263,7 @@ const PageContent = () => {
                         <strong>Untuk Halaman About</strong>, gunakan section_key: <code className="bg-green-50 px-1.5 py-0.5 rounded">story</code>, <code className="bg-green-50 px-1.5 py-0.5 rounded">vision</code>, <code className="bg-green-50 px-1.5 py-0.5 rounded">awards</code>, atau <code className="bg-green-50 px-1.5 py-0.5 rounded">facilities</code>
                       </span>
                     ) : formData.page_type === 'promo' ? (
-                      <span className="text-blue-600 font-medium">
+                      <span className="text-brown-600 font-medium">
                         <strong>Untuk Promo</strong>, section_key otomatis diset ke <code className="bg-blue-50 px-1.5 py-0.5 rounded">main_promo</code>
                       </span>
                     ) : (
@@ -1284,7 +1284,7 @@ const PageContent = () => {
                     value={formData.title}
                     onChange={handleInputChange}
                     placeholder="Masukkan judul konten"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                   />
                 </div>
 
@@ -1299,7 +1299,7 @@ const PageContent = () => {
                     value={formData.subtitle}
                     onChange={handleInputChange}
                     placeholder="Masukkan subtitle"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                   />
                 </div>
 
@@ -1314,13 +1314,13 @@ const PageContent = () => {
                     onChange={handleInputChange}
                     rows="4"
                     placeholder="Masukkan konten detail"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* Image Upload/URL - HANYA TAMPILKAN JIKA DIPERLUKAN */}
                 {requiresMainImage() && (
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-lg border-2 border-brown-200">
+                <div className="bg-gradient-to-br from-brown-50 to-brown-100 p-4 rounded-lg border-2 border-brown-300">
                   <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
                     <svg className="w-5 h-5 text-brown-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1337,16 +1337,16 @@ const PageContent = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleImageUpload}
-                      className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+                      className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brown-100 file:text-brown-700 hover:file:bg-brown-200 cursor-pointer"
                       key="main-image-upload"
                     />
-                    <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">  
+                    <div className="mt-2 p-2 bg-brown-50 border border-brown-200 rounded">  
                     </div>
                   </div> 
                   {/* Method 2: Image URL Input - RECOMMENDED */}
-                  <div className="bg-white p-3 rounded-lg border-2 border-green-300 shadow-sm">
+                  <div className="bg-white p-3 rounded-lg border-2 border-brown-400 shadow-sm">
                     <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1.5">
-                      <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">REKOMENDASI</span>
+                      <span className="bg-brown-100 text-brown-700 text-[10px] font-bold px-2 py-0.5 rounded-full">REKOMENDASI</span>
                        Masukkan URL Gambar
                     </label>
                     <input
@@ -1355,9 +1355,9 @@ const PageContent = () => {
                       value={formData.image_url}
                       onChange={handleImageUrlChange}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
                     />
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                    <div className="mt-2 p-2 bg-brown-50 border border-brown-200 rounded">
                     </div>
                   </div>
 
@@ -1389,9 +1389,9 @@ const PageContent = () => {
                   )}
                   
                   {!previewImage && (
-                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-xs text-yellow-800">
-                        âš ï¸ <strong>Belum ada gambar.</strong> Upload gambar atau masukkan URL untuk menampilkan gambar.
+                    <div className="mt-3 p-3 bg-brown-50 border border-brown-200 rounded-lg">
+                      <p className="text-xs text-brown-800">
+                        ⚠️ <strong>Belum ada gambar.</strong> Upload gambar atau masukkan URL untuk menampilkan gambar.
                       </p>
                     </div>
                   )}
@@ -1402,7 +1402,7 @@ const PageContent = () => {
                 {!requiresMainImage() && formData.section_key && (
                   <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      ℹ️ <strong>Bagian ini tidak memerlukan gambar.</strong> Input gambar disembunyikan karena konten "<strong>{formData.section_key}</strong>" tidak membutuhkan visual image.
+                      ?? <strong>Bagian ini tidak memerlukan gambar.</strong> Input gambar disembunyikan karena konten "<strong>{formData.section_key}</strong>" tidak membutuhkan visual image.
                     </p>
                   </div>
                 )}
@@ -1422,7 +1422,7 @@ const PageContent = () => {
                         value={additionalFields.promo_label}
                         onChange={(e) => handleAdditionalFieldChange('promo_label', e.target.value)}
                         placeholder="Contoh: DISKON SPESIAL"
-                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                       />
                     </div>
 
@@ -1438,7 +1438,7 @@ const PageContent = () => {
                         placeholder="Contoh: 50"
                         min="0"
                         max="100"
-                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                       />
                     </div>
 
@@ -1452,7 +1452,7 @@ const PageContent = () => {
                         value={additionalFields.whatsapp_number}
                         onChange={(e) => handleAdditionalFieldChange('whatsapp_number', e.target.value)}
                         placeholder="Contoh: 628123456789"
-                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                       />
                     </div>
 
@@ -1468,7 +1468,7 @@ const PageContent = () => {
                             value={benefit}
                             onChange={(e) => handleAdditionalFieldChange('benefits', e.target.value, index)}
                             placeholder={`Manfaat ${index + 1}`}
-                            className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                           />
                           {additionalFields.benefits.length > 1 && (
                             <button
@@ -1510,7 +1510,7 @@ const PageContent = () => {
                         onChange={(e) => handleAdditionalFieldChange('visi', e.target.value)}
                         rows="3"
                         placeholder="Masukkan visi perusahaan"
-                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                       />
                     </div>
 
@@ -1526,7 +1526,7 @@ const PageContent = () => {
                             value={misi}
                             onChange={(e) => handleAdditionalFieldChange('misi', e.target.value, index)}
                             placeholder={`Misi ${index + 1}`}
-                            className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                           />
                           {additionalFields.misi.length > 1 && (
                             <button
@@ -1555,16 +1555,16 @@ const PageContent = () => {
 
                 {/* Additional Fields for About Awards */}
                 {formData.page_type === 'about' && formData.section_key === 'awards' && (
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border-2 border-amber-300 shadow-sm">
+                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-gradient-to-br from-brown-50 to-brown-100 rounded-lg border-2 border-brown-400 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-brown-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                       </svg>
                       <h3 className="font-bold text-gray-900 text-base sm:text-lg">Data Penghargaan</h3>
                     </div>
                     
-                    <p className="text-xs text-amber-800 bg-amber-100 p-2 rounded">
-                      ðŸ’¡ Tambahkan penghargaan yang akan ditampilkan dalam slider
+                    <p className="text-xs text-brown-800 bg-brown-100 p-2 rounded">
+                      💡 Tambahkan penghargaan yang akan ditampilkan dalam slider
                     </p>
 
                     {additionalFields.awards.map((award, index) => (
@@ -1592,7 +1592,7 @@ const PageContent = () => {
                               value={award.title}
                               onChange={(e) => handleAwardChange(index, 'title', e.target.value)}
                               placeholder="Contoh: Best Beauty Clinic 2024"
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500"
                             />
                           </div>
                           <div>
@@ -1605,7 +1605,7 @@ const PageContent = () => {
                                   type="file"
                                   accept="image/*"
                                   onChange={(e) => handleAwardImageUpload(index, e)}
-                                  className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                                  className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brown-100 file:text-brown-700 hover:file:bg-brown-200"
                                 />
                               </div>
                               {/* URL Input */}
@@ -1616,7 +1616,7 @@ const PageContent = () => {
                                   value={award.image}
                                   onChange={(e) => handleAwardChange(index, 'image', e.target.value)}
                                   placeholder="https://example.com/award.jpg"
-                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500"
                                 />
                               </div>
                               {/* Preview */}
@@ -1642,7 +1642,7 @@ const PageContent = () => {
                     <button
                       type="button"
                       onClick={addAward}
-                      className="w-full px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                      className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1654,16 +1654,16 @@ const PageContent = () => {
 
                 {/* Additional Fields for About Facilities */}
                 {formData.page_type === 'about' && formData.section_key === 'facilities' && (
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg border-2 border-teal-300 shadow-sm">
+                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-gradient-to-br from-brown-50 to-brown-100 rounded-lg border-2 border-brown-400 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-brown-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                       <h3 className="font-bold text-gray-900 text-base sm:text-lg">Data Fasilitas</h3>
                     </div>
                     
-                    <p className="text-xs text-teal-800 bg-teal-100 p-2 rounded">
-                      ðŸ¢ Tambahkan fasilitas yang tersedia di klinik
+                    <p className="text-xs text-brown-800 bg-brown-100 p-2 rounded">
+                      🏢 Tambahkan fasilitas yang tersedia di klinik
                     </p>
 
                     {additionalFields.facilities.map((facility, index) => (
@@ -1691,7 +1691,7 @@ const PageContent = () => {
                               value={facility.name}
                               onChange={(e) => handleFacilityChange(index, 'name', e.target.value)}
                               placeholder="Contoh: Ruang Treatment"
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500"
                             />
                           </div>
                           <div>
@@ -1701,7 +1701,7 @@ const PageContent = () => {
                               onChange={(e) => handleFacilityChange(index, 'description', e.target.value)}
                               placeholder="Deskripsi fasilitas..."
                               rows="2"
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500"
                             />
                           </div>
                           <div>
@@ -1714,7 +1714,7 @@ const PageContent = () => {
                                   type="file"
                                   accept="image/*"
                                   onChange={(e) => handleFacilityImageUpload(index, e)}
-                                  className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                                  className="w-full text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brown-100 file:text-brown-700 hover:file:bg-brown-200"
                                 />
                               </div>
                               {/* URL Input */}
@@ -1725,7 +1725,7 @@ const PageContent = () => {
                                   value={facility.image}
                                   onChange={(e) => handleFacilityChange(index, 'image', e.target.value)}
                                   placeholder="https://example.com/facility.jpg"
-                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500"
                                 />
                               </div>
                               {/* Preview */}
@@ -1751,7 +1751,7 @@ const PageContent = () => {
                     <button
                       type="button"
                       onClick={addFacility}
-                      className="w-full px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                      className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1780,7 +1780,7 @@ const PageContent = () => {
                     {/* Section 1: WhatsApp */}
                     <div className="bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="bg-green-100 p-1.5 rounded">
+                        <div className="bg-brown-100 p-1.5 rounded">
                           <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                           </svg>
@@ -1798,7 +1798,7 @@ const PageContent = () => {
                           value={additionalFields.phone_display}
                           onChange={(e) => handleAdditionalFieldChange('phone_display', e.target.value)}
                           placeholder="+62 819-9420-4009"
-                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all font-medium"
                         />
                       </div>
 
@@ -1812,7 +1812,7 @@ const PageContent = () => {
                           value={additionalFields.whatsapp_url}
                           onChange={(e) => handleAdditionalFieldChange('whatsapp_url', e.target.value)}
                           placeholder="https://wa.me/6281994204009"
-                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all font-mono"
                         />
                       </div>
                     </div>
@@ -1835,9 +1835,9 @@ const PageContent = () => {
                           onChange={(e) => handleAdditionalFieldChange('map_embed_url', e.target.value)}
                           rows="2"
                           placeholder="https://www.google.com/maps/embed?pb=!1m18!1m12..."
-                          className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono text-xs resize-none"
+                          className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all font-mono text-xs resize-none"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps → Share → Embed a map → Salin iframe src lengkap</p>
+                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps ? Share ? Embed a map ? Salin iframe src lengkap</p>
                       </div>
 
                       <div>
@@ -1849,13 +1849,13 @@ const PageContent = () => {
                           value={additionalFields.maps_url}
                           onChange={(e) => handleAdditionalFieldChange('maps_url', e.target.value)}
                           placeholder="https://maps.app.goo.gl/xxxxx atau https://www.google.com/maps/place/..."
-                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all font-mono"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps → Klik lokasi → Share → Copy link</p>
+                        <p className="mt-1 text-xs text-gray-500">Salin dari: Google Maps ? Klik lokasi ? Share ? Copy link</p>
                       </div>
 
                       {/* Info Box */}
-                      <div className="mt-4 flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="mt-4 flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-brown-200">
                         <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <p className="text-xs font-semibold text-green-900 mb-1"> Informasi Tambahan:</p>
@@ -1881,7 +1881,7 @@ const PageContent = () => {
                     value={formData.display_order}
                     onChange={handleInputChange}
                     min="1"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Semakin kecil angka, semakin atas posisinya
@@ -1890,8 +1890,8 @@ const PageContent = () => {
 
                 {/* Footer Fields */}
                 {formData.page_type === 'footer' && (
-                  <div className="space-y-4 p-4 sm:p-5 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border-2 border-purple-300 shadow-sm">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4">⚙️ Konfigurasi Footer</h3>
+                  <div className="space-y-4 p-4 sm:p-5 bg-gradient-to-br from-brown-50 to-blue-50 rounded-xl border-2 border-brown-300 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">?? Konfigurasi Footer</h3>
 
                     {/* Company Description */}
                     <div>
@@ -1901,49 +1901,49 @@ const PageContent = () => {
                         onChange={(e) => handleAdditionalFieldChange('footer_company_description', e.target.value)}
                         rows="2"
                         placeholder="Klinik kecantikan terpercaya dengan teknologi AI untuk analisis kulit terbaik."
-                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all resize-none"
                       />
                     </div>
 
                     {/* Contact Information */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">📞 Nomor Telepon</label>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">?? Nomor Telepon</label>
                         <input
                           type="text"
                           value={additionalFields.footer_phone}
                           onChange={(e) => handleAdditionalFieldChange('footer_phone', e.target.value)}
                           placeholder="+62 (XXX) XXXX-XXXX"
-                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">✉️ Email</label>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">?? Email</label>
                         <input
                           type="email"
                           value={additionalFields.footer_email}
                           onChange={(e) => handleAdditionalFieldChange('footer_email', e.target.value)}
                           placeholder="info@mochintbeauty.com"
-                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                         />
                       </div>
                     </div>
 
                     {/* Address */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">📍 Alamat</label>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">?? Alamat</label>
                       <input
                         type="text"
                         value={additionalFields.footer_address}
                         onChange={(e) => handleAdditionalFieldChange('footer_address', e.target.value)}
                         placeholder="Jakarta, Indonesia"
-                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                       />
                     </div>
 
                     {/* Social Links */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">🔗 Media Sosial</label>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">?? Media Sosial</label>
                       <div className="space-y-2">
                         {additionalFields.footer_social_links?.map((link, index) => (
                           <div key={index} className="flex gap-2 items-end">
@@ -1957,7 +1957,7 @@ const PageContent = () => {
                                   handleAdditionalFieldChange('footer_social_links', updatedLinks);
                                 }}
                                 placeholder={`Link ${link.platform}`}
-                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                               />
                             </div>
                             <span className="text-xs font-medium text-gray-600 capitalize px-2 py-2.5 bg-gray-100 rounded-lg min-w-max">
@@ -1970,7 +1970,7 @@ const PageContent = () => {
 
                     {/* Quick Links */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">🔗 Menu Cepat</label>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">?? Menu Cepat</label>
                       <div className="space-y-2">
                         {additionalFields.footer_quick_links?.map((link, index) => (
                           <div key={index} className="flex gap-2 items-end">
@@ -1984,7 +1984,7 @@ const PageContent = () => {
                                   handleAdditionalFieldChange('footer_quick_links', updatedLinks);
                                 }}
                                 placeholder="Label Menu"
-                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                               />
                             </div>
                           </div>
@@ -2001,7 +2001,7 @@ const PageContent = () => {
                                   handleAdditionalFieldChange('footer_quick_links', updatedLinks);
                                 }}
                                 placeholder="URL"
-                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                               />
                             </div>
                           </div>
@@ -2011,7 +2011,7 @@ const PageContent = () => {
 
                     {/* Member Links */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">👥 Menu Member</label>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-3">?? Menu Member</label>
                       <div className="space-y-2">
                         {additionalFields.footer_member_links?.map((link, index) => (
                           <div key={index} className="flex gap-2 items-end">
@@ -2025,7 +2025,7 @@ const PageContent = () => {
                                   handleAdditionalFieldChange('footer_member_links', updatedLinks);
                                 }}
                                 placeholder="Label Menu"
-                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                               />
                             </div>
                           </div>
@@ -2042,7 +2042,7 @@ const PageContent = () => {
                                   handleAdditionalFieldChange('footer_member_links', updatedLinks);
                                 }}
                                 placeholder="URL"
-                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                               />
                             </div>
                           </div>
@@ -2052,13 +2052,13 @@ const PageContent = () => {
 
                     {/* Copyright */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">© Copyright Text</label>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">� Copyright Text</label>
                       <input
                         type="text"
                         value={additionalFields.footer_copyright}
                         onChange={(e) => handleAdditionalFieldChange('footer_copyright', e.target.value)}
-                        placeholder="© 2024 Mochint Beauty. All rights reserved."
-                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="� 2024 Mochint Beauty. All rights reserved."
+                        className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brown-500 focus:border-brown-500 transition-all"
                       />
                     </div>
                   </div>
@@ -2072,7 +2072,7 @@ const PageContent = () => {
                     id="is_active"
                     checked={formData.is_active}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-brown-600 border-gray-300 rounded focus:ring-2 focus:ring-brown-500 cursor-pointer"
                   />
                   <label htmlFor="is_active" className="text-xs sm:text-sm font-medium text-gray-700 cursor-pointer">
                     Aktifkan konten ini
