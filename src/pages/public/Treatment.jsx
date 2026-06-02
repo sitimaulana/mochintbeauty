@@ -390,24 +390,24 @@ const Treatment = () => {
 
                   {/* Active Filters Mobile */}
                   {(selectedCategory !== 'All' || searchQuery.trim() !== '') && (
-                    <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
-                      <p className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-2">
+                    <div className="bg-[#FDFBF7] border-2 border-[#8D6E63] p-4 rounded-xl">
+                      <p className="text-xs font-bold text-[#8D6E63] mb-3 flex items-center gap-2">
                         <Filter size={14} />
                         Filter Aktif
                       </p>
                       <div className="space-y-2">
                         {selectedCategory !== 'All' && (
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-blue-600 font-medium">Kategori:</span>
-                            <span className="px-2 py-1 bg-white rounded font-bold text-blue-700">
+                            <span className="text-[#8D6E63] font-medium">Kategori:</span>
+                            <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63]">
                               {selectedCategory}
                             </span>
                           </div>
                         )}
                         {searchQuery.trim() !== '' && (
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-blue-600 font-medium">Pencarian:</span>
-                            <span className="px-2 py-1 bg-white rounded font-bold text-blue-700 truncate max-w-[150px]">
+                            <span className="text-[#8D6E63] font-medium">Pencarian:</span>
+                            <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63] truncate max-w-[150px]">
                               "{searchQuery}"
                             </span>
                           </div>

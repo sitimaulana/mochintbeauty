@@ -320,24 +320,24 @@ const Product = () => {
 
                 {/* Active Filters */}
                 {(activeTab !== 'All Products' || searchQuery.trim() !== '') && (
-                  <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
-                    <p className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-2">
+                  <div className="bg-[#FDFBF7] border-2 border-[#8D6E63] p-4 rounded-xl">
+                    <p className="text-xs font-bold text-[#8D6E63] mb-3 flex items-center gap-2">
                       <Filter size={14} />
                       Filter Aktif
                     </p>
                     <div className="space-y-2">
                       {activeTab !== 'All Products' && (
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-blue-600 font-medium">Kategori:</span>
-                          <span className="px-2 py-1 bg-white rounded font-bold text-blue-700">
+                          <span className="text-[#8D6E63] font-medium">Kategori:</span>
+                          <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63]">
                             {activeTab}
                           </span>
                         </div>
                       )}
                       {searchQuery.trim() !== '' && (
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-blue-600 font-medium">Pencarian:</span>
-                          <span className="px-2 py-1 bg-white rounded font-bold text-blue-700 truncate max-w-[150px]">
+                          <span className="text-[#8D6E63] font-medium">Pencarian:</span>
+                          <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63] truncate max-w-[150px]">
                             "{searchQuery}"
                           </span>
                         </div>
@@ -370,24 +370,24 @@ const Product = () => {
 
         {/* Mobile Active Filter Info */}
         {(activeTab !== 'All Products' || searchQuery.trim() !== '') && (
-          <div className="lg:hidden mb-4 bg-blue-50 border-2 border-blue-200 p-3 rounded-xl">
+          <div className="lg:hidden mb-4 bg-[#FDFBF7] border-2 border-[#8D6E63] p-3 rounded-xl">
             <div className="flex items-center justify-between">
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Filter size={12} className="text-blue-700" />
+                <Filter size={12} className="text-[#8D6E63]" />
                 {activeTab !== 'All Products' && (
-                  <span className="px-2 py-1 bg-white rounded font-bold text-blue-700">
+                  <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63]">
                     {activeTab}
                   </span>
                 )}
                 {searchQuery.trim() !== '' && (
-                  <span className="px-2 py-1 bg-white rounded font-bold text-blue-700 truncate max-w-[100px]">
+                  <span className="px-2 py-1 bg-white rounded font-bold text-[#8D6E63] truncate max-w-[100px]">
                     "{searchQuery}"
                   </span>
                 )}
               </div>
               <button
                 onClick={handleResetFilter}
-                className="text-blue-700 font-bold text-xs hover:underline"
+                className="text-[#8D6E63] font-bold text-xs hover:underline"
               >
                 Reset
               </button>
@@ -424,7 +424,7 @@ const Product = () => {
                 </div>
 
                 <div className="p-2 sm:p-3 lg:p-4">
-                  <h3 className="text-[#3E2723] font-display font-bold text-xs sm:text-sm mb-2 sm:mb-3 h-6 sm:h-7 leading-tight overflow-hidden tracking-tight line-clamp-2">
+                  <h3 className="text-[#3E2723] font-display font-bold text-xs sm:text-sm mb-2 sm:mb-3 h-12 sm:h-14 leading-snug overflow-hidden tracking-tight line-clamp-2">
                     {product.name}
                   </h3>
                   
