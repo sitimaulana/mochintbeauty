@@ -1,12 +1,3 @@
-/**
- * Example: Admin Reminder Management Component
- * 
- * This is a React component example for managing appointment reminders
- * Can be added to admin dashboard
- * 
- * Path: src/pages/admin/ReminderManagement.jsx
- */
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 

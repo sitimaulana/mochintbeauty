@@ -1391,7 +1391,7 @@ const PageContent = () => {
                   {!previewImage && (
                     <div className="mt-3 p-3 bg-brown-50 border border-brown-200 rounded-lg">
                       <p className="text-xs text-brown-800">
-                        ⚠️ <strong>Belum ada gambar.</strong> Upload gambar atau masukkan URL untuk menampilkan gambar.
+                         <strong>Belum ada gambar.</strong> Upload gambar atau masukkan URL untuk menampilkan gambar.
                       </p>
                     </div>
                   )}
@@ -1400,9 +1400,9 @@ const PageContent = () => {
 
                 {/* Info Message ketika tidak memerlukan gambar */}
                 {!requiresMainImage() && formData.section_key && (
-                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      ?? <strong>Bagian ini tidak memerlukan gambar.</strong> Input gambar disembunyikan karena konten "<strong>{formData.section_key}</strong>" tidak membutuhkan visual image.
+                  <div className="p-4 bg-brown-50 border-2 border-brown-200 rounded-lg">
+                    <p className="text-sm text-brown-800">
+                      <strong>Bagian ini tidak memerlukan gambar.</strong>
                     </p>
                   </div>
                 )}
