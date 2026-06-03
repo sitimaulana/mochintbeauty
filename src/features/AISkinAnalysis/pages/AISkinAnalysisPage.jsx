@@ -377,7 +377,7 @@ const AISkinAnalysisPage = () => {
                     <Camera className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-[#5D4037] text-sm">Pencahayaan Alami</p>
-                      <p className="text-xs text-gray-600">Ambil foto di area terang dengan cahaya cukup, hindari backlight[cite: 2].</p>
+                      <p className="text-xs text-gray-600">Ambil foto di area terang dengan cahaya cukup, hindari backlight.</p>
                     </div>
                   </div>
 
@@ -385,7 +385,7 @@ const AISkinAnalysisPage = () => {
                     <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-[#5D4037] text-sm">Wajah Bersih</p>
-                      <p className="text-xs text-gray-600">Lepas makeup dan cuci wajah terlebih dahulu untuk hasil akurat[cite: 2].</p>
+                      <p className="text-xs text-gray-600">Lepas makeup dan cuci wajah terlebih dahulu untuk hasil akurat.</p>
                     </div>
                   </div>
 
@@ -393,7 +393,7 @@ const AISkinAnalysisPage = () => {
                     <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-[#5D4037] text-sm">Posisi Depan</p>
-                      <p className="text-xs text-gray-600">Arahkan wajah lurus menghadap kamera dengan ekspresi natural[cite: 2].</p>
+                      <p className="text-xs text-gray-600">Arahkan wajah lurus menghadap kamera dengan ekspresi natural.</p>
                     </div>
                   </div>
 
@@ -401,7 +401,7 @@ const AISkinAnalysisPage = () => {
                     <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-[#5D4037] text-sm">Resolusi Tinggi</p>
-                      <p className="text-xs text-gray-600">Gunakan kamera dengan resolusi tinggi agar detail kulit terbaca jelas[cite: 2].</p>
+                      <p className="text-xs text-gray-600">Gunakan kamera dengan resolusi tinggi agar detail kulit terbaca jelas.</p>
                     </div>
                   </div>
                 </div>
@@ -409,7 +409,7 @@ const AISkinAnalysisPage = () => {
                 {/* Perbaikan Sintaks Kode Warna Latar Belakang */}
                 <div className="bg-white/70 border border-[#E8DCC8] rounded-xl p-3.5 mt-4">
                   <p className="text-[11px] md:text-xs text-[#5D4037] leading-relaxed">
-                    <span className="font-bold">Info:</span> Analisis AI kami memberikan panduan awal. Konsultasikan dengan dermatolog profesional untuk diagnosis yang lebih akurat[cite: 2].
+                    <span className="font-bold">Info:</span> Analisis AI kami memberikan panduan awal. Konsultasikan dengan dermatolog profesional untuk diagnosis yang lebih akurat.
                   </p>
                 </div>
               </div>
