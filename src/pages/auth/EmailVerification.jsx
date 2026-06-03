@@ -90,7 +90,7 @@ const EmailVerification = () => {
         }
       }
     } catch (error) {
-      console.error('âŒ Error sending OTP:', error);
+      console.error('Error sending OTP:', error);
       console.error('Error details:', error.response?.data);
       setNotification({
         show: true,
