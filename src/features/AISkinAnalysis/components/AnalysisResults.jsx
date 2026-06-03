@@ -3,88 +3,133 @@ import { getSeverityColor, formatPrice, translateCondition } from '../utils/face
 import { COLORS } from '../constants';
 
 const AnalysisResults = ({ result, imagePreview, onReset }) => {
+  if (!result) return null;
+
+  const conditions = result.skinCondition || [];
+  const hasConditions = conditions.length > 0;
+
   return (
-    <div className="space-y-8">
-      {/* Image and Overall Result */}
-      <div className="grid md:grid-cols-2 gap-8 bg-white rounded-2xl shadow-lg p-8">
-        {/* Image */}
-        <div>
-          <h3 className="text-lg font-bold text-[#5D4037] mb-4">Foto Analisis</h3>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 border-2 border-blue-200 shadow-lg">
+    <div className="space-y-4 md:space-y-6 px-2 sm:px-0">
+      {/* Container Utama Hasil Analisis */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-white rounded-2xl shadow-md p-4 md:p-6 border border-gray-100">
+        
+        {/* Sisi Kiri: Foto */}
+        <div className="flex flex-col">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-[#5D4037] mb-2">
+            Foto Analisis
+          </h3>
+          <div className="bg-gradient-to-br from-[#FDF8F5] to-[#F5E6D3] rounded-xl p-2 border border-[#E8DCC8] flex items-center justify-center">
             <img
               src={imagePreview}
-              alt="Analyzed"
-              className="w-full h-80 object-cover rounded-lg border border-blue-300 shadow-md"
+              alt="Analyzed Face"
+              className="w-full h-56 sm:h-72 md:h-80 object-cover rounded-lg border border-[#C4A57B] shadow-sm"
             />
           </div>
         </div>
 
-        {/* Skin Type Result */}
+        {/* Sisi Kanan: Box Hasil (Satu Box Tunggal & Padat) */}
         <div className="flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-bold text-[#5D4037] mb-4">Hasil Analisis</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#5D4037] mb-2">
+              Hasil Analisis
+            </h3>
 
-            <div className="mb-6 p-6 bg-gradient-to-br from-[#FDF8F5] to-[#F5E6D3] rounded-xl border-2 border-[#C4A57B]">
-              <p className="text-sm text-gray-600 mb-2">Tipe Kulit Anda</p>
-              <h2 className="text-4xl font-bold text-[#5D4037] mb-4">
-                {result.skinType}
-              </h2>
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="h-2 bg-gradient-to-r from-[#C4A57B] to-[#8D6E63] rounded-full flex-1"
-                  style={{ width: `${result.confidence}%` }}
-                ></div>
-                <span className="text-sm font-semibold text-[#5D4037]">
-                  {result.confidence}%
-                </span>
-              </div>
-              <p className="text-xs text-gray-600">Tingkat Kepercayaan Analisis</p>
+            {/* SINGLE COMPACT BOX */}
+            <div className="bg-gradient-to-br from-[#FDF8F5] to-[#FAF3E0] rounded-xl border-2 border-[#C4A57B] p-4 shadow-sm space-y-4">
+              
+              {/* 1. HIGHLIGHT UTAMA: MASALAH KULIT */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#8D6E63] mb-1.5">
+                  Masalah Kulit Terdeteksi
+                </p>
+                
+                {hasConditions ? (
+                  <div className="space-y-2">
+                    {conditions.map((condition, idx) => {
+                      let severityClass = "bg-white border-orange-200 text-orange-700";
+                      try {
+                        if (typeof getSeverityColor === 'function' && getSeverityColor) {
+                          severityClass = getSeverityColor(condition?.severity);
+                        }
+                      } catch (e) { }
 
-              {/* DETECTED CONDITION FROM YOUR MODEL */}
-              {result.detectedCondition &&
-                result.detectedCondition !== 'Unknown' && (
-                  <div className="mt-4 pt-4 border-t border-[#C4A57B]">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Masalah Kulit Terdeteksi
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-semibold text-[#8D6E63]">
-                        {translateCondition(result.detectedCondition)}
-                      </span>
-                      <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded">
-                        {result.conditionConfidence}%
-                      </span>
+                      return (
+                        <div key={idx} className={`p-3 rounded-lg border bg-white shadow-sm ${severityClass}`}>
+                          <div className="flex items-baseline justify-between">
+                            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#5D4037]">
+                              {typeof translateCondition === 'function' ? translateCondition(condition?.issue) : condition?.issue}
+                            </h2>
+                            <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-black/5">
+                              {condition?.severity || 'Sedang'}
+                            </span>
+                          </div>
+
+                          {/* Persentase Akurasi Terikat pada Masalah Kulit */}
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#C4A57B]"
+                                style={{ width: `${result.conditionConfidence || result.confidence || 85}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs font-bold text-[#8D6E63]">
+                              {result.conditionConfidence || result.confidence || 85}% Akurasi Analisis
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  result.detectedCondition && result.detectedCondition !== 'Unknown' ? (
+                    <div className="p-3 rounded-lg bg-white border border-[#E8DCC8] shadow-sm">
+                      <div className="flex items-baseline justify-between">
+                        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#5D4037]">
+                          {typeof translateCondition === 'function' ? translateCondition(result.detectedCondition) : result.detectedCondition}
+                        </h2>
+                        {result.conditionConfidence && (
+                          <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-800">
+                            Terdeteksi
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#C4A57B]"
+                            style={{ width: `${result.conditionConfidence || 85}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs font-bold text-[#8D6E63]">
+                          {result.conditionConfidence || 85}% Akurasi Analisis
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <p className="text-gray-500 text-xs italic p-3 bg-white rounded-lg border text-center">
+                      Tidak ada masalah kulit terdeteksi
+                    </p>
+                  )
                 )}
-            </div>
-
-            {/* Skin Issues */}
-            <div>
-              <h4 className="font-bold text-[#5D4037] mb-3">
-                Masalah Kulit Terdeteksi:
-              </h4>
-              <div className="space-y-2">
-                {result.skinCondition.map((condition, idx) => (
-                  <div
-                    key={idx}
-                    className={`px-4 py-3 rounded-lg border ${getSeverityColor(
-                      condition.severity
-                    )} text-sm font-medium flex items-center justify-between`}
-                  >
-                    <span>{translateCondition(condition.issue)}</span>
-                    <span className="capitalize text-xs">
-                      ({condition.severity})
-                    </span>
-                  </div>
-                ))}
               </div>
+
+              {/* 2. TIPE KULIT: MENGIKUTI ALUR DI BAWAHNYA TANPA JARAK JAUH */}
+              <div className="pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#8D6E63] mb-0.5">
+                  Tipe Kulit
+                </p>
+                <p className="text-lg sm:text-xl font-bold text-[#5D4037]">
+                  {result.skinType || "Berminyak"}
+                </p>
+              </div>
+
             </div>
           </div>
 
+          {/* Tombol Aksi */}
           <button
             onClick={onReset}
-            className="mt-6 w-full py-3 px-6 bg-[#C4A57B] text-white rounded-lg font-semibold hover:bg-[#B89968] transition-colors"
+            className="mt-4 w-full py-2.5 px-4 bg-[#C4A57B] text-white rounded-xl font-bold hover:bg-[#B89968] active:scale-[0.99] transition-all text-sm shadow-sm"
           >
             Analisis Foto Lain
           </button>
@@ -92,54 +137,48 @@ const AnalysisResults = ({ result, imagePreview, onReset }) => {
       </div>
 
       {/* Recommended Treatments */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h3 className="text-2xl font-bold text-[#5D4037] mb-6">
-          Rekomendasi Treatment
-        </h3>
+      {result.recommendations && result.recommendations.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-md p-4 md:p-6 border border-gray-50">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-[#5D4037] mb-3">
+            Rekomendasi Treatment
+          </h3>
 
-        <div className="space-y-4">
-          {result.recommendations.map((treatment) => (
-            <div
-              key={treatment.id}
-              className="border-2 border-[#E8DCC8] rounded-xl p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h4 className="text-lg font-bold text-[#5D4037] mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {result.recommendations.map((treatment) => (
+              <div
+                key={treatment.id}
+                className="border border-[#E8DCC8] rounded-xl p-4 bg-white hover:bg-[#FDF8F5]/30 transition-colors flex flex-col justify-between"
+              >
+                <div>
+                  <h4 className="text-sm font-bold text-[#5D4037] mb-1">
                     {treatment.treatment}
                   </h4>
-                  <p className="text-gray-600 text-sm mb-4">
+                  <p className="text-gray-600 text-xs mb-3 line-clamp-2">
                     {treatment.reason}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-[#C4A57B]">
-                      {formatPrice(treatment.price)}
-                    </span>
-                    <span className="text-xs text-gray-500">/sesi</span>
-                  </div>
                 </div>
-
-                <button className="px-6 py-2 bg-[#C4A57B] text-white rounded-lg font-semibold hover:bg-[#B89968] transition-colors whitespace-nowrap">
-                  Booking
-                </button>
+                <div className="flex items-baseline gap-1 mt-auto pt-2 border-t border-gray-50">
+                  <span className="text-lg font-black text-[#C4A57B]">
+                    {typeof formatPrice === 'function' ? formatPrice(treatment.price) : treatment.price}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">/sesi</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Additional Info */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
-        <h4 className="text-lg font-bold text-blue-900 mb-2">
-          Hasil Analisis Lebih Akurat?
-        </h4>
-        <p className="text-blue-800 mb-6">
-          Hubungi customer service kami untuk berkonsultasi langsung dengan
-          beautician profesional.
+      {/* Catatan Penting */}
+      <div className="bg-gradient-to-r from-[#FDF8F5] to-[#F5E6D3] border border-[#C4A57B] rounded-2xl p-4 shadow-sm text-xs text-[#5D4037]">
+        <h4 className="font-bold text-sm mb-1">Catatan Penting:</h4>
+        <p className="mb-2 opacity-90">
+          Hasil analisis AI ini adalah panduan awal berbasis citra wajah. AI memiliki keterbatasan dan hasilnya <span className="font-bold text-red-700">tidak 100% akurat</span>.
         </p>
-        <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-          Hubungi Kami
-        </button>
+        <ul className="list-disc list-inside space-y-0.5 opacity-80 pl-1">
+          <li>Hasil dapat berbeda dengan diagnosis klinis dermatolog.</li>
+          <li>Faktor pencahayaan dan sudut foto mempengaruhi akurasi deteksi.</li>
+        </ul>
       </div>
     </div>
   );

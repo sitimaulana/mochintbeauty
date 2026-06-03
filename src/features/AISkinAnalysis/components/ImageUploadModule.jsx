@@ -24,11 +24,11 @@ const ImageUploadModule = ({
         </div>
       ) : (
         <div className="relative">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-brown-50 to-brown-100/50 rounded-xl p-4 border-2 border-brown-200">
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-full h-64 object-cover rounded-lg border border-blue-300 shadow-md"
+              className="w-full h-64 object-cover rounded-lg border border-brown-300 shadow-md"
             />
           </div>
           <button

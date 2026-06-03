@@ -151,9 +151,6 @@ const AISkinAnalysisPage = () => {
   // Handle analyze
   const handleAnalyze = async () => {
     const result = await skinAnalysis.analyzeImage(imagePreview);
-    if (result) {
-      // Success - results will be shown via showResults state update
-    }
   };
 
   // Handle reset
@@ -186,51 +183,49 @@ const AISkinAnalysisPage = () => {
   // Intro Screen
   if (showIntro) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] via-[#F5E6D3] to-[#FDFBF7] flex items-center justify-center px-4 py-12">
+      <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] via-[#F5E6D3] to-[#FDFBF7] flex items-center justify-center px-4 py-8">
         <div className="max-w-2xl w-full">
-          <div className="text-center space-y-8">
+          <div className="text-center space-y-6 md:space-y-8">
             {/* Title */}
-            <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl font-bold text-[#3E2723] tracking-tight">
+            <div className="space-y-2 md:space-y-4">
+              <h1 className="text-4xl md:text-6xl font-bold text-[#3E2723] tracking-tight">
                 Mochint Skin Reveal
               </h1>
-              <p className="text-xl text-gray-600 font-sans leading-relaxed">
+              <p className="text-base md:text-xl text-gray-600 font-sans leading-relaxed px-2">
                 Temukan jenis kulit Anda dan dapatkan rekomendasi treatment
                 personal dari AI kami
               </p>
             </div>
 
             {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8">
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Camera className="w-6 h-6 text-[#8D6E63]" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 py-4 md:py-8">
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 md:p-6 border border-white/40 shadow-md">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <Camera className="w-5 h-5 md:w-6 md:h-6 text-[#8D6E63]" />
                 </div>
-                <h3 className="font-bold text-[#3E2723] mb-2">Foto Real-Time</h3>
-                <p className="text-sm text-gray-600">
-                  Ambil foto langsung dari kamera atau upload dari galeri
+                <h3 className="font-bold text-[#3E2723] mb-1 md:mb-2 text-sm md:text-base">Foto Real-Time</h3>
+                <p className="text-xs md:text-sm text-gray-600">
+                  Ambil foto langsung atau upload dari galeri
                 </p>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-6 h-6 text-[#8D6E63]" />
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 md:p-6 border border-white/40 shadow-md">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-[#8D6E63]" />
                 </div>
-                <h3 className="font-bold text-[#3E2723] mb-2">Analisis Akurat</h3>
-                <p className="text-sm text-gray-600">
-                  Teknologi AI mendeteksi masalah kulit Anda dengan presisi
+                <h3 className="font-bold text-[#3E2723] mb-1 md:mb-2 text-sm md:text-base">Analisis Akurat</h3>
+                <p className="text-xs md:text-sm text-gray-600">
+                  AI mendeteksi masalah kulit dengan presisi
                 </p>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-6 h-6 text-[#8D6E63]" />
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 md:p-6 border border-white/40 shadow-md">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#C4A57B]/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-[#8D6E63]" />
                 </div>
-                <h3 className="font-bold text-[#3E2723] mb-2">
-                  Rekomendasi Personal
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Treatment khusus sesuai dengan kebutuhan kulit Anda
+                <h3 className="font-bold text-[#3E2723] mb-1 md:mb-2 text-sm md:text-base">Rekomendasi Personal</h3>
+                <p className="text-xs md:text-sm text-gray-600">
+                  Treatment khusus sesuai kebutuhan kulit Anda
                 </p>
               </div>
             </div>
@@ -238,15 +233,14 @@ const AISkinAnalysisPage = () => {
             {/* CTA Button */}
             <button
               onClick={() => setShowIntro(false)}
-              className="w-full py-4 px-8 bg-gradient-to-r from-[#8D6E63] to-[#6D4C41] text-white font-bold text-lg rounded-full hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95"
+              className="w-full py-4 px-8 bg-gradient-to-r from-[#8D6E63] to-[#6D4C41] text-white font-bold text-lg rounded-full hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 shadow-lg"
             >
               Mulai Analisis Sekarang
             </button>
 
             {/* Disclaimer */}
-            <p className="text-xs text-gray-500 text-center px-4">
-              Hasil analisis ini adalah panduan awal. Untuk diagnosis akurat,
-              konsultasi dengan dermatolog profesional.
+            <p className="text-[10px] md:text-xs text-gray-500 text-center px-4">
+              Hasil analisis ini adalah panduan awal. Konsultasikan dengan dermatolog profesional.
             </p>
           </div>
         </div>
@@ -255,97 +249,96 @@ const AISkinAnalysisPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F5E6D3] py-8 md:py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F5E6D3] py-6 md:py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-8 h-8 text-[#C4A57B]" />
-            <h1 className="text-4xl md:text-5xl font-bold text-[#5D4037]">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="flex items-center justify-center gap-2 md:gap-3 mb-3 md:mb-4">
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-[#C4A57B]" />
+            <h1 className="text-3xl md:text-5xl font-bold text-[#5D4037]">
               AI Skin Analysis
             </h1>
-            <Sparkles className="w-8 h-8 text-[#C4A57B]" />
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-[#C4A57B]" />
           </div>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Dapatkan analisis kulit wajah Anda secara real-time menggunakan
-            teknologi AI. Kami akan memberikan diagnosis jenis kulit dan
-            rekomendasi treatment yang tepat untuk Anda.
+          <p className="text-gray-600 text-sm md:text-lg max-w-2xl mx-auto px-2">
+            Dapatkan analisis kulit wajah Anda secara real-time. Kami akan memberikan diagnosis jenis kulit dan rekomendasi treatment yang tepat.
           </p>
         </div>
 
         {/* Main Content */}
         {!skinAnalysis.analysisResult ? (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="grid md:grid-cols-2 gap-8 p-8">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-white/20">
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-8 p-5 md:p-8">
               {/* Upload/Camera Section */}
               <div className="flex flex-col justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#5D4037] mb-4">
+                  <h2 className="text-xl md:text-2xl font-bold text-[#5D4037] mb-2 md:mb-4">
                     {useCamera ? 'Ambil Foto Wajah' : 'Unggah Foto Wajah Anda'}
                   </h2>
-                  <p className="text-gray-600 mb-6">
-                    Pastikan pencahayaan baik dan wajah terlihat jelas untuk
-                    hasil analisis terbaik.
+                  <p className="text-sm md:text-base text-gray-600 mb-6">
+                    Pastikan pencahayaan baik dan wajah terlihat jelas.
                   </p>
 
                   {/* Toggle Camera/Upload */}
-                  <div className="flex gap-3 mb-6">
+                  <div className="flex gap-2 md:gap-3 mb-6">
                     <button
                       onClick={() => setUseCamera(false)}
-                      className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all ${
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm md:text-base transition-all flex items-center justify-center ${
                         !useCamera
-                          ? 'bg-[#C4A57B] text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          ? 'bg-[#C4A57B] text-white shadow-md'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      <Upload className="w-4 h-4 inline mr-2" />
+                      <Upload className="w-4 h-4 mr-2" />
                       Upload
                     </button>
                     <button
                       onClick={() => setUseCamera(true)}
-                      className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all ${
+                      className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm md:text-base transition-all flex items-center justify-center ${
                         useCamera
-                          ? 'bg-[#C4A57B] text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          ? 'bg-[#C4A57B] text-white shadow-md'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      <Camera className="w-4 h-4 inline mr-2" />
+                      <Camera className="w-4 h-4 mr-2" />
                       Kamera
                     </button>
                   </div>
 
                   {/* Upload Area */}
-                  {!useCamera ? (
-                    <ImageUploadModule
-                      fileInputRef={fileInputRef}
-                      imagePreview={imagePreview}
-                      onImageUpload={handleImageUpload}
-                      onRemoveImage={handleRemoveImage}
-                      onBrowseFile={handleBrowseFile}
-                    />
-                  ) : (
-                    <CameraModule
-                      videoRef={videoRef}
-                      canvasRef={canvasRef}
-                      cameraActive={cameraActive}
-                      faceDetected={faceDetection.faceDetected}
-                      faceInBox={faceDetection.faceInBox}
-                      error={error}
-                      useCamera={useCamera}
-                      onCapture={handleCapture}
-                      onRefreshCamera={handleRefreshCamera}
-                      onToggleMode={() => setUseCamera(false)}
-                      onBrowseFile={handleBrowseFile}
-                      fileInputRef={fileInputRef}
-                    />
-                  )}
+                  <div className="relative">
+                    {!useCamera ? (
+                      <ImageUploadModule
+                        fileInputRef={fileInputRef}
+                        imagePreview={imagePreview}
+                        onImageUpload={handleImageUpload}
+                        onRemoveImage={handleRemoveImage}
+                        onBrowseFile={handleBrowseFile}
+                      />
+                    ) : (
+                      <CameraModule
+                        videoRef={videoRef}
+                        canvasRef={canvasRef}
+                        cameraActive={cameraActive}
+                        faceDetected={faceDetection.faceDetected}
+                        faceInBox={faceDetection.faceInBox}
+                        error={error}
+                        useCamera={useCamera}
+                        onCapture={handleCapture}
+                        onRefreshCamera={handleRefreshCamera}
+                        onToggleMode={() => setUseCamera(false)}
+                        onBrowseFile={handleBrowseFile}
+                        fileInputRef={fileInputRef}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Error Message */}
                 {error && (
-                  <div className="mt-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="mt-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
                     <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-red-700">{error}</p>
+                    <p className="text-xs md:text-sm text-red-700 font-medium">{error}</p>
                   </div>
                 )}
 
@@ -353,10 +346,10 @@ const AISkinAnalysisPage = () => {
                 <button
                   onClick={handleAnalyze}
                   disabled={!imagePreview || skinAnalysis.isAnalyzing}
-                  className={`mt-6 w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                  className={`mt-6 w-full py-3.5 md:py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
                     imagePreview && !skinAnalysis.isAnalyzing
-                      ? 'bg-[#C4A57B] text-white hover:bg-[#B89968] cursor-pointer'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      ? 'bg-[#C4A57B] text-white hover:bg-[#B89968] active:scale-[0.98]'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                   }`}
                 >
                   {skinAnalysis.isAnalyzing ? (
@@ -373,78 +366,65 @@ const AISkinAnalysisPage = () => {
                 </button>
               </div>
 
-              {/* Tips Section */}
-              <div className="bg-[#FDF8F5] rounded-xl p-6 space-y-4">
-                <h3 className="text-xl font-bold text-[#5D4037]">
+              {/* Tips Section - DIKEMBALIKAN UTUH & AMAN DI MOBILE */}
+              <div className="bg-[#FDF8F5] rounded-xl p-5 md:p-6 space-y-4 border border-[#E8DCC8]">
+                <h3 className="text-lg md:text-xl font-bold text-[#5D4037]">
                   Tips Foto Terbaik
                 </h3>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   <div className="flex gap-3">
-                    <Camera className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-1" />
+                    <Camera className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-[#5D4037]">
-                        Pencahayaan Alami
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Ambil foto di area dengan cahaya alami yang cukup,
-                        hindari backlight
-                      </p>
+                      <p className="font-bold text-[#5D4037] text-sm">Pencahayaan Alami</p>
+                      <p className="text-xs text-gray-600">Ambil foto di area terang dengan cahaya cukup, hindari backlight[cite: 2].</p>
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-1" />
+                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-[#5D4037]">Wajah Bersih</p>
-                      <p className="text-sm text-gray-600">
-                        Lepas makeup dan cuci wajah terlebih dahulu untuk hasil
-                        akurat
-                      </p>
+                      <p className="font-bold text-[#5D4037] text-sm">Wajah Bersih</p>
+                      <p className="text-xs text-gray-600">Lepas makeup dan cuci wajah terlebih dahulu untuk hasil akurat[cite: 2].</p>
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-1" />
+                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-[#5D4037]">Posisi Depan</p>
-                      <p className="text-sm text-gray-600">
-                        Arahkan wajah lurus ke kamera dengan ekspresi natural
-                      </p>
+                      <p className="font-bold text-[#5D4037] text-sm">Posisi Depan</p>
+                      <p className="text-xs text-gray-600">Arahkan wajah lurus menghadap kamera dengan ekspresi natural[cite: 2].</p>
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-1" />
+                    <CheckCircle className="w-5 h-5 text-[#C4A57B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-[#5D4037]">
-                        Resolusi Tinggi
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Gunakan kamera dengan resolusi tinggi untuk detail yang
-                        lebih baik
-                      </p>
+                      <p className="font-bold text-[#5D4037] text-sm">Resolusi Tinggi</p>
+                      <p className="text-xs text-gray-600">Gunakan kamera dengan resolusi tinggi agar detail kulit terbaca jelas[cite: 2].</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-semibold">ℹ️ Info:</span> Analisis AI
-                    kami memberikan panduan awal. Konsultasi dengan dermatolog
-                    profesional untuk diagnosis yang lebih akurat.
+                {/* Perbaikan Sintaks Kode Warna Latar Belakang */}
+                <div className="bg-white/70 border border-[#E8DCC8] rounded-xl p-3.5 mt-4">
+                  <p className="text-[11px] md:text-xs text-[#5D4037] leading-relaxed">
+                    <span className="font-bold">Info:</span> Analisis AI kami memberikan panduan awal. Konsultasikan dengan dermatolog profesional untuk diagnosis yang lebih akurat[cite: 2].
                   </p>
                 </div>
               </div>
+
             </div>
           </div>
         ) : (
           /* Results Section */
-          <AnalysisResults
-            result={skinAnalysis.analysisResult}
-            imagePreview={imagePreview}
-            onReset={handleReset}
-          />
+          <div className="animate-in fade-in duration-500 px-1">
+            <AnalysisResults
+              result={skinAnalysis.analysisResult}
+              imagePreview={imagePreview}
+              onReset={handleReset}
+            />
+          </div>
         )}
       </div>
     </div>
