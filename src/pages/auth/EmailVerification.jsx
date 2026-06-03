@@ -172,7 +172,7 @@ const EmailVerification = () => {
           if (isManualRegistration && response.data.autoLogin && response.data.token) {
             // Manual registration with auto-login: user already has password and email verified
             // Directly login and redirect to dashboard
-            console.log('📧 Manual registration verified - auto-login and redirect to dashboard');
+            console.log(' Manual registration verified - auto-login and redirect to dashboard');
             
             // Save token and user data to localStorage
             localStorage.setItem('token', response.data.token);
@@ -185,7 +185,7 @@ const EmailVerification = () => {
             navigate('/member', { replace: true });
           } else if (isManualRegistration) {
             // Manual registration without auto-login: redirect to login
-            console.log('📧 Manual registration verified - redirecting to login');
+            console.log(' Manual registration verified - redirecting to login');
             navigate('/auth/login', {
               state: { 
                 emailVerified: true,
@@ -196,7 +196,7 @@ const EmailVerification = () => {
             });
           } else {
             // Google OAuth or Forgot Password: redirect to set password
-            console.log('🔐 Redirecting to set password page');
+            console.log(' Redirecting to set password page');
             navigate('/auth/set-password', {
               state: { 
                 user: userData, 

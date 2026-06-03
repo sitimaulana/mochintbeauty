@@ -494,10 +494,8 @@ const PageContent = () => {
       footer_email: '',
       footer_address: '',
       footer_social_links: [
-        { platform: 'facebook', url: '' },
         { platform: 'instagram', url: '' },
-        { platform: 'twitter', url: '' },
-        { platform: 'linkedin', url: '' }
+
       ],
       footer_quick_links: [
         { label: 'Beranda', url: '/' },
@@ -511,7 +509,7 @@ const PageContent = () => {
         { label: 'Promo & Reseller', url: '/promo' },
         { label: 'Blog & Tips', url: '/information' }
       ],
-      footer_copyright: '� 2024 Mochint Beauty. All rights reserved.'
+      footer_copyright: '2024 Mochint Beauty. All rights reserved.'
     });
     setPreviewImage('');
   };
@@ -571,10 +569,7 @@ const PageContent = () => {
       footer_email: additionalData.email || '',
       footer_address: additionalData.address || '',
       footer_social_links: additionalData.social_links || [
-        { platform: 'facebook', url: '' },
-        { platform: 'instagram', url: '' },
-        { platform: 'twitter', url: '' },
-        { platform: 'linkedin', url: '' }
+        { platform: 'instagram', url: 'https://www.instagram.com/mochint_beautycare/' },
       ],
       footer_quick_links: additionalData.quick_links || [
         { label: 'Beranda', url: '/' },
@@ -588,7 +583,7 @@ const PageContent = () => {
         { label: 'Promo & Reseller', url: '/promo' },
         { label: 'Blog & Tips', url: '/information' }
       ],
-      footer_copyright: additionalData.copyright || '� 2024 Mochint Beauty. All rights reserved.'
+      footer_copyright: additionalData.copyright || '2024 Mochint Beauty. All rights reserved.'
     });
   };
 
