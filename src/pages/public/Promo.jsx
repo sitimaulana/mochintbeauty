@@ -120,16 +120,19 @@ const Promo = () => {
             </div>
           </div>
 
-          {/* Order Button Section - Poppins */}
+           {/* Order Button Section */}
           <div className="pt-6 sm:pt-8 flex flex-col items-center gap-4 sm:gap-5 md:gap-6 px-2 sm:px-4 md:px-0">
-            <p className="font-sans font-bold text-gray-400 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1 sm:mb-0">Tertarik bergabung?</p>
+            <p className="font-sans font-bold text-gray-400 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1 sm:mb-0">
+              Tertarik bergabung?
+            </p>
             <button 
               onClick={handleOrderNow}
-              className="flex items-center justify-center gap-3 sm:gap-4 md:gap-5 px-8 sm:px-12 md:px-16 py-4 sm:py-5 md:py-6 bg-[#3E2723] text-white rounded-2xl sm:rounded-[20px] md:rounded-[25px] font-display font-bold text-sm sm:text-base md:text-lg lg:text-xl shadow-lg sm:shadow-[0_15px_30px_rgba(62,39,35,0.25)] md:shadow-[0_20px_40px_rgba(62,39,35,0.3)] hover:bg-[#8D6E63] hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-500 group active:scale-95 w-full sm:w-auto mx-2 sm:mx-0"
+              className="flex items-center justify-center gap-3 sm:gap-4 md:gap-5 px-8 sm:px-12 md:px-16 py-4 sm:py-5 md:py-6 bg-[#3E2723] text-white rounded-2xl sm:rounded-[20px] md:rounded-[25px] font-display font-bold text-sm sm:text-base md:text-lg lg:text-xl shadow-lg sm:shadow-[0_15px_30px_rgba(62,39,35,0.25)] md:shadow-[0_20px_40px_rgba(62,39,35,0.3)] hover:bg-[#543832] active:scale-[0.98] transition-all w-full group"
             >
-              <span className="leading-tight">Daftar Reseller</span>
+              <MessageCircle size={22} className="sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:animate-bounce" />
+              <span>Hubungi via WhatsApp</span>
+              <ChevronRight size={18} className="sm:w-5 sm:h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </button>
-            <p className="text-[10px] sm:text-[11px] text-gray-400 font-sans font-medium italic text-center px-4">*Syarat dan ketentuan berlaku</p>
           </div>
         </section>
       </div>

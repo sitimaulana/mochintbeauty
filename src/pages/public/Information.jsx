@@ -175,13 +175,13 @@ const Information = () => {
               <div className="absolute -right-8 -top-8 sm:-right-10 sm:-top-10 w-24 h-24 sm:w-32 sm:h-32 bg-[#8D6E63] rounded-full opacity-20 group-hover:scale-150 transition-transform duration-700"></div>
               <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[#D7CCC8] relative z-10">Exclusive Offer</p>
               <h4 className="text-lg sm:text-xl md:text-2xl font-display font-bold leading-tight tracking-tight relative z-10">
-                Dapatkan Diskon 30% untuk Reseller!
+                Jadilah Reseller Mochint Beauty Care!
               </h4>
               <button 
                 onClick={() => navigate('/promo')}
                 className="w-full py-3 sm:py-3.5 md:py-4 bg-[#8D6E63] text-white rounded-xl sm:rounded-2xl font-display font-bold text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest hover:bg-white hover:text-[#5D4037] transition-all shadow-lg active:scale-95 relative z-10"
               >
-                Cek Promo
+                Lihat Promo
               </button>
             </div>
             
