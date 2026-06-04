@@ -17,8 +17,8 @@ router.post('/analyze-skin', async (req, res) => {
       return res.status(400).json({ error: 'Image data is required' });
     }
 
-    // Call Python script
-    const pythonScriptPath = path.join(__dirname, '../mock_analysis.py');
+    // Call Python script (use simple mock version to avoid dependency issues)
+    const pythonScriptPath = path.join(__dirname, '../mock_analysis_simple.py');
     
     let responseSent = false;
     

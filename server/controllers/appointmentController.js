@@ -222,11 +222,11 @@ exports.updateAppointmentStatus = async (req, res) => {
     const { status } = req.body;
     
     // Validasi status
-    const validStatuses = ['confirmed', 'completed'];
+    const validStatuses = ['pending', 'confirmed', 'completed'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Invalid status. Must be: confirmed or completed' 
+        error: 'Invalid status. Must be: pending, confirmed or completed' 
       });
     }
     
@@ -257,7 +257,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     
     // AUTO-SYNC: Jika status diubah ke 'completed', sinkronkan data member
     if (status === 'completed' && memberId) {
-      console.log(`🔄 Auto-syncing member ${memberId} after appointment completed`);
+      console.log(`🔄 Auto-syncing member ${memberId} after appointment status changed to completed`);
       
       try {
         const Member = require('../models/Member');
@@ -306,6 +306,18 @@ exports.updateAppointmentStatus = async (req, res) => {
 exports.completeAppointment = async (req, res) => {
   try {
     const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validasi status jika dikirim
+    const validStatuses = ['pending', 'confirmed', 'completed'];
+    const targetStatus = status || 'completed';
+    
+    if (!validStatuses.includes(targetStatus)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid status. Must be: pending, confirmed or completed' 
+      });
+    }
     
     // Check if appointment exists
     const appointment = await Appointment.getById(id);
@@ -316,18 +328,22 @@ exports.completeAppointment = async (req, res) => {
       });
     }
     
-    // Complete appointment (this also updates therapist and member stats)
-    await Appointment.complete(id);
+    // Get old status untuk tracking changes
+    const oldStatus = appointment.status;
+    
+    // Update appointment dengan status baru
+    await Appointment.updateStatusWithStats(id, targetStatus, oldStatus);
     
     res.json({ 
       success: true, 
-      message: 'Appointment completed successfully. Therapist and member stats updated.' 
+      message: `Appointment status updated to ${targetStatus} successfully. Stats updated.`,
+      data: await Appointment.getByIdWithDetails(id)
     });
   } catch (error) {
-    console.error('Error completing appointment:', error);
+    console.error('Error updating appointment status:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to complete appointment',
+      error: 'Failed to update appointment status',
       message: error.message 
     });
   }

@@ -161,6 +161,12 @@ class Appointment {
 
   // Update appointment status
   static async updateStatus(id, status) {
+    // Validasi status
+    const validStatuses = ['pending', 'confirmed', 'completed'];
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`);
+    }
+    
     const [result] = await promisePool.query(
       'UPDATE appointments SET status = ? WHERE id = ?',
       [status, id]
@@ -193,6 +199,53 @@ class Appointment {
     
     // Update appointment status to completed
     return await this.updateStatus(id, 'completed');
+  }
+
+  // Update appointment status with stats tracking
+  static async updateStatusWithStats(id, newStatus, oldStatus) {
+    // First get appointment details
+    const appointment = await this.getById(id);
+    
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+    
+    // Only update therapist stats if transitioning TO or FROM completed
+    if (newStatus === 'completed' && oldStatus !== 'completed' && appointment.therapist_id) {
+      // Transitioning TO completed - increment therapist treatment count
+      await promisePool.query(
+        'UPDATE therapists SET total_treatments = total_treatments + 1 WHERE id = ?',
+        [appointment.therapist_id]
+      );
+    } else if (newStatus !== 'completed' && oldStatus === 'completed' && appointment.therapist_id) {
+      // Transitioning FROM completed - decrement therapist treatment count
+      await promisePool.query(
+        'UPDATE therapists SET total_treatments = GREATEST(0, total_treatments - 1) WHERE id = ?',
+        [appointment.therapist_id]
+      );
+    }
+    
+    // Only update member stats if transitioning TO or FROM completed
+    if (newStatus === 'completed' && oldStatus !== 'completed' && appointment.member_id) {
+      // Transitioning TO completed - increment member visit count
+      await promisePool.query(
+        `UPDATE members 
+         SET total_visits = total_visits + 1, last_visit = CURDATE()
+         WHERE id = ?`,
+        [appointment.member_id]
+      );
+    } else if (newStatus !== 'completed' && oldStatus === 'completed' && appointment.member_id) {
+      // Transitioning FROM completed - decrement member visit count
+      await promisePool.query(
+        `UPDATE members 
+         SET total_visits = GREATEST(0, total_visits - 1)
+         WHERE id = ?`,
+        [appointment.member_id]
+      );
+    }
+    
+    // Update appointment status
+    return await this.updateStatus(id, newStatus);
   }
 
   // Get appointments by status

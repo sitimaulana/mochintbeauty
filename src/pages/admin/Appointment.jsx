@@ -41,6 +41,7 @@ const Appointment = () => {
   const [therapists, setTherapists] = useState([]);
   const [treatments, setTreatments] = useState([]);
   const [stats, setStats] = useState({
+    pending_count: 0,
     confirmed_count: 0,
     completed_count: 0,
     total_count: 0,
@@ -191,6 +192,7 @@ const Appointment = () => {
   };
 
   const calculateStatistics = (appointmentsData) => {
+    const pending_count = appointmentsData.filter(app => app.status === 'pending').length;
     const confirmed_count = appointmentsData.filter(app => app.status === 'confirmed').length;
     const completed_count = appointmentsData.filter(app => app.status === 'completed').length;
     const total_count = appointmentsData.length;
@@ -201,6 +203,7 @@ const Appointment = () => {
       .reduce((sum, app) => sum + (app.amount || 0), 0);
     
     setStats({
+      pending_count,
       confirmed_count,
       completed_count,
       total_count,
@@ -462,10 +465,12 @@ const Appointment = () => {
   const handleQuickStatusUpdate = async (id, currentStatus) => {
     let nextStatus;
     
-    if (currentStatus === 'confirmed') {
+    if (currentStatus === 'pending') {
+      nextStatus = 'confirmed';
+    } else if (currentStatus === 'confirmed') {
       nextStatus = 'completed';
     } else if (currentStatus === 'completed') {
-      nextStatus = 'confirmed';
+      nextStatus = 'pending';
     }
     
     setActionLoading(prev => ({ ...prev, [id]: true }));
@@ -546,7 +551,7 @@ const Appointment = () => {
     setFormData({
       customer_name: '', member_id: '', treatment: '', treatment_id: '', therapist: '', therapist_id: '',
       date: today,
-      time: time, amount: 0, status: 'confirmed'
+      time: time, amount: 0, status: 'pending'
     });
     setAmountInput('0');
     setMemberSearch('');
@@ -779,6 +784,7 @@ const Appointment = () => {
 
   const getStatusText = (status) => {
     const statusMap = {
+      'pending': 'Tertunda',
       'confirmed': 'Dikonfirmasi',
       'completed': 'Selesai'
     };
@@ -843,7 +849,20 @@ const Appointment = () => {
       </div>
 
       {/* Statistik Janji Temu */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.pending_count}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Tertunda</div>
+            </div>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-full flex items-center justify-center">
+              <span className="text-orange-600 text-sm sm:text-base font-bold">⏳</span>
+            </div>
+          </div>
+          <div className="mt-2 text-[10px] sm:text-xs text-gray-500">Menunggu konfirmasi</div>
+        </div>
+        
         <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -889,6 +908,13 @@ const Appointment = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 gap-4">
           <div className="flex flex-wrap gap-4 sm:gap-6">
             <div className="flex items-center">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-orange-500 rounded-full mr-2"></div>
+              <div>
+                <span className="text-xs sm:text-sm font-medium text-gray-800">Tertunda</span>
+                <div className="text-[9px] sm:text-[10px] text-gray-500 leading-none">Menunggu konfirmasi</div>
+              </div>
+            </div>
+            <div className="flex items-center">
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full mr-2"></div>
               <div>
                 <span className="text-xs sm:text-sm font-medium text-gray-800">Dikonfirmasi</span>
@@ -910,6 +936,7 @@ const Appointment = () => {
               className="border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brown-500"
             >
               <option value="all">Semua Status</option>
+              <option value="pending">Tertunda</option>
               <option value="confirmed">Dikonfirmasi</option>
               <option value="completed">Selesai</option>
             </select>
@@ -1019,6 +1046,15 @@ const Appointment = () => {
                       </button>
                     </td>
                     <td className="p-2 sm:p-4 text-center">
+                      {app.status === 'pending' && (
+                        <button 
+                          onClick={() => handleQuickStatusUpdate(app.id, 'pending')} 
+                          disabled={actionLoading[app.id]}
+                          className="bg-blue-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase shadow-sm hover:bg-blue-600 disabled:opacity-50 transition-colors duration-200"
+                        >
+                          {actionLoading[app.id] ? 'Proses...' : 'Konfirmasi'}
+                        </button>
+                      )}
                       {app.status === 'confirmed' && (
                         <button 
                           onClick={() => handleQuickStatusUpdate(app.id, 'confirmed')} 
@@ -1540,6 +1576,7 @@ const Appointment = () => {
                   onChange={handleChange} 
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brown-500 outline-none"
                 >
+                  <option value="pending">Tertunda - Menunggu konfirmasi</option>
                   <option value="confirmed">Dikonfirmasi - Janji temu disetujui</option>
                   <option value="completed">Selesai - Perawatan selesai</option>
                 </select>

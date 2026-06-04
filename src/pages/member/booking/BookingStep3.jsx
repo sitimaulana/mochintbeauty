@@ -70,11 +70,12 @@ const BookingStep3 = () => {
         console.log('[USER] Current user ID:', currentUserId);
         console.log('[INFO] Total appointments from API:', allAppointments.length);
         
-        // Filter appointments for selected date and confirmed status
+        // Filter appointments for selected date (pending dan confirmed = sudah booked)
         const filteredAppointments = allAppointments.filter(appointment => {
           const appointmentDate = appointment.date?.split('T')[0] || appointment.date;
           const dateMatch = appointmentDate === date;
-          const statusMatch = appointment.status === 'confirmed';
+          // Anggap pending dan confirmed sebagai slot yang sudah booked
+          const statusMatch = appointment.status === 'pending' || appointment.status === 'confirmed';
           
           return dateMatch && statusMatch;
         });
@@ -451,7 +452,7 @@ const BookingStep3 = () => {
         date: selectedDate,
         time: selectedTime,
         amount: priceNumber,
-        status: 'confirmed'
+        status: 'pending'
       };
       
       console.log('[NOTIFY] Creating appointment:', appointmentData);
