@@ -253,3 +253,23 @@ exports.searchTherapists = async (req, res) => {
     });
   }
 };
+
+// Get therapist income history
+exports.getTherapistIncomeHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const history = await Therapist.getIncomeHistory(id);
+
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (error) {
+    console.error('Error getting therapist income history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get therapist income history',
+      message: error.message
+    });
+  }
+};

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Preloader from '../../components/common/Preloader';
 
@@ -15,7 +15,8 @@ const Treatment = () => {
     facilities: [], // Array untuk fasilitas
     discountPercentage: 0,
     promoStartDate: '',
-    promoEndDate: ''
+    promoEndDate: '',
+    fee_terapis: '0'
   });
   const [newFacility, setNewFacility] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -166,7 +167,8 @@ const Treatment = () => {
       facilities: [],
       discountPercentage: 0,
       promoStartDate: '',
-      promoEndDate: ''
+      promoEndDate: '',
+      fee_terapis: '0'
     });
     setNewFacility('');
     setNewCategory('');
@@ -196,7 +198,8 @@ const Treatment = () => {
       facilities: treatment.facilities || [],
       discountPercentage: treatment.discount_percentage || 0,
       promoStartDate: formatDateForInput(treatment.promo_start_date),
-      promoEndDate: formatDateForInput(treatment.promo_end_date)
+      promoEndDate: formatDateForInput(treatment.promo_end_date),
+      fee_terapis: String(parseInt(treatment.fee_terapis) || 0)
     });
     setNewFacility('');
     setNewCategory('');
@@ -437,7 +440,8 @@ const Treatment = () => {
         facilities: formData.facilities.filter(facility => facility.trim() !== ''),
         discountPercentage: parseInt(formData.discountPercentage) || 0,
         promoStartDate: formData.promoStartDate && formData.promoStartDate.trim() !== '' ? formData.promoStartDate : null,
-        promoEndDate: formData.promoEndDate && formData.promoEndDate.trim() !== '' ? formData.promoEndDate : null
+        promoEndDate: formData.promoEndDate && formData.promoEndDate.trim() !== '' ? formData.promoEndDate : null,
+        fee_terapis: parseRupiah(formData.fee_terapis)
       };
 
       const Token = localStorage.getItem('token');
@@ -496,7 +500,8 @@ const Treatment = () => {
       facilities: [],
       discountPercentage: 0,
       promoStartDate: '',
-      promoEndDate: ''
+      promoEndDate: '',
+      fee_terapis: '0'
     });
     setNewFacility('');
     setNewCategory('');
@@ -533,9 +538,32 @@ const Treatment = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === 'price') {
+    if (name === 'price' || name === 'fee_terapis') {
       const digitsOnly = value.replace(/\D/g, '');
       setFormData({ ...formData, [name]: digitsOnly });
+    } else if (name === 'name') {
+      // Auto-calculate fee_terapis based on known names
+      let autoFee = formData.fee_terapis;
+      const lowerName = value.toLowerCase();
+      // predefined fees mapping based on the provided image
+      if (lowerName.includes('facial basic')) autoFee = '7000';
+      else if (lowerName.includes('facial acne')) autoFee = '10000';
+      else if (lowerName.includes('facial whitening')) autoFee = '10000';
+      else if (lowerName.includes('facial anti aging')) autoFee = '12000';
+      else if (lowerName.includes('facial detox')) autoFee = '12000';
+      else if (lowerName.includes('facial glowing')) autoFee = '12000';
+      else if (lowerName.includes('facial bopeng')) autoFee = '12000';
+      else if (lowerName.includes('facial korean')) autoFee = '15000';
+      else if (lowerName.includes('facial mikrodermabrasi')) autoFee = '15000';
+      else if (lowerName.includes('facial hifu')) autoFee = '15000';
+      else if (lowerName.includes('facial rf')) autoFee = '15000';
+      else if (lowerName.includes('facial ipl')) autoFee = '15000';
+      else if (lowerName.includes('facial oxy')) autoFee = '15000';
+      else if (lowerName.includes('facial peeling')) autoFee = '15000';
+      else if (lowerName.includes('facial dermapen')) autoFee = '15000';
+      else if (lowerName.includes('facial bb glow')) autoFee = '15000';
+
+      setFormData({ ...formData, name: value, fee_terapis: autoFee });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -1117,6 +1145,26 @@ const Treatment = () => {
                     </div>
                     <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                       Harga akhir akan ditampilkan sebagai: {formatRupiah(formData.price)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Fee Terapis</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                        <span className="text-xs sm:text-sm text-gray-500">Rp</span>
+                      </div>
+                      <input
+                        type="text"
+                        name="fee_terapis"
+                        value={formData.fee_terapis || ''}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md pl-8 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 text-sm sm:text-base"
+                        placeholder="0"
+                      />
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                      Fee untuk terapis setiap kali melakukan treatment ini. Jika nama treatment dikenali, ini dapat terisi otomatis.
                     </p>
                   </div>
 

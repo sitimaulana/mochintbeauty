@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Preloader from '../../components/common/Preloader';
@@ -93,6 +93,7 @@ const TherapistDetail = () => {
           grouped[monthYear] = {
             appointments: [],
             totalRevenue: 0,
+            totalFee: 0,
             completed: 0
           };
         }
@@ -100,6 +101,7 @@ const TherapistDetail = () => {
         grouped[monthYear].appointments.push(appointment);
         grouped[monthYear].completed++;
         grouped[monthYear].totalRevenue += parseFloat(appointment.amount) || 0;
+        grouped[monthYear].totalFee += parseFloat(appointment.treatment_fee_terapis) || 0;
       } catch (e) {
         console.error('Error parsing date:', e);
       }
@@ -155,7 +157,8 @@ const TherapistDetail = () => {
   const overallStats = {
     totalAppointments: appointments.length, // Total semua yang pernah ditangani
     monthlyAppointments: filteredMonths.reduce((sum, monthYear) => sum + monthlyData[monthYear].appointments.length, 0), // Per bulan sesuai filter
-    monthlyRevenue: filteredMonths.reduce((sum, monthYear) => sum + monthlyData[monthYear].totalRevenue, 0) // Revenue per bulan sesuai filter
+    monthlyRevenue: filteredMonths.reduce((sum, monthYear) => sum + monthlyData[monthYear].totalRevenue, 0), // Revenue per bulan sesuai filter
+    monthlyFee: filteredMonths.reduce((sum, monthYear) => sum + monthlyData[monthYear].totalFee, 0) // Fee per bulan sesuai filter
   };
 
   if (loading) {
@@ -264,8 +267,12 @@ const TherapistDetail = () => {
           <div className="text-xs sm:text-sm text-gray-600">Perawatan Per Bulan</div>
         </div>
         <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
+          <div className="text-lg sm:text-xl font-bold text-green-600">{formatRupiah(overallStats.monthlyFee)}</div>
+          <div className="text-xs sm:text-sm text-gray-600">Total Fee Terapis</div>
+        </div>
+        <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
           <div className="text-lg sm:text-xl font-bold text-purple-600">{formatRupiah(overallStats.monthlyRevenue)}</div>
-          <div className="text-xs sm:text-sm text-gray-600">Pendapatan Per Bulan</div>
+          <div className="text-xs sm:text-sm text-gray-600">Total Pendapatan Klinik</div>
         </div>
       </div>
 
@@ -344,8 +351,12 @@ const TherapistDetail = () => {
                         <div className="text-gray-600">Selesai</div>
                       </div>
                       <div className="text-center">
+                        <div className="font-bold text-green-600 text-xs sm:text-sm">{formatRupiah(data.totalFee)}</div>
+                        <div className="text-gray-600">Fee Terapis</div>
+                      </div>
+                      <div className="text-center">
                         <div className="font-bold text-purple-600 text-xs sm:text-sm">{formatRupiah(data.totalRevenue)}</div>
-                        <div className="text-gray-600">Pendapatan</div>
+                        <div className="text-gray-600">Revenue Klinik</div>
                       </div>
                     </div>
                   </div>
@@ -364,7 +375,8 @@ const TherapistDetail = () => {
                           <th className="pb-3 font-medium">Pasien</th>
                           <th className="pb-3 font-medium">Treatment</th>
                           <th className="pb-3 font-medium">Status</th>
-                          <th className="pb-3 font-medium">Jumlah</th>
+                          <th className="pb-3 font-medium">Fee Terapis</th>
+                          <th className="pb-3 font-medium">Total Harga</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -403,6 +415,9 @@ const TherapistDetail = () => {
                                  appointment.status === 'pending' ? 'Pending' : 
                                  appointment.status || 'N/A'}
                               </span>
+                            </td>
+                            <td className="py-3 text-sm font-semibold text-green-700">
+                              {formatRupiah(appointment.treatment_fee_terapis)}
                             </td>
                             <td className="py-3 text-sm font-semibold text-gray-800">
                               {formatRupiah(appointment.amount)}
@@ -453,8 +468,12 @@ const TherapistDetail = () => {
                             <span className="text-xs text-gray-600">{appointment.time || 'N/A'}</span>
                           </div>
                           <div className="flex justify-between pt-1 border-t border-gray-300">
-                            <span className="text-xs text-gray-500">Jumlah:</span>
-                            <span className="text-sm font-bold text-green-700">{formatRupiah(appointment.amount)}</span>
+                            <span className="text-xs text-gray-500">Fee Terapis:</span>
+                            <span className="text-sm font-bold text-green-700">{formatRupiah(appointment.treatment_fee_terapis)}</span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-gray-300">
+                            <span className="text-xs text-gray-500">Total Harga:</span>
+                            <span className="text-sm font-bold text-gray-700">{formatRupiah(appointment.amount)}</span>
                           </div>
                         </div>
                       </div>

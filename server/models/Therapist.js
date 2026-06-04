@@ -190,12 +190,30 @@ class Therapist {
         SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed_appointments,
         SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) as pending_appointments,
         SUM(CASE WHEN a.status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_appointments,
-        COALESCE(SUM(a.amount), 0) as total_revenue
+        COALESCE(SUM(a.amount), 0) as total_revenue,
+        COALESCE(SUM(CASE WHEN a.status = 'completed' THEN t.fee_terapis ELSE 0 END), 0) as total_income
       FROM therapists th
       LEFT JOIN appointments a ON th.id = a.therapist_id
+      LEFT JOIN treatments t ON a.treatment_id = t.id
       GROUP BY th.id, th.name, th.total_treatments, th.status
       ORDER BY total_treatments DESC
     `);
+    return rows;
+  }
+
+  // Get therapist income history by month
+  static async getIncomeHistory(id) {
+    const [rows] = await promisePool.query(`
+      SELECT 
+        DATE_FORMAT(a.date, '%Y-%m') as month,
+        COUNT(a.id) as total_completed,
+        COALESCE(SUM(t.fee_terapis), 0) as total_income
+      FROM appointments a
+      JOIN treatments t ON a.treatment_id = t.id
+      WHERE a.therapist_id = ? AND a.status = 'completed'
+      GROUP BY DATE_FORMAT(a.date, '%Y-%m')
+      ORDER BY month DESC
+    `, [id]);
     return rows;
   }
 }

@@ -12,6 +12,7 @@ class Appointment {
         t.name as treatment_name,
         t.category as treatment_category,
         t.duration as treatment_duration,
+        t.fee_terapis as treatment_fee_terapis,
         th.name as therapist_name
       FROM appointments a
       LEFT JOIN members m ON a.member_id = m.id
@@ -43,15 +44,16 @@ class Appointment {
         t.name as treatment_name,
         t.category as treatment_category,
         t.duration as treatment_duration,
+        t.fee_terapis as treatment_fee_terapis,
         th.name as therapist_name
       FROM appointments a
       LEFT JOIN members m ON a.member_id = m.id
       LEFT JOIN treatments t ON a.treatment_id = t.id
       LEFT JOIN therapists th ON a.therapist_id = th.id
       WHERE `;
-    
+
     let params = [];
-    
+
     // Check if id looks like appointment_id (e.g., "APT99999")
     if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
       query += `a.appointment_id = ?`;
@@ -68,7 +70,7 @@ class Appointment {
         params.push(id, id);
       }
     }
-    
+
     const [rows] = await promisePool.query(query, params);
     return rows[0];
   }
@@ -109,7 +111,7 @@ class Appointment {
       time,
       amount,
       status = 'confirmed',
-  
+
     } = appointmentData;
 
     const [result] = await promisePool.query(
@@ -117,10 +119,10 @@ class Appointment {
        (appointment_id, member_id, customer_name, treatment_id, therapist_id, 
         date, time, amount, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [appointment_id, member_id, customer_name, treatment_id, therapist_id, 
-       date, time, amount, status]
+      [appointment_id, member_id, customer_name, treatment_id, therapist_id,
+        date, time, amount, status]
     );
-    
+
     return { id: result.insertId, insertId: result.insertId };
   }
 
@@ -135,7 +137,7 @@ class Appointment {
       time,
       amount,
       status,
-  
+
     } = appointmentData;
 
     const [result] = await promisePool.query(
@@ -144,9 +146,9 @@ class Appointment {
         date = ?, time = ?, amount = ?, status = ?
        WHERE id = ?`,
       [member_id, customer_name, treatment_id, therapist_id,
-       date, time, amount, status, id]
+        date, time, amount, status, id]
     );
-    
+
     return result.affectedRows;
   }
 
@@ -161,12 +163,20 @@ class Appointment {
 
   // Update appointment status
   static async updateStatus(id, status) {
-    // Validasi status
+    // Validasi status string
     const validStatuses = ['pending', 'confirmed', 'completed'];
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`);
     }
-    
+
+    const appointment = await this.getById(id);
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+
+    if (status === 'completed' && !appointment.therapist_id) {
+      throw new Error('Status tidak bisa diubah ke completed sebelum memilih terapis.');
+    }
     const [result] = await promisePool.query(
       'UPDATE appointments SET status = ? WHERE id = ?',
       [status, id]
@@ -178,25 +188,32 @@ class Appointment {
   static async complete(id) {
     // First get appointment details
     const appointment = await this.getById(id);
-    
-    if (appointment && appointment.therapist_id) {
-      // Increment therapist treatment count
-      await promisePool.query(
-        'UPDATE therapists SET total_treatments = total_treatments + 1 WHERE id = ?',
-        [appointment.therapist_id]
-      );
+
+    if (!appointment) {
+      throw new Error('Appointment not found');
     }
-    
-    if (appointment && appointment.member_id) {
+
+    // Mencegah status diselesaikan jika belum ada terapis yang menangani
+    if (!appointment.therapist_id) {
+      throw new Error('Gagal menyelesaikan: Terapis belum ditentukan untuk janji temu ini.');
+    }
+
+    // Increment therapist treatment count
+    await promisePool.query(
+      'UPDATE therapists SET total_treatments = total_treatments + 1 WHERE id = ?',
+      [appointment.therapist_id]
+    );
+
+    if (appointment.member_id) {
       // Increment member visit count
       await promisePool.query(
         `UPDATE members 
-         SET total_visits = total_visits + 1, last_visit = CURDATE()
-         WHERE id = ?`,
+          SET total_visits = total_visits + 1, last_visit = CURDATE()
+          WHERE id = ?`,
         [appointment.member_id]
       );
     }
-    
+
     // Update appointment status to completed
     return await this.updateStatus(id, 'completed');
   }
@@ -205,11 +222,15 @@ class Appointment {
   static async updateStatusWithStats(id, newStatus, oldStatus) {
     // First get appointment details
     const appointment = await this.getById(id);
-    
+
     if (!appointment) {
       throw new Error('Appointment not found');
     }
-    
+
+    if (newStatus === 'completed' && !appointment.therapist_id) {
+      throw new Error('Janji temu membutuhkan data terapis.');
+    }
+
     // Only update therapist stats if transitioning TO or FROM completed
     if (newStatus === 'completed' && oldStatus !== 'completed' && appointment.therapist_id) {
       // Transitioning TO completed - increment therapist treatment count
@@ -224,28 +245,33 @@ class Appointment {
         [appointment.therapist_id]
       );
     }
-    
+
     // Only update member stats if transitioning TO or FROM completed
     if (newStatus === 'completed' && oldStatus !== 'completed' && appointment.member_id) {
       // Transitioning TO completed - increment member visit count
       await promisePool.query(
         `UPDATE members 
-         SET total_visits = total_visits + 1, last_visit = CURDATE()
-         WHERE id = ?`,
+          SET total_visits = total_visits + 1, last_visit = CURDATE()
+          WHERE id = ?`,
         [appointment.member_id]
       );
     } else if (newStatus !== 'completed' && oldStatus === 'completed' && appointment.member_id) {
       // Transitioning FROM completed - decrement member visit count
       await promisePool.query(
         `UPDATE members 
-         SET total_visits = GREATEST(0, total_visits - 1)
-         WHERE id = ?`,
+          SET total_visits = GREATEST(0, total_visits - 1)
+          WHERE id = ?`,
         [appointment.member_id]
       );
     }
-    
+
     // Update appointment status
-    return await this.updateStatus(id, newStatus);
+    // Gunakan query langsung di sini untuk menghindari query SELECT ganda yang dipanggil dari this.updateStatus asli
+    const [result] = await promisePool.query(
+      'UPDATE appointments SET status = ? WHERE id = ?',
+      [newStatus, id]
+    );
+    return result.affectedRows;
   }
 
   // Get appointments by status
@@ -397,13 +423,13 @@ class Appointment {
     const numId = parseInt(id);
     let whereClause = 'id = ?';
     let params = [numId];
-    
+
     // If id looks like appointment_id (e.g., "APT99999")
     if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
       whereClause = 'appointment_id = ?';
       params = [id];
     }
-    
+
     const [result] = await promisePool.query(
       `UPDATE appointments 
        SET reminder_sent = TRUE, reminder_sent_at = NOW()
@@ -421,13 +447,13 @@ class Appointment {
     const numId = parseInt(id);
     let whereClause = 'id = ?';
     let params = [numId];
-    
+
     // If id looks like appointment_id (e.g., "APT99999")
     if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
       whereClause = 'appointment_id = ?';
       params = [id];
     }
-    
+
     const [rows] = await promisePool.query(
       `SELECT id, appointment_id, reminder_sent, reminder_sent_at FROM appointments WHERE ${whereClause}`,
       params
@@ -488,13 +514,13 @@ class Appointment {
     const numId = parseInt(id);
     let whereClause = 'id = ?';
     let params = [numId];
-    
+
     // If id looks like appointment_id (e.g., "APT99999")
     if (typeof id === 'string' && id.match(/^[A-Z]+\d+$/)) {
       whereClause = 'appointment_id = ?';
       params = [id];
     }
-    
+
     const [result] = await promisePool.query(
       `UPDATE appointments 
        SET reminder_sent = FALSE, reminder_sent_at = NULL

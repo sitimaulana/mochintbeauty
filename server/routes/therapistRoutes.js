@@ -20,6 +20,9 @@ router.get('/search', therapistController.searchTherapists);
 // GET /api/therapists/status/:status - Get therapists by status
 router.get('/status/:status', therapistController.getTherapistsByStatus);
 
+// GET /api/therapists/:id/income - Get therapist income history
+router.get('/:id/income', therapistController.getTherapistIncomeHistory);
+
 // GET /api/therapists/:id - Get therapist by ID
 router.get('/:id', therapistController.getTherapistById);
 

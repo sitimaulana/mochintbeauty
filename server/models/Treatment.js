@@ -106,7 +106,8 @@ class Treatment {
       facilities = [],
       discountPercentage = 0,
       promoStartDate = null,
-      promoEndDate = null
+      promoEndDate = null,
+      fee_terapis = 0
     } = treatmentData;
 
     const categoryString = this.stringifyCategory(category);
@@ -118,12 +119,13 @@ class Treatment {
     // Ensure dates are properly formatted or null
     const validPromoStartDate = promoStartDate && promoStartDate !== '' ? promoStartDate : null;
     const validPromoEndDate = promoEndDate && promoEndDate !== '' ? promoEndDate : null;
+    const validFeeTerapis = parseFloat(fee_terapis) || 0;
 
     const [result] = await promisePool.query(
       `INSERT INTO treatments 
-       (name, category, duration, price, description, image, facilities, discount_percentage, promo_start_date, promo_end_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, categoryString, duration, price, description, image, facilitiesString, validDiscountPercentage, validPromoStartDate, validPromoEndDate]
+       (name, category, duration, price, description, image, facilities, discount_percentage, promo_start_date, promo_end_date, fee_terapis)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, categoryString, duration, price, description, image, facilitiesString, validDiscountPercentage, validPromoStartDate, validPromoEndDate, validFeeTerapis]
     );
     
     return { insertId: result.insertId };
@@ -141,7 +143,8 @@ class Treatment {
       facilities = [],
       discountPercentage = 0,
       promoStartDate = null,
-      promoEndDate = null
+      promoEndDate = null,
+      fee_terapis = 0
     } = treatmentData;
 
     const categoryString = this.stringifyCategory(category);
@@ -153,13 +156,14 @@ class Treatment {
     // Ensure dates are properly formatted or null
     const validPromoStartDate = promoStartDate && promoStartDate !== '' ? promoStartDate : null;
     const validPromoEndDate = promoEndDate && promoEndDate !== '' ? promoEndDate : null;
+    const validFeeTerapis = parseFloat(fee_terapis) || 0;
 
     const [result] = await promisePool.query(
       `UPDATE treatments SET
         name = ?, category = ?, duration = ?, price = ?, 
-        description = ?, image = ?, facilities = ?, discount_percentage = ?, promo_start_date = ?, promo_end_date = ?
+        description = ?, image = ?, facilities = ?, discount_percentage = ?, promo_start_date = ?, promo_end_date = ?, fee_terapis = ?
        WHERE id = ?`,
-      [name, categoryString, duration, price, description, image, facilitiesString, validDiscountPercentage, validPromoStartDate, validPromoEndDate, id]
+      [name, categoryString, duration, price, description, image, facilitiesString, validDiscountPercentage, validPromoStartDate, validPromoEndDate, validFeeTerapis, id]
     );
     
     return result.affectedRows;

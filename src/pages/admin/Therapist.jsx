@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Preloader from '../../components/common/Preloader';
@@ -114,10 +114,10 @@ const Therapist = () => {
     ).sort((a, b) => new Date(b.date) - new Date(a.date));
   };
 
-  // Fungsi untuk menghitung total pendapatan dari appointments terapis
+  // Fungsi untuk menghitung total pendapatan (fee_terapis) dari appointments terapis
   const calculateTherapistRevenue = (therapistId) => {
     const therapistAppointments = getAppointmentsByTherapist(therapistId);
-    return therapistAppointments.reduce((total, app) => total + (parseFloat(app.amount) || 0), 0);
+    return therapistAppointments.reduce((total, app) => total + (parseFloat(app.treatment_fee_terapis) || 0), 0);
   };
 
   // Hitung statistik keseluruhan - UBAH dari therapist.name menjadi therapist.id
