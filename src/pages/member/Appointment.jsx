@@ -51,11 +51,11 @@ const Appointment = () => {
         const response = await appointmentAPI.getByMember(memberId);
         console.log('✅ API Response:', response.data);
 
-        // Filter appointment dengan status 'confirmed' saja
+        // Filter appointment dengan status 'confirmed' atau 'pending'
         const upcomingAppointments = response.data.data.filter(
-          item => item.status === 'confirmed'
+          item => item.status === 'confirmed' || item.status === 'pending'
         );
-        console.log('✅ Confirmed appointments:', upcomingAppointments.length);
+        console.log('✅ Upcoming appointments (confirmed & pending):', upcomingAppointments.length);
 
         // Mapping data dari database ke format yang dibutuhkan
         const formattedAppointments = upcomingAppointments.map(item => ({
@@ -87,7 +87,7 @@ const Appointment = () => {
           console.log("⚠️ Menggunakan data fallback dari mockData.js");
           // Fallback ke mockData jika API tidak tersedia
           const localUpcoming = mockAppointments.filter(
-            item => item.status === 'Confirmed'
+            item => item.status === 'Confirmed' || item.status === 'Pending'
           );
           const formattedMockData = localUpcoming.map(item => ({
             id: item.id,
@@ -95,7 +95,7 @@ const Appointment = () => {
             date: item.date,
             time: '10:00 WIB',
             price: parseInt(item.price.replace(/[^0-9]/g, '')),
-            status: 'confirmed',
+            status: item.status.toLowerCase(),
             customerName: 'Siti Maulana'
           }));
           setAppointments(formattedMockData);
@@ -111,10 +111,11 @@ const Appointment = () => {
   // Status badge component
   const StatusBadge = ({ status }) => {
     const statusConfig = {
+      pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pending' },
       confirmed: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Confirmed' }
     };
 
-    const config = statusConfig[status] || statusConfig.confirmed;
+    const config = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-700', label: status };
 
     return (
       <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider font-sans ${config.bg} ${config.text}`}>

@@ -179,12 +179,12 @@ const Dashboard = () => {
         if (response.data && response.data.success) {
           const appointments = response.data.data;
           
-          // Filter only confirmed appointments that are upcoming (today or future)
+          // Filter only confirmed or pending appointments that are upcoming (today or future)
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
           const upcoming = appointments.filter(apt => {
-            if (apt.status !== 'confirmed') return false;
+            if (apt.status !== 'confirmed' && apt.status !== 'pending') return false;
             
             const aptDate = new Date(apt.date);
             return aptDate >= today;
@@ -195,7 +195,7 @@ const Dashboard = () => {
             return a.time.localeCompare(b.time);
           }).slice(0, 3); // Take first 3 upcoming appointments
           
-          console.log('✅ Found', upcoming.length, 'upcoming appointments');
+          console.log('✅ Found', upcoming.length, 'upcoming appointments (confirmed & pending)');
           setUpcomingAppointments(upcoming);
         }
       } catch (error) {
@@ -530,7 +530,7 @@ const Dashboard = () => {
                           </p>
                           <p className="text-[10px] sm:text-xs text-gray-500 truncate">{formattedDate}</p>
                           <p className="text-[10px] sm:text-xs text-[#8D6E63] font-black mt-0.5 sm:mt-1">
-                            {appointment.time}
+                            {appointment.time} • <span className={appointment.status === 'pending' ? 'text-amber-600 font-bold' : 'text-green-600 font-bold'}>{appointment.status === 'pending' ? 'Pending' : 'Confirmed'}</span>
                           </p>
                         </div>
                       </div>

@@ -66,7 +66,7 @@ CREATE TABLE `appointments` (
   `date` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `time` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `amount` int NOT NULL,
-  `status` enum('confirmed','completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'confirmed',
+  `status` enum('pending','confirmed','completed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'confirmed',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `reminder_sent` tinyint(1) DEFAULT '0',
