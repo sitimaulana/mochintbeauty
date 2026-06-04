@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -10,10 +10,7 @@ const Footer = () => {
     email: 'info@mochintbeauty.com',
     address: 'Jakarta, Indonesia',
     social_links: [
-      { platform: 'facebook', url: '#' },
-      { platform: 'instagram', url: '#' },
-      { platform: 'twitter', url: '#' },
-      { platform: 'linkedin', url: '#' }
+      { platform: 'instagram', url: '#' }
     ],
     quick_links: [
       { label: 'Beranda', url: '/' },
@@ -51,7 +48,6 @@ const Footer = () => {
         }
       } catch (error) {
         console.error('Error fetching footer data:', error);
-        // Use default data if fetch fails
       } finally {
         setLoading(false);
       }
@@ -60,24 +56,16 @@ const Footer = () => {
     fetchFooterData();
   }, []);
 
-  const getSocialIcon = (platform) => {
-    const icons = {
-      facebook: Facebook,
-      instagram: Instagram,
-      twitter: Twitter,
-      linkedin: Linkedin
-    };
-    return icons[platform] || Facebook;
-  };
-
   if (loading) {
-    return null; // Or return a loading skeleton
+    return null;
   }
+  
   return (
     <footer className="bg-[#3E2723] text-white mt-8 sm:mt-10 md:mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-8 py-8 sm:py-10 md:py-12 lg:py-16">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
+          
           {/* Company Info */}
           <div>
             <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 font-display">Mochint Beauty</h3>
@@ -85,20 +73,18 @@ const Footer = () => {
               {footerData.company_description}
             </p>
             <div className="flex space-x-3 sm:space-x-4">
-              {footerData.social_links?.map((link) => {
-                const IconComponent = getSocialIcon(link.platform);
-                return (
-                  <a 
-                    key={link.platform}
-                    href={link.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-[#8D6E63] hover:text-[#FDFBF7] transition p-1"
-                  >
-                    <IconComponent size={18} className="sm:w-5 sm:h-5" />
-                  </a>
-                );
-              })}
+              {/* Memastikan hanya me-render platform instagram yang aktif */}
+              {footerData.social_links?.filter(link => link.platform === 'instagram').map((link) => (
+                <a 
+                  key={link.platform}
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#8D6E63] hover:text-[#FDFBF7] transition p-1 flex items-center gap-1"
+                >
+                  <Instagram size={18} className="sm:w-5 sm:h-5" />
+                </a>
+              ))}
             </div>
           </div>
 
