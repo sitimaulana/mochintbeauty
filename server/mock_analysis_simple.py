@@ -49,7 +49,7 @@ SKIN_CONDITION_TRANSLATIONS = {
 CONDITIONS = list(CONDITION_KEYWORDS.keys())
 
 def get_recommendations_from_db(detected_condition):
-    """Query database for treatment recommendations based on skin condition"""
+    """Query database for treatment and product recommendations based on skin condition"""
     if not MYSQL_AVAILABLE:
         return []
     try:
@@ -73,35 +73,81 @@ def get_recommendations_from_db(detected_condition):
             connection.close()
             return []
             
+        # 1. Fetch treatments matching keywords
         search_parts = []
         for keyword in keywords:
             search_parts.append(f"LOWER(name) LIKE '%{keyword}%'")
             search_parts.append(f"LOWER(description) LIKE '%{keyword}%'")
         
         where_clause = " OR ".join(search_parts)
-        
         query = f"""
             SELECT DISTINCT id, name, price, description, duration
             FROM treatments 
             WHERE {where_clause}
             ORDER BY price ASC
-            LIMIT 5
+            LIMIT 2
         """
-        
         cursor.execute(query)
         treatments = cursor.fetchall()
+        
+        # 2. Fetch products matching keywords
+        prod_keywords = list(keywords)
+        if detected_condition == 'acne':
+            prod_keywords += ['acne', 'jerawat', 'anti-acne']
+        elif detected_condition == 'blackheades':
+            prod_keywords += ['komedo', 'blackhead']
+        elif detected_condition == 'dark spots':
+            prod_keywords += ['brightening', 'whitening', 'mencerahkan', 'flek', 'lotion']
+        elif detected_condition == 'pores':
+            prod_keywords += ['pori', 'pore']
+        elif detected_condition == 'redness':
+            prod_keywords += ['calming', 'kemerahan', 'soothing']
+        elif detected_condition == 'wrinkles':
+            prod_keywords += ['retinol', 'penuaan', 'kerut']
+            
+        prod_search_parts = []
+        for keyword in prod_keywords:
+            prod_search_parts.append(f"LOWER(name) LIKE '%{keyword}%'")
+            prod_search_parts.append(f"LOWER(description) LIKE '%{keyword}%'")
+            
+        prod_where_clause = " OR ".join(prod_search_parts)
+        query_prod = f"""
+            SELECT DISTINCT id, name, price, description
+            FROM products 
+            WHERE {prod_where_clause}
+            ORDER BY price ASC
+            LIMIT 2
+        """
+        cursor.execute(query_prod)
+        products = cursor.fetchall()
+        
         cursor.close()
         connection.close()
         
         recommendations = []
-        for treatment in treatments[:3]:
+        
+        # Format treatments
+        for t in treatments:
             recommendations.append({
-                'id': treatment['id'],
-                'treatment': treatment['name'],
+                'id': f"treat_{t['id']}",
+                'treatment': t['name'],
                 'reason': f"Treatment khusus untuk mengatasi {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}",
-                'price': int(treatment['price']),
-                'duration': treatment.get('duration', '60 min')
+                'price': int(t['price']),
+                'duration': t.get('duration', '60 min'),
+                'category': 'Treatment'
             })
+            
+        # Format products
+        for p in products:
+            recommendations.append({
+                'id': f"prod_{p['id']}",
+                'treatment': p['name'],
+                'reason': f"Rekomendasi produk untuk merawat kulit dengan {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}",
+                'price': int(p['price']),
+                'duration': 'N/A',
+                'category': 'Product'
+            })
+            
         return recommendations
     except Exception as e:
         # Fallback silently on any DB error
