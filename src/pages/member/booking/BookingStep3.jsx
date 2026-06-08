@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo } from 'react'; 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -305,7 +305,6 @@ const BookingStep3 = () => {
         
         const exceedsClosingTime = slotEndTime > clinicCloseTime;
         const availableBeds = getAvailableBedsForSlot(slot);
-        const hasAvailableBeds = availableBeds > 0;
         const userHasBooking = hasUserBookingAtTime(slot);
         const isDisabledByAdmin = isTimeslotDisabledByAdmin(slot);
         
@@ -318,10 +317,13 @@ const BookingStep3 = () => {
           }
         }
         
+        // Cek validitas slot secara menyeluruh (termasuk ketersediaan bed selama 90 menit kedepan)
+        const isSlotValid = isTimeSlotValid(slot);
+        
         return {
           time: slot,
           availableBeds: availableBeds,
-          isAvailable: hasAvailableBeds && !exceedsClosingTime && !userHasBooking && !isDisabledByAdmin && !isTimePassed,
+          isAvailable: isSlotValid && !isDisabledByAdmin && !isTimePassed,
           exceedsClosingTime: exceedsClosingTime,
           userHasBooking: userHasBooking,
           isDisabledByAdmin: isDisabledByAdmin,

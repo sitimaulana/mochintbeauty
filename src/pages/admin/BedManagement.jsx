@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Bed, 
   Calendar, 
@@ -56,10 +56,10 @@ const BedManagement = () => {
       const data = await response.json();
       const appointmentsData = data.data || data || [];
       
-      // Filter appointments untuk tanggal yang dipilih dan status confirmed
+      // Filter appointments untuk tanggal yang dipilih dan status confirmed atau pending
       const filteredAppointments = appointmentsData.filter(apt => {
         const aptDate = apt.date?.split('T')[0] || apt.date;
-        return aptDate === selectedDate && apt.status === 'confirmed';
+        return aptDate === selectedDate && (apt.status === 'confirmed' || apt.status === 'pending');
       });
       
       setAppointments(filteredAppointments);
