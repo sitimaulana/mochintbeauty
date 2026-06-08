@@ -7,7 +7,16 @@ import sys
 import json
 import base64
 import random
+import os
 from io import BytesIO
+
+# Try to import mysql.connector for database integration
+try:
+    import mysql.connector
+    from mysql.connector import Error
+    MYSQL_AVAILABLE = True
+except ImportError:
+    MYSQL_AVAILABLE = False
 
 # Skin condition keywords for recommendations
 CONDITION_KEYWORDS = {
@@ -39,21 +48,80 @@ SKIN_CONDITION_TRANSLATIONS = {
 
 CONDITIONS = list(CONDITION_KEYWORDS.keys())
 
+def get_recommendations_from_db(detected_condition):
+    """Query database for treatment recommendations based on skin condition"""
+    if not MYSQL_AVAILABLE:
+        return []
+    try:
+        host = os.environ.get('DB_HOST', 'localhost')
+        user = os.environ.get('DB_USER', 'root')
+        password = os.environ.get('DB_PASSWORD', '')
+        database = os.environ.get('DB_NAME', 'beauty_clinic')
+        port = int(os.environ.get('DB_PORT', 3306))
+        
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database,
+            port=port
+        )
+        cursor = connection.cursor(dictionary=True)
+        keywords = CONDITION_KEYWORDS.get(detected_condition, [])
+        if not keywords:
+            cursor.close()
+            connection.close()
+            return []
+            
+        search_parts = []
+        for keyword in keywords:
+            search_parts.append(f"LOWER(name) LIKE '%{keyword}%'")
+            search_parts.append(f"LOWER(description) LIKE '%{keyword}%'")
+        
+        where_clause = " OR ".join(search_parts)
+        
+        query = f"""
+            SELECT DISTINCT id, name, price, description, duration
+            FROM treatments 
+            WHERE {where_clause}
+            ORDER BY price ASC
+            LIMIT 5
+        """
+        
+        cursor.execute(query)
+        treatments = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        recommendations = []
+        for treatment in treatments[:3]:
+            recommendations.append({
+                'id': treatment['id'],
+                'treatment': treatment['name'],
+                'reason': f"Treatment khusus untuk mengatasi {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}",
+                'price': int(treatment['price']),
+                'duration': treatment.get('duration', '60 min')
+            })
+        return recommendations
+    except Exception as e:
+        # Fallback silently on any DB error
+        return []
+
 def get_mock_recommendations(detected_condition):
-    """Return mock treatment recommendations"""
+    """Return mock treatment recommendations with keys matching React frontend"""
     return [
         {
             'id': 1,
-            'name': f'{SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)} Treatment',
-            'description': f'Professional treatment for {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}',
+            'treatment': f'{SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)} Treatment',
+            'reason': f'Professional treatment for {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}',
             'price': 500000,
             'duration': 60,
             'category': 'Facial Treatment'
         },
         {
             'id': 2,
-            'name': f'{SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)} Serum',
-            'description': f'Specialized serum for {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}',
+            'treatment': f'{SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)} Serum',
+            'reason': f'Specialized serum for {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}',
             'price': 250000,
             'duration': 0,
             'category': 'Product'
@@ -77,6 +145,11 @@ def main():
         detected_condition = random.choice(CONDITIONS)
         skin_type = CONDITION_TO_SKIN_TYPE.get(detected_condition, 'Normal')
         
+        # Get recommendations (database query with fallback to mock data)
+        recommendations = get_recommendations_from_db(detected_condition)
+        if not recommendations:
+            recommendations = get_mock_recommendations(detected_condition)
+            
         # Generate mock analysis
         response = {
             'success': True,
@@ -91,7 +164,7 @@ def main():
                     'recommendation': f"Gunakan perawatan khusus untuk {SKIN_CONDITION_TRANSLATIONS.get(detected_condition, detected_condition)}"
                 }
             ],
-            'recommendations': get_mock_recommendations(detected_condition),
+            'recommendations': recommendations,
             'allProbabilities': {
                 'acne': random.randint(10, 25),
                 'blackheades': random.randint(10, 25),
